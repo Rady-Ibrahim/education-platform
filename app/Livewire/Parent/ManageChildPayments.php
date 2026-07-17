@@ -1,19 +1,23 @@
 <?php
 
-namespace App\Livewire\Student;
+namespace App\Livewire\Parent;
 
 use App\Enums\SubscriptionStatus;
+use App\Models\User;
+use App\Modules\Identity\Services\ParentLinkService;
 use App\Modules\Payments\Models\Subscription;
-use App\Modules\Payments\Models\SubscriptionPlan;
 use App\Modules\Payments\Services\EnrollmentService;
 use App\Modules\Payments\Services\PaymentRecordService;
 use App\Modules\Payments\Services\StudentAccountService;
+use App\Modules\Payments\Models\SubscriptionPlan;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
-class ManageSubscriptions extends Component
+class ManageChildPayments extends Component
 {
     use WithFileUploads;
+
+    public int $studentId;
 
     public ?int $payingSubscriptionId = null;
 
@@ -21,17 +25,30 @@ class ManageSubscriptions extends Component
 
     public $proof;
 
-    public function enroll(int $planId, EnrollmentService $enrollment): void
+    public function mount(int $studentId, ParentLinkService $links): void
     {
-        $plan = SubscriptionPlan::query()->where('is_active', true)->findOrFail($planId);
-        $enrollment->enrollStudent(auth()->user(), $plan);
-        session()->flash('status', 'تم إنشاء الاشتراك. أكمل التحويل ثم أرسل الإثبات.');
+        $student = User::query()->findOrFail($studentId);
+
+        if (! $links->parentCanViewStudent(auth()->user(), $student)) {
+            abort(403);
+        }
+
+        $this->studentId = $student->id;
     }
 
-    public function startPayment(int $subscriptionId, StudentAccountService $accounts): void
+    public function enroll(int $planId, EnrollmentService $enrollment, ParentLinkService $links): void
     {
+        $student = $this->student($links);
+        $plan = SubscriptionPlan::query()->where('is_active', true)->findOrFail($planId);
+        $enrollment->enrollStudent($student, $plan);
+        session()->flash('status', 'تم إنشاء الاشتراك. أكمل التحويل وأرسل الإثبات.');
+    }
+
+    public function startPayment(int $subscriptionId, ParentLinkService $links, StudentAccountService $accounts): void
+    {
+        $student = $this->student($links);
         $subscription = Subscription::query()
-            ->where('student_id', auth()->id())
+            ->where('student_id', $student->id)
             ->where('status', SubscriptionStatus::PendingPayment)
             ->findOrFail($subscriptionId);
 
@@ -46,29 +63,30 @@ class ManageSubscriptions extends Component
         $this->proof = null;
     }
 
-    public function submitProof(PaymentRecordService $payments): void
+    public function submitProof(PaymentRecordService $payments, ParentLinkService $links): void
     {
         $this->validate([
             'externalReference' => ['required', 'string', 'min:4', 'max:100'],
             'proof' => ['nullable', 'image', 'max:4096'],
         ]);
 
+        $student = $this->student($links);
         $subscription = Subscription::query()
-            ->where('student_id', auth()->id())
+            ->where('student_id', $student->id)
             ->findOrFail($this->payingSubscriptionId);
 
-        $payments->submitVodafoneProof(auth()->user(), $subscription, [
+        $payments->submitVodafoneProofForChild(auth()->user(), $student, $subscription, [
             'external_reference' => $this->externalReference,
         ], $this->proof);
 
         $this->payingSubscriptionId = null;
         $this->reset(['externalReference', 'proof']);
-        session()->flash('status', 'تم إرسال إثبات الدفع وبانتظار مراجعة المدرس.');
+        session()->flash('status', 'تم إرسال إثبات فودافون كاش وبانتظار مراجعة المدرس.');
     }
 
-    public function render(PaymentRecordService $payments, StudentAccountService $accounts)
+    public function render(ParentLinkService $links, PaymentRecordService $payments, StudentAccountService $accounts)
     {
-        $student = auth()->user();
+        $student = $this->student($links);
         $teacherIds = $student->teachers()->pluck('users.id');
 
         $plans = SubscriptionPlan::query()
@@ -85,19 +103,29 @@ class ManageSubscriptions extends Component
             ->get();
 
         $instructions = [];
+        foreach ($subscriptions->where('status', SubscriptionStatus::PendingPayment) as $subscription) {
+            $instructions[$subscription->id] = $payments->paymentInstructionsForSubscription($subscription);
+        }
+
         $canSubmit = [];
         foreach ($subscriptions as $subscription) {
             $canSubmit[$subscription->id] = $accounts->canSubmitProof($subscription);
-            if ($subscription->status === SubscriptionStatus::PendingPayment) {
-                $instructions[$subscription->id] = $payments->paymentInstructionsForSubscription($subscription);
-            }
         }
 
-        return view('livewire.student.manage-subscriptions', [
+        return view('livewire.parent.manage-child-payments', [
+            'student' => $student,
             'plans' => $plans,
             'subscriptions' => $subscriptions,
             'instructions' => $instructions,
             'canSubmit' => $canSubmit,
         ]);
+    }
+
+    private function student(ParentLinkService $links): User
+    {
+        $student = User::query()->findOrFail($this->studentId);
+        abort_unless($links->parentCanViewStudent(auth()->user(), $student), 403);
+
+        return $student;
     }
 }

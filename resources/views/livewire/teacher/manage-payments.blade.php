@@ -12,6 +12,11 @@
         </div>
 
         <div class="border rounded-lg p-4 space-y-3">
+            <h4 class="font-medium">بيانات فودافون كاش للطلاب وأولياء الأمور</h4>
+            <livewire:teacher.payment-settings-form />
+        </div>
+
+        <div class="border rounded-lg p-4 space-y-3">
             <h4 class="font-medium">إنشاء خطة اشتراك</h4>
             <div class="grid gap-3 md:grid-cols-3">
                 <div>
@@ -57,7 +62,7 @@
         <div class="border rounded-lg p-4 space-y-3">
             <h4 class="font-medium">تسجيل دفعة كاش</h4>
             <div class="grid gap-3 md:grid-cols-2">
-                <select wire:model="cashStudentId" class="border-gray-300 rounded-md">
+                <select wire:model.live="cashStudentId" class="border-gray-300 rounded-md">
                     <option value="">اختر الطالب</option>
                     @foreach ($students as $student)
                         <option value="{{ $student->id }}">{{ $student->name }}</option>

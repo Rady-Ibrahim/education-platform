@@ -16,28 +16,50 @@ class NotificationService
 {
     public function notifyPaymentConfirmed(Payment $payment): void
     {
-        $payment->loadMissing('student');
+        $payment->loadMissing(['student.parents', 'recorder']);
 
         if ($payment->student) {
             $payment->student->notify(new PaymentConfirmedNotification($payment));
         }
+
+        $this->notifyLinkedParents($payment, PaymentConfirmedNotification::class);
     }
 
     public function notifyPaymentRejected(Payment $payment): void
     {
-        $payment->loadMissing('student');
+        $payment->loadMissing(['student.parents', 'recorder']);
 
         if ($payment->student) {
             $payment->student->notify(new PaymentRejectedNotification($payment));
         }
+
+        $this->notifyLinkedParents($payment, PaymentRejectedNotification::class);
     }
 
     public function notifyPaymentPendingReview(Payment $payment): void
     {
-        $payment->loadMissing('teacher');
+        $payment->loadMissing(['teacher', 'recorder']);
 
         if ($payment->teacher) {
             $payment->teacher->notify(new PaymentPendingReviewNotification($payment));
+        }
+    }
+
+    /**
+     * @param  class-string  $notificationClass
+     */
+    private function notifyLinkedParents(Payment $payment, string $notificationClass): void
+    {
+        if (! $payment->student) {
+            return;
+        }
+
+        $parents = $payment->student->parents()
+            ->wherePivot('status', \App\Enums\ParentLinkStatus::Active->value)
+            ->get();
+
+        foreach ($parents as $parent) {
+            $parent->notify(new $notificationClass($payment));
         }
     }
 

@@ -39,8 +39,15 @@
                 <div class="p-6 space-y-4">
                     @forelse ($stats['children'] as $child)
                         <div class="border rounded-lg p-4">
-                            <div class="font-medium text-gray-900">{{ $child['name'] }}</div>
-                            <div class="text-sm text-gray-500 mb-3">الكود: {{ $child['student_code'] ?? '—' }}</div>
+                            <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-3">
+                                <div>
+                                    <div class="font-medium text-gray-900">{{ $child['name'] }}</div>
+                                    <div class="text-sm text-gray-500">الكود: {{ $child['student_code'] ?? '—' }}</div>
+                                </div>
+                                <a href="{{ route('parent.children.payments', $child['id']) }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500" wire:navigate>
+                                    اشتراكات ودفع فودافون
+                                </a>
+                            </div>
                             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 text-sm">
                                 <div>
                                     <div class="text-gray-500">اشتراكات نشطة</div>

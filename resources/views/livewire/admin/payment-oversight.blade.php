@@ -18,6 +18,9 @@
                     @if ($payment->external_reference)
                         <div class="text-sm text-gray-500">رقم العملية: {{ $payment->external_reference }}</div>
                     @endif
+                    @if ($payment->proof_path)
+                        <a href="{{ asset('storage/'.$payment->proof_path) }}" target="_blank" class="text-sm text-indigo-600">عرض الإثبات</a>
+                    @endif
                 </div>
                 <div class="flex gap-2">
                     <x-primary-button wire:click="confirm({{ $payment->id }})">تأكيد</x-primary-button>

@@ -8,6 +8,7 @@ use App\Enums\SubscriptionStatus;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Modules\Academic\Models\Branch;
+use App\Modules\Identity\Services\ParentLinkService;
 use App\Modules\Notifications\Services\NotificationService;
 use App\Modules\Payments\Models\Payment;
 use App\Modules\Payments\Models\Subscription;
@@ -20,6 +21,7 @@ class PaymentRecordService
     public function __construct(
         private readonly PaymentReviewService $review,
         private readonly NotificationService $notifications,
+        private readonly ParentLinkService $parentLinks,
     ) {}
 
     /**
@@ -33,39 +35,30 @@ class PaymentRecordService
     ): Payment {
         $this->assertStudentOwnsSubscription($student, $subscription);
 
-        if ($subscription->status !== SubscriptionStatus::PendingPayment) {
+        return $this->createVodafonePayment($student, $student, $subscription, $data, $proof);
+    }
+
+    /**
+     * ولي الأمر يرسل إثبات فودافون كاش نيابة عن ابنه المرتبط.
+     *
+     * @param  array{amount: float|int, external_reference?: string|null, notes?: string|null}  $data
+     */
+    public function submitVodafoneProofForChild(
+        User $parent,
+        User $student,
+        Subscription $subscription,
+        array $data,
+        ?UploadedFile $proof = null,
+    ): Payment {
+        if (! $this->parentLinks->parentCanViewStudent($parent, $student)) {
             throw ValidationException::withMessages([
-                'subscription' => 'الاشتراك ليس بانتظار الدفع.',
+                'student' => 'هذا الطالب غير مرتبط بحسابك.',
             ]);
         }
 
-        $subscription->loadMissing('plan', 'teacher');
-        $proofPath = null;
+        $this->assertStudentOwnsSubscription($student, $subscription);
 
-        if ($proof) {
-            $proofPath = $proof->store('payment-proofs', 'public');
-        }
-
-        $payment = DB::transaction(function () use ($student, $subscription, $data, $proofPath) {
-            return Payment::query()->create([
-                'student_id' => $student->id,
-                'teacher_id' => $subscription->teacher_id,
-                'subscription_id' => $subscription->id,
-                'branch_id' => $student->branch_id ?? Branch::defaultBranch()?->id,
-                'channel' => PaymentChannel::VodafoneCash,
-                'provider' => 'manual',
-                'amount' => $data['amount'] ?? $subscription->plan->price,
-                'external_reference' => $data['external_reference'] ?? null,
-                'proof_path' => $proofPath,
-                'status' => PaymentStatus::PendingReview,
-                'recorded_by' => $student->id,
-                'notes' => $data['notes'] ?? null,
-            ]);
-        });
-
-        $this->notifications->notifyPaymentPendingReview($payment);
-
-        return $payment;
+        return $this->createVodafonePayment($parent, $student, $subscription, $data, $proof);
     }
 
     /**
@@ -73,6 +66,12 @@ class PaymentRecordService
      */
     public function recordCash(User $recorder, User $student, Subscription $subscription, array $data): Payment
     {
+        if ($subscription->student_id !== $student->id) {
+            throw ValidationException::withMessages([
+                'subscription' => 'الاشتراك لا يخص هذا الطالب.',
+            ]);
+        }
+
         $this->assertCanRecordForStudent($recorder, $student, $subscription);
         $subscription->loadMissing('plan', 'teacher');
 
@@ -103,6 +102,79 @@ class PaymentRecordService
 
             return $payment;
         });
+    }
+
+    /**
+     * تعليمات التحويل المعروضة للطالب/ولي الأمر.
+     *
+     * @return array{vodafone_cash_number: string|null, payment_instructions: string|null, teacher_name: string|null}
+     */
+    public function paymentInstructionsForSubscription(Subscription $subscription): array
+    {
+        $subscription->loadMissing(['teacher', 'branch', 'student.branch']);
+
+        $teacher = $subscription->teacher;
+        $branch = $subscription->branch
+            ?? $subscription->student?->branch
+            ?? Branch::defaultBranch();
+
+        return [
+            'vodafone_cash_number' => $teacher?->vodafone_cash_number ?: $branch?->vodafone_cash_number,
+            'payment_instructions' => $teacher?->payment_instructions ?: $branch?->payment_instructions,
+            'teacher_name' => $teacher?->name,
+        ];
+    }
+
+    /**
+     * @param  array{amount: float|int, external_reference?: string|null, notes?: string|null}  $data
+     */
+    private function createVodafonePayment(
+        User $recorder,
+        User $student,
+        Subscription $subscription,
+        array $data,
+        ?UploadedFile $proof = null,
+    ): Payment {
+        if ($subscription->status !== SubscriptionStatus::PendingPayment) {
+            throw ValidationException::withMessages([
+                'subscription' => 'الاشتراك ليس بانتظار الدفع.',
+            ]);
+        }
+
+        $hasPending = Payment::query()
+            ->where('subscription_id', $subscription->id)
+            ->where('status', PaymentStatus::PendingReview)
+            ->exists();
+
+        if ($hasPending) {
+            throw ValidationException::withMessages([
+                'payment' => 'يوجد إثبات دفع قيد المراجعة بالفعل لهذا الاشتراك.',
+            ]);
+        }
+
+        $subscription->loadMissing('plan', 'teacher');
+        $proofPath = $proof?->store('payment-proofs', 'public');
+
+        $payment = DB::transaction(function () use ($recorder, $student, $subscription, $data, $proofPath) {
+            return Payment::query()->create([
+                'student_id' => $student->id,
+                'teacher_id' => $subscription->teacher_id,
+                'subscription_id' => $subscription->id,
+                'branch_id' => $student->branch_id ?? Branch::defaultBranch()?->id,
+                'channel' => PaymentChannel::VodafoneCash,
+                'provider' => 'manual',
+                'amount' => $data['amount'] ?? $subscription->plan->price,
+                'external_reference' => $data['external_reference'] ?? null,
+                'proof_path' => $proofPath,
+                'status' => PaymentStatus::PendingReview,
+                'recorded_by' => $recorder->id,
+                'notes' => $data['notes'] ?? null,
+            ]);
+        });
+
+        $this->notifications->notifyPaymentPendingReview($payment);
+
+        return $payment;
     }
 
     private function assertStudentOwnsSubscription(User $student, Subscription $subscription): void

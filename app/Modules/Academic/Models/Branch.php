@@ -14,6 +14,8 @@ class Branch extends Model
     protected $fillable = [
         'name',
         'code',
+        'vodafone_cash_number',
+        'payment_instructions',
         'is_default',
         'is_active',
     ];

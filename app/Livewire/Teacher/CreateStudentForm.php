@@ -15,6 +15,8 @@ class CreateStudentForm extends Component
 
     public ?string $generatedPassword = null;
 
+    public ?string $generatedStudentCode = null;
+
     public function save(TeacherStudentService $service): void
     {
         $validated = $this->validate([
@@ -26,6 +28,7 @@ class CreateStudentForm extends Component
         $result = $service->createStudent(auth()->user(), $validated);
 
         $this->generatedPassword = $result['plain_password'];
+        $this->generatedStudentCode = $result['user']->student_code;
         $this->reset(['name', 'email', 'phone']);
         session()->flash('status', 'تم إضافة الطالب وتفعيله مباشرة ضمن مجموعتك.');
     }

@@ -98,21 +98,14 @@
             </div>
 
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <h3 class="font-medium mb-3">طلابك الحاليون</h3>
-                    <ul class="space-y-2">
-                        @forelse (auth()->user()->students as $student)
-                            <li class="text-sm text-gray-700">
-                                {{ $student->name }}
-                                — {{ $student->email }}
-                                @if ($student->student_code)
-                                    — {{ $student->student_code }}
-                                @endif
-                            </li>
-                        @empty
-                            <li class="text-sm text-gray-500">لا يوجد طلاب بعد.</li>
-                        @endforelse
-                    </ul>
+                <div class="p-6 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-medium mb-1">طلاب مجموعتك</h3>
+                        <p class="text-sm text-gray-500">بحث، تصفية، وكشف حساب لكل طالب.</p>
+                    </div>
+                    <a href="{{ route('teacher.students') }}" class="text-sm text-indigo-600 hover:text-indigo-800" wire:navigate>
+                        فتح إدارة الطلاب
+                    </a>
                 </div>
             </div>
         </div>

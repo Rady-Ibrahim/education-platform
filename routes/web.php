@@ -5,6 +5,7 @@ use App\Http\Controllers\AttachmentDownloadController;
 use App\Http\Controllers\CertificateShowController;
 use App\Http\Controllers\CertificateVerifyController;
 use App\Http\Controllers\DashboardController;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome');
@@ -38,6 +39,10 @@ Route::middleware(['auth', 'account.active', 'role:teacher'])
     ->name('teacher.')
     ->group(function () {
         Route::view('dashboard', 'panels.teacher.dashboard')->name('dashboard');
+        Route::view('students', 'panels.teacher.students')->name('students');
+        Route::get('students/{student}', function (User $student) {
+            return view('panels.teacher.student-show', ['studentId' => $student->id]);
+        })->name('students.show');
         Route::view('lessons', 'panels.teacher.lessons')->name('lessons');
         Route::view('exams', 'panels.teacher.exams')->name('exams');
         Route::view('payments', 'panels.teacher.payments')->name('payments');
@@ -62,6 +67,9 @@ Route::middleware(['auth', 'account.active', 'role:parent'])
     ->name('parent.')
     ->group(function () {
         Route::view('dashboard', 'panels.parent.dashboard')->name('dashboard');
+        Route::get('children/{student}/payments', function (User $student) {
+            return view('panels.parent.child-payments', ['studentId' => $student->id]);
+        })->name('children.payments');
     });
 
 require __DIR__.'/auth.php';

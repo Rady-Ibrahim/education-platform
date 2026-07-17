@@ -25,6 +25,9 @@
                 <div class="bg-white shadow-sm sm:rounded-lg p-5">
                     <div class="text-sm text-gray-500">بانتظار الدفع</div>
                     <div class="text-2xl font-semibold mt-1">{{ $stats['pending_subscriptions'] }}</div>
+                    @if ($stats['pending_subscriptions'] > 0)
+                        <a href="{{ route('student.subscriptions') }}" class="text-xs text-indigo-600 hover:underline" wire:navigate>إكمال الدفع</a>
+                    @endif
                 </div>
                 <div class="bg-white shadow-sm sm:rounded-lg p-5">
                     <div class="text-sm text-gray-500">دروس مكتملة</div>

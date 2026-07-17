@@ -140,6 +140,7 @@ class ManagePayments extends Component
             ->with(['student', 'plan', 'subject'])
             ->where('teacher_id', $teacher->id)
             ->where('status', SubscriptionStatus::PendingPayment)
+            ->when($this->cashStudentId, fn ($q) => $q->where('student_id', $this->cashStudentId))
             ->get();
 
         $subjects = app(\App\Modules\Academic\Services\AcademicStructureService::class)

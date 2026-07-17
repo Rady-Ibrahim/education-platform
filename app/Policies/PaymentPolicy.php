@@ -22,6 +22,11 @@ class PaymentPolicy
             return $payment->student_id === $user->id;
         }
 
+        if ($user->hasRole(UserRole::Parent)) {
+            return app(\App\Modules\Identity\Services\ParentLinkService::class)
+                ->parentCanViewStudent($user, $payment->student);
+        }
+
         return false;
     }
 

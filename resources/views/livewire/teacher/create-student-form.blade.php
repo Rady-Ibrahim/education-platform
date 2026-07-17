@@ -6,10 +6,18 @@
     @endif
 
     @if ($generatedPassword)
-        <div class="mb-4 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-3">
-            كلمة مرور الطالب المؤقتة:
-            <span class="font-mono font-semibold">{{ $generatedPassword }}</span>
-            — سلّمها للطالب مرة واحدة.
+        <div class="mb-4 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-3 space-y-1">
+            <div>
+                كلمة مرور الطالب المؤقتة:
+                <span class="font-mono font-semibold">{{ $generatedPassword }}</span>
+            </div>
+            @if ($generatedStudentCode)
+                <div>
+                    كود الطالب لولي الأمر:
+                    <span class="font-mono font-semibold">{{ $generatedStudentCode }}</span>
+                </div>
+            @endif
+            <div class="text-xs">سلّم البيانات للطالب/ولي الأمر مرة واحدة.</div>
         </div>
     @endif
 

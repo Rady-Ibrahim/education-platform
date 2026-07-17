@@ -9,6 +9,7 @@ use App\Modules\Academic\Models\Grade;
 use App\Modules\Academic\Models\Subject;
 use App\Modules\Identity\Models\ParentStudentLink;
 use App\Modules\Identity\Models\TeacherJoinRequest;
+use App\Modules\Payments\Models\Subscription;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,6 +32,8 @@ class User extends Authenticatable
         'name',
         'email',
         'phone',
+        'vodafone_cash_number',
+        'payment_instructions',
         'student_code',
         'branch_id',
         'created_by',
@@ -134,6 +137,11 @@ class User extends Authenticatable
         return $this->belongsToMany(Grade::class, 'student_grade', 'student_id', 'grade_id')
             ->withPivot('enrolled_at')
             ->withTimestamps();
+    }
+
+    public function subscriptionsAsStudent(): HasMany
+    {
+        return $this->hasMany(Subscription::class, 'student_id');
     }
 
     public function isActive(): bool
