@@ -5,7 +5,6 @@ namespace App\Modules\Content\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Storage;
 
 class LessonAttachment extends Model
 {
@@ -34,12 +33,11 @@ class LessonAttachment extends Model
         return $this->belongsTo(Lesson::class);
     }
 
+    /**
+     * الروابط العامة معطّلة — استخدم AttachmentAccessService::signedDownloadUrl.
+     */
     public function url(): ?string
     {
-        if (! $this->is_downloadable) {
-            return null;
-        }
-
-        return Storage::disk($this->disk)->url($this->path);
+        return null;
     }
 }

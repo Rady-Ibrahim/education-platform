@@ -5,6 +5,7 @@ namespace App\Modules\Exams\Services;
 use App\Enums\ExamAttemptStatus;
 use App\Enums\QuestionType;
 use App\Models\User;
+use App\Modules\Certificates\Services\CertificateService;
 use App\Modules\Content\Services\ContentAccessService;
 use App\Modules\Exams\Models\Exam;
 use App\Modules\Exams\Models\ExamAnswer;
@@ -17,6 +18,7 @@ class ExamAttemptService
 {
     public function __construct(
         private readonly ContentAccessService $access,
+        private readonly CertificateService $certificates,
     ) {}
 
     public function start(User $student, Exam $exam): ExamAttempt
@@ -113,7 +115,7 @@ class ExamAttemptService
             return $attempt;
         }
 
-        return DB::transaction(function () use ($attempt) {
+        $graded = DB::transaction(function () use ($attempt) {
             $this->gradeAttempt($attempt);
 
             $attempt->update([
@@ -123,6 +125,10 @@ class ExamAttemptService
 
             return $attempt->refresh();
         });
+
+        $this->certificates->issueForPassedAttempt($graded);
+
+        return $graded;
     }
 
     /**

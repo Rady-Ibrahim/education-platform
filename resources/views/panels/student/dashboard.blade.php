@@ -6,6 +6,7 @@
                 <a href="{{ route('student.lessons') }}" class="text-indigo-600 hover:text-indigo-800" wire:navigate>الدروس</a>
                 <a href="{{ route('student.exams') }}" class="text-indigo-600 hover:text-indigo-800" wire:navigate>الامتحانات</a>
                 <a href="{{ route('student.subscriptions') }}" class="text-indigo-600 hover:text-indigo-800" wire:navigate>الاشتراكات</a>
+                <a href="{{ route('student.certificates') }}" class="text-indigo-600 hover:text-indigo-800" wire:navigate>الشهادات</a>
             </div>
         </div>
     </x-slot>

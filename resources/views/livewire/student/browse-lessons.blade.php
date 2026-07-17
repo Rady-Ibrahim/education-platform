@@ -70,7 +70,16 @@
                             <h4 class="font-medium mb-2">مرفقات</h4>
                             <ul class="space-y-1 text-sm">
                                 @foreach ($current->attachments->where('is_downloadable', true) as $attachment)
-                                    <li>{{ $attachment->name }}</li>
+                                    <li>
+                                        @if (! empty($attachmentLinks[$attachment->id]))
+                                            <a href="{{ $attachmentLinks[$attachment->id] }}" class="text-indigo-600 hover:text-indigo-800 underline">
+                                                {{ $attachment->name }}
+                                            </a>
+                                            <span class="text-xs text-gray-400">(رابط موقّع مؤقت)</span>
+                                        @else
+                                            {{ $attachment->name }}
+                                        @endif
+                                    </li>
                                 @endforeach
                             </ul>
                         </div>

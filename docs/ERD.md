@@ -114,7 +114,7 @@ payments:
 
 invoices
 notifications
-certificates (لاحقًا)
+certificates (student_id, exam_id, exam_attempt_id, verification_code, score, issued_at)
 ```
 
 ---

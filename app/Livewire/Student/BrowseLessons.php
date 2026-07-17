@@ -4,6 +4,7 @@ namespace App\Livewire\Student;
 
 use App\Modules\Academic\Models\Subject;
 use App\Modules\Content\Models\Lesson;
+use App\Modules\Content\Services\AttachmentAccessService;
 use App\Modules\Content\Services\ContentAccessService;
 use App\Modules\Content\Services\LessonPlaybackService;
 use App\Modules\Content\Services\LessonProgressService;
@@ -51,7 +52,7 @@ class BrowseLessons extends Component
         session()->flash('progress_status', 'تم حفظ التقدم.');
     }
 
-    public function render(ContentAccessService $access)
+    public function render(ContentAccessService $access, AttachmentAccessService $attachments)
     {
         $subjects = $this->accessibleSubjects($access);
 
@@ -67,10 +68,22 @@ class BrowseLessons extends Component
             ? Lesson::query()->with('attachments')->find($this->lessonId)
             : null;
 
+        $attachmentLinks = [];
+        if ($current) {
+            foreach ($current->attachments->where('is_downloadable', true) as $attachment) {
+                try {
+                    $attachmentLinks[$attachment->id] = $attachments->signedDownloadUrl(auth()->user(), $attachment);
+                } catch (\Throwable) {
+                    // skip inaccessible
+                }
+            }
+        }
+
         return view('livewire.student.browse-lessons', [
             'subjects' => $subjects,
             'lessons' => $lessons,
             'current' => $current,
+            'attachmentLinks' => $attachmentLinks,
         ]);
     }
 

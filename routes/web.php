@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\AccountPendingController;
+use App\Http\Controllers\AttachmentDownloadController;
+use App\Http\Controllers\CertificateShowController;
+use App\Http\Controllers\CertificateVerifyController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +20,9 @@ Route::get('account/pending', AccountPendingController::class)
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
+
+Route::get('certificates/verify/{code}', CertificateVerifyController::class)
+    ->name('certificates.verify');
 
 Route::middleware(['auth', 'account.active', 'role:admin'])
     ->prefix('admin')
@@ -45,6 +51,10 @@ Route::middleware(['auth', 'account.active', 'role:student'])
         Route::view('lessons', 'panels.student.lessons')->name('lessons');
         Route::view('exams', 'panels.student.exams')->name('exams');
         Route::view('subscriptions', 'panels.student.subscriptions')->name('subscriptions');
+        Route::view('certificates', 'panels.student.certificates')->name('certificates');
+        Route::get('certificates/{certificate}', CertificateShowController::class)->name('certificates.show');
+        Route::get('attachments/{attachment}/download', AttachmentDownloadController::class)
+            ->name('attachments.download');
     });
 
 Route::middleware(['auth', 'account.active', 'role:parent'])

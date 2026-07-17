@@ -10,4 +10,5 @@ return [
     App\Modules\Payments\Providers\PaymentsServiceProvider::class,
     App\Modules\Notifications\Providers\NotificationsServiceProvider::class,
     App\Modules\Reports\Providers\ReportsServiceProvider::class,
+    App\Modules\Certificates\Providers\CertificatesServiceProvider::class,
 ];
