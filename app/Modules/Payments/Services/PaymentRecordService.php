@@ -8,19 +8,18 @@ use App\Enums\SubscriptionStatus;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Modules\Academic\Models\Branch;
-use App\Modules\Content\Services\ContentAccessService;
+use App\Modules\Notifications\Services\NotificationService;
 use App\Modules\Payments\Models\Payment;
 use App\Modules\Payments\Models\Subscription;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class PaymentRecordService
 {
     public function __construct(
-        private readonly ContentAccessService $access,
         private readonly PaymentReviewService $review,
+        private readonly NotificationService $notifications,
     ) {}
 
     /**
@@ -47,8 +46,8 @@ class PaymentRecordService
             $proofPath = $proof->store('payment-proofs', 'public');
         }
 
-        return DB::transaction(function () use ($student, $subscription, $data, $proofPath) {
-            $payment = Payment::query()->create([
+        $payment = DB::transaction(function () use ($student, $subscription, $data, $proofPath) {
+            return Payment::query()->create([
                 'student_id' => $student->id,
                 'teacher_id' => $subscription->teacher_id,
                 'subscription_id' => $subscription->id,
@@ -62,9 +61,11 @@ class PaymentRecordService
                 'recorded_by' => $student->id,
                 'notes' => $data['notes'] ?? null,
             ]);
-
-            return $payment;
         });
+
+        $this->notifications->notifyPaymentPendingReview($payment);
+
+        return $payment;
     }
 
     /**

@@ -6,6 +6,7 @@ use App\Enums\PaymentStatus;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Modules\Payments\Models\Payment;
+use App\Modules\Notifications\Services\NotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -14,6 +15,7 @@ class PaymentReviewService
     public function __construct(
         private readonly EnrollmentService $enrollment,
         private readonly InvoiceService $invoices,
+        private readonly NotificationService $notifications,
     ) {}
 
     public function confirm(User $reviewer, Payment $payment): Payment
@@ -26,7 +28,7 @@ class PaymentReviewService
             ]);
         }
 
-        return DB::transaction(function () use ($reviewer, $payment) {
+        $confirmed = DB::transaction(function () use ($reviewer, $payment) {
             $payment->update([
                 'status' => PaymentStatus::Confirmed,
                 'reviewed_by' => $reviewer->id,
@@ -44,6 +46,10 @@ class PaymentReviewService
 
             return $payment->fresh();
         });
+
+        $this->notifications->notifyPaymentConfirmed($confirmed);
+
+        return $confirmed;
     }
 
     public function reject(User $reviewer, Payment $payment, string $reason): Payment
@@ -63,7 +69,10 @@ class PaymentReviewService
             'rejection_reason' => $reason,
         ]);
 
-        return $payment->fresh();
+        $rejected = $payment->fresh();
+        $this->notifications->notifyPaymentRejected($rejected);
+
+        return $rejected;
     }
 
     private function assertCanReview(User $reviewer, Payment $payment): void

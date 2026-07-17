@@ -7,6 +7,7 @@ use App\Modules\Academic\Models\Subject;
 use App\Modules\Content\Services\ContentAccessService;
 use App\Modules\Exams\Models\Exam;
 use App\Modules\Exams\Models\Question;
+use App\Modules\Notifications\Services\NotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -14,6 +15,7 @@ class ExamService
 {
     public function __construct(
         private readonly ContentAccessService $access,
+        private readonly NotificationService $notifications,
     ) {}
 
     /**
@@ -42,7 +44,13 @@ class ExamService
                 $this->syncQuestions($teacher, $exam, $data['question_ids']);
             }
 
-            return $exam->load('questions');
+            $exam = $exam->load('questions');
+
+            if ($exam->is_published) {
+                $this->notifications->notifyExamPublished($exam);
+            }
+
+            return $exam;
         });
     }
 
@@ -89,8 +97,14 @@ class ExamService
             ]);
         }
 
+        $wasPublished = $exam->is_published;
         $exam->update(['is_published' => $published]);
+        $exam = $exam->refresh();
 
-        return $exam->refresh();
+        if ($published && ! $wasPublished) {
+            $this->notifications->notifyExamPublished($exam);
+        }
+
+        return $exam;
     }
 }

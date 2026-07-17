@@ -10,8 +10,37 @@
         </div>
     </x-slot>
 
+    @php
+        $stats = app(\App\Modules\Reports\Services\DashboardReportService::class)->forTeacher(auth()->user());
+    @endphp
+
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                <div class="bg-white shadow-sm sm:rounded-lg p-5">
+                    <div class="text-sm text-gray-500">عدد الطلاب</div>
+                    <div class="text-2xl font-semibold mt-1">{{ $stats['students_count'] }}</div>
+                </div>
+                <div class="bg-white shadow-sm sm:rounded-lg p-5">
+                    <div class="text-sm text-gray-500">التحصيل المؤكد</div>
+                    <div class="text-2xl font-semibold mt-1">{{ number_format($stats['confirmed_total'], 2) }} ج.م</div>
+                </div>
+                <div class="bg-white shadow-sm sm:rounded-lg p-5">
+                    <div class="text-sm text-gray-500">مدفوعات معلّقة</div>
+                    <div class="text-2xl font-semibold mt-1">{{ $stats['pending_payments'] }}</div>
+                </div>
+                <div class="bg-white shadow-sm sm:rounded-lg p-5">
+                    <div class="text-sm text-gray-500">متأخرون (+3 أيام)</div>
+                    <div class="text-2xl font-semibold mt-1">{{ $stats['late_subscriptions'] }}</div>
+                </div>
+                <div class="bg-white shadow-sm sm:rounded-lg p-5">
+                    <div class="text-sm text-gray-500">متوسط درجات المجموعة</div>
+                    <div class="text-2xl font-semibold mt-1">
+                        {{ $stats['average_exam_score'] !== null ? $stats['average_exam_score'].'%' : '—' }}
+                    </div>
+                </div>
+            </div>
+
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 border-b">
                     <h3 class="font-medium">موادك الدراسية</h3>
