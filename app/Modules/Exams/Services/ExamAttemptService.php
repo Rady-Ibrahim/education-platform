@@ -12,6 +12,7 @@ use App\Modules\Exams\Models\ExamAnswer;
 use App\Modules\Exams\Models\ExamAttempt;
 use App\Modules\Exams\Models\Question;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
 class ExamAttemptService
@@ -77,6 +78,7 @@ class ExamAttemptService
      */
     public function autosaveAnswer(User $student, ExamAttempt $attempt, Question $question, array $payload): ExamAnswer
     {
+        $this->assertRateLimit($student, 'autosave');
         $this->assertOwnedInProgress($student, $attempt);
 
         if ($attempt->hasExpired()) {
@@ -109,6 +111,7 @@ class ExamAttemptService
 
     public function submit(User $student, ExamAttempt $attempt): ExamAttempt
     {
+        $this->assertRateLimit($student, 'submit');
         $this->assertOwnedAttempt($student, $attempt);
 
         if (! $attempt->isInProgress()) {
@@ -261,6 +264,21 @@ class ExamAttemptService
         $isCorrect = $expected !== '' && $expected === $given;
 
         return [$isCorrect, $isCorrect ? $points : 0.0];
+    }
+
+    private function assertRateLimit(User $student, string $action): void
+    {
+        $max = (int) config("exams.{$action}_rate_limit", $action === 'submit' ? 10 : 60);
+        $decay = (int) config("exams.{$action}_rate_decay_seconds", 60);
+        $key = "exam-{$action}:{$student->id}";
+
+        if (RateLimiter::tooManyAttempts($key, $max)) {
+            throw ValidationException::withMessages([
+                'rate' => 'تم تجاوز الحد المسموح من الطلبات. حاول بعد لحظات.',
+            ]);
+        }
+
+        RateLimiter::hit($key, $decay);
     }
 
     private function assertOwnedInProgress(User $student, ExamAttempt $attempt): void

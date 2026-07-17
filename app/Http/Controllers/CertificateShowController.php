@@ -10,7 +10,7 @@ class CertificateShowController extends Controller
 {
     public function __invoke(Request $request, Certificate $certificate): View
     {
-        abort_unless($request->user()->id === $certificate->student_id, 403);
+        $this->authorize('view', $certificate);
 
         $certificate->load(['student', 'exam', 'subject']);
 
