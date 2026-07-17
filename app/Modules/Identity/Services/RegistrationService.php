@@ -6,6 +6,8 @@ use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use App\Models\User;
 use App\Modules\Academic\Models\Branch;
+use App\Modules\Academic\Models\Grade;
+use App\Modules\Academic\Services\AcademicStructureService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -14,6 +16,7 @@ class RegistrationService
 {
     public function __construct(
         private readonly TeacherProfileService $teacherProfiles,
+        private readonly AcademicStructureService $academic,
     ) {}
 
     /**
@@ -72,6 +75,17 @@ class RegistrationService
 
             $user = User::query()->create($payload);
             $user->assignRole($role);
+
+            if ($role === UserRole::Student) {
+                $gradeId = (int) ($data['grade_id'] ?? 0);
+                $grade = Grade::query()->whereKey($gradeId)->where('is_active', true)->first();
+                if (! $grade) {
+                    throw ValidationException::withMessages([
+                        'grade_id' => 'اختر الصف الدراسي (مثلاً أولى ثانوي).',
+                    ]);
+                }
+                $this->academic->enrollStudentInGrade($user, $grade);
+            }
 
             if ($role === UserRole::Teacher) {
                 $profileData = [

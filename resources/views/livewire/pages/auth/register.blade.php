@@ -46,7 +46,38 @@ new #[Layout('layouts.guest')] class extends Component
 
     public ?int $gradeId = null;
 
+    public ?int $teacherId = null;
+
     public string $subjectName = '';
+
+    public function mount(TeacherCatalogService $catalog): void
+    {
+        if ($this->role === 'student' && $this->join !== '') {
+            $teacher = $catalog->findPublicBySlug($this->join);
+            if ($teacher) {
+                $this->teacherId = $teacher->id;
+                $gradeId = $teacher->teachingSubjects()->value('grade_id');
+                if ($gradeId) {
+                    $this->gradeId = (int) $gradeId;
+                }
+            }
+        }
+    }
+
+    public function updatedGradeId(): void
+    {
+        if ($this->role !== 'student' || ! $this->teacherId || ! $this->gradeId) {
+            return;
+        }
+
+        $stillValid = app(TeacherCatalogService::class)
+            ->listPublic($this->gradeId)
+            ->contains('id', $this->teacherId);
+
+        if (! $stillValid) {
+            $this->teacherId = null;
+        }
+    }
 
     public function register(
         RegistrationService $registration,
@@ -60,6 +91,11 @@ new #[Layout('layouts.guest')] class extends Component
             'role' => ['required', 'in:student,teacher,parent'],
             'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
         ];
+
+        if ($this->role === 'student') {
+            $rules['gradeId'] = ['required', 'exists:grades,id'];
+            $rules['teacherId'] = ['required', 'integer', 'exists:users,id'];
+        }
 
         if ($this->role === 'teacher') {
             $rules = array_merge($rules, [
@@ -81,6 +117,27 @@ new #[Layout('layouts.guest')] class extends Component
 
         $validated = $this->validate($rules);
 
+        $selectedTeacher = null;
+        if ($this->role === 'student') {
+            $selectedTeacher = $catalog->findPublicById((int) $this->teacherId);
+            if (! $selectedTeacher) {
+                $this->addError('teacherId', 'اختر مدرسًا ظاهرًا من القائمة.');
+
+                return;
+            }
+
+            if ($this->gradeId) {
+                $teachesGrade = $selectedTeacher->teachingSubjects()
+                    ->where('grade_id', $this->gradeId)
+                    ->exists();
+                if (! $teachesGrade) {
+                    $this->addError('teacherId', 'المدرس المختار لا يدرّس صفك.');
+
+                    return;
+                }
+            }
+        }
+
         $payload = [
             'name' => $validated['name'],
             'email' => $validated['email'],
@@ -88,6 +145,10 @@ new #[Layout('layouts.guest')] class extends Component
             'role' => $validated['role'],
             'password' => $validated['password'],
         ];
+
+        if ($this->role === 'student') {
+            $payload['grade_id'] = $this->gradeId;
+        }
 
         if ($this->role === 'teacher') {
             $payload['headline'] = $this->headline !== '' ? $this->headline : null;
@@ -105,14 +166,11 @@ new #[Layout('layouts.guest')] class extends Component
 
         Auth::login($user);
 
-        if ($user->hasRole(UserRole::Student) && $this->join !== '') {
-            $teacher = $catalog->findPublicBySlug($this->join);
-            if ($teacher) {
-                $joins->requestJoin($user, $teacher, 'طلب انضمام من صفحة المدرس');
-                $this->redirect(route('teachers.show', $teacher->slug, absolute: false), navigate: true);
+        if ($user->hasRole(UserRole::Student) && $selectedTeacher) {
+            $joins->requestJoin($user, $selectedTeacher, 'طلب انضمام عند التسجيل');
+            $this->redirect(route('teachers.show', $selectedTeacher->slug, absolute: false), navigate: true);
 
-                return;
-            }
+            return;
         }
 
         $this->redirect(route('dashboard', absolute: false), navigate: true);
@@ -123,41 +181,91 @@ new #[Layout('layouts.guest')] class extends Component
     <form wire:submit="register">
         <div>
             <x-input-label for="name" value="الاسم" />
-            <x-text-input wire:model="name" id="name" class="block mt-1 w-full" type="text" required autofocus autocomplete="name" />
+            <x-text-input wire:model="name" id="name" class="mt-1 block w-full" type="text" required autofocus autocomplete="name" />
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 
         <div class="mt-4">
             <x-input-label for="email" value="البريد الإلكتروني" />
-            <x-text-input wire:model="email" id="email" class="block mt-1 w-full" type="email" required autocomplete="username" />
+            <x-text-input wire:model="email" id="email" class="mt-1 block w-full" type="email" required autocomplete="username" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
         <div class="mt-4">
             <x-input-label for="phone" value="رقم الهاتف (اختياري)" />
-            <x-text-input wire:model="phone" id="phone" class="block mt-1 w-full" type="text" autocomplete="tel" />
+            <x-text-input wire:model="phone" id="phone" class="mt-1 block w-full" type="text" autocomplete="tel" />
             <x-input-error :messages="$errors->get('phone')" class="mt-2" />
         </div>
 
         <div class="mt-4">
             <x-input-label for="role" value="نوع الحساب" />
-            <select wire:model.live="role" id="role" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+            <select wire:model.live="role" id="role" class="mt-1 block w-full rounded-xl border-brand-200 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                 <option value="student">طالب</option>
                 <option value="teacher">مدرس</option>
                 <option value="parent">ولي أمر</option>
             </select>
             <x-input-error :messages="$errors->get('role')" class="mt-2" />
-            <p class="mt-2 text-sm text-gray-500">
-                الحساب يتفعّل فورًا. المدرس له مادة واحدة يحدّدها هنا أو يعدّلها لاحقًا من البروفايل.
-                @if ($join !== '')
-                    بعد التسجيل هنرسل طلب انضمام للمدرس الذي اخترته.
+            <p class="mt-2 text-sm text-ink-muted">
+                الحساب يتفعّل فورًا.
+                @if ($role === 'student')
+                    اختَر صفك ومدرسك، وهيتبعت طلب انضمام للمدرس.
+                @else
+                    المدرس له مادة واحدة يحدّدها هنا أو يعدّلها لاحقًا من البروفايل.
                 @endif
             </p>
         </div>
 
+        @if ($role === 'student')
+            @php
+                $availableTeachers = $gradeId
+                    ? app(TeacherCatalogService::class)->listPublic($gradeId)
+                    : collect();
+            @endphp
+
+            <div class="mt-4 space-y-4 rounded-2xl border border-brand-100 bg-brand-50/40 p-4">
+                <div>
+                    <x-input-label for="gradeId" value="الصف الدراسي" />
+                    <select wire:model.live="gradeId" id="gradeId" class="mt-1 block w-full rounded-xl border-brand-200 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                        <option value="">اختر صفك — مثلاً أولى ثانوي</option>
+                        @foreach (Grade::query()->where('is_active', true)->with('stage')->orderBy('ordering')->get() as $grade)
+                            <option value="{{ $grade->id }}">{{ $grade->stage?->name }} — {{ $grade->name }}</option>
+                        @endforeach
+                    </select>
+                    <x-input-error :messages="$errors->get('gradeId')" class="mt-2" />
+                </div>
+
+                <div>
+                    <x-input-label for="teacherId" value="المدرس" />
+                    <select wire:model="teacherId" id="teacherId" class="mt-1 block w-full rounded-xl border-brand-200 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                        <option value="">اختر مدرسك</option>
+                        @forelse ($availableTeachers as $teacher)
+                            <option value="{{ $teacher->id }}">
+                                {{ $teacher->name }}
+                                @if ($teacher->headline)
+                                    — {{ $teacher->headline }}
+                                @elseif ($teacher->teachingSubjects->isNotEmpty())
+                                    — {{ $teacher->teachingSubjects->pluck('name')->take(2)->join(' · ') }}
+                                @endif
+                            </option>
+                        @empty
+                            <option value="" disabled>
+                                @if ($gradeId)
+                                    لا يوجد مدرسون ظاهرون لهذا الصف حاليًا
+                                @else
+                                    اختَر الصف أولاً لعرض المدرسين
+                                @endif
+                            </option>
+                        @endforelse
+                    </select>
+                    <x-input-error :messages="$errors->get('teacherId')" class="mt-2" />
+                    <p class="mt-1 text-xs text-ink-muted">بعد التسجيل هيتبعت طلب انضمام للمدرس عشان يوافق عليه.</p>
+                </div>
+            </div>
+        @endif
+
         @if ($role === 'teacher')
-            <div class="mt-4 space-y-4 rounded-md border border-teal-100 bg-teal-50/50 p-4">
-                <p class="text-sm font-medium text-teal-900">بيانات المدرس</p>
+            <div class="mt-4 space-y-4 rounded-md border border-brand-100 bg-brand-50/50 p-4">
+                <p class="text-sm font-medium text-brand-900">بيانات المدرس</p>
                 <div>
                     <x-input-label for="headline" value="تخصص / عنوان قصير" />
                     <x-text-input wire:model="headline" id="headline" class="block mt-1 w-full" placeholder="مدرس فيزياء — أولى ثانوي" />
@@ -176,14 +284,14 @@ new #[Layout('layouts.guest')] class extends Component
                 </div>
 
                 <div class="space-y-3 rounded-md border border-white bg-white/80 p-3">
-                    <p class="text-sm font-medium text-teal-950">مادتك (واحدة فقط)</p>
+                    <p class="text-sm font-medium text-brand-950">مادتك (واحدة فقط)</p>
                     <div class="flex flex-wrap gap-4 text-sm">
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" wire:model.live="subjectMode" value="catalog" class="text-teal-700">
+                            <input type="radio" wire:model.live="subjectMode" value="catalog" class="text-brand-700">
                             من كتالوج السنتر
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" wire:model.live="subjectMode" value="custom" class="text-teal-700">
+                            <input type="radio" wire:model.live="subjectMode" value="custom" class="text-brand-700">
                             أكتب اسم مادتي
                         </label>
                     </div>
@@ -221,7 +329,7 @@ new #[Layout('layouts.guest')] class extends Component
                 </div>
 
                 <label class="flex items-start gap-2 text-sm">
-                    <input type="checkbox" wire:model="isPubliclyVisible" class="mt-1 rounded border-gray-300 text-indigo-600">
+                    <input type="checkbox" wire:model="isPubliclyVisible" class="mt-1 rounded border-gray-300 text-brand-700">
                     <span>أظهر صفحتي في كتالوج المدرسين الآن</span>
                 </label>
                 <x-input-error :messages="$errors->get('isPubliclyVisible')" class="mt-1" />
@@ -230,18 +338,18 @@ new #[Layout('layouts.guest')] class extends Component
 
         <div class="mt-4">
             <x-input-label for="password" value="كلمة المرور" />
-            <x-text-input wire:model="password" id="password" class="block mt-1 w-full" type="password" required autocomplete="new-password" />
+            <x-text-input wire:model="password" id="password" class="mt-1 block w-full" type="password" required autocomplete="new-password" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
         <div class="mt-4">
             <x-input-label for="password_confirmation" value="تأكيد كلمة المرور" />
-            <x-text-input wire:model="password_confirmation" id="password_confirmation" class="block mt-1 w-full" type="password" required autocomplete="new-password" />
+            <x-text-input wire:model="password_confirmation" id="password_confirmation" class="mt-1 block w-full" type="password" required autocomplete="new-password" />
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}" wire:navigate>
+        <div class="mt-4 flex items-center justify-end">
+            <a class="rounded-md text-sm text-ink-muted underline hover:text-ink focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2" href="{{ route('login') }}" wire:navigate>
                 لديك حساب؟
             </a>
 

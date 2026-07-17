@@ -6,10 +6,12 @@ use App\Enums\JoinRequestStatus;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use App\Models\User;
+use App\Modules\Academic\Models\Grade;
 use App\Modules\Identity\Services\RegistrationService;
 use App\Modules\Identity\Services\TeacherJoinService;
 use App\Modules\Identity\Services\TeacherStudentService;
 use App\Modules\Identity\Services\UserApprovalService;
+use Database\Seeders\AcademicStructureSeeder;
 use Database\Seeders\BranchSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,21 +28,26 @@ class ApprovalWorkflowTest extends TestCase
         $this->seed([
             BranchSeeder::class,
             RolePermissionSeeder::class,
+            AcademicStructureSeeder::class,
         ]);
     }
 
     public function test_self_registered_student_is_active_immediately(): void
     {
+        $grade = Grade::query()->where('code', 'S1')->firstOrFail();
+
         $user = app(RegistrationService::class)->register([
             'name' => 'طالب تجريبي',
             'email' => 'student@test.com',
             'password' => 'password',
             'role' => 'student',
+            'grade_id' => $grade->id,
         ]);
 
         $this->assertTrue($user->hasRole(UserRole::Student));
         $this->assertSame(UserStatus::Active, $user->status);
         $this->assertTrue($user->isActive());
+        $this->assertTrue($user->grades()->where('grades.id', $grade->id)->exists());
     }
 
     public function test_self_registered_teacher_is_active_immediately(): void
@@ -93,10 +100,13 @@ class ApprovalWorkflowTest extends TestCase
         $teacher = User::factory()->create();
         $teacher->assignRole(UserRole::Teacher);
 
+        $grade = Grade::query()->where('code', 'S2')->firstOrFail();
+
         $result = app(TeacherStudentService::class)->createStudent($teacher, [
             'name' => 'طالب يدوي',
             'email' => 'manual@test.com',
             'phone' => '01011112222',
+            'grade_id' => $grade->id,
         ]);
 
         $student = $result['user'];
@@ -105,6 +115,7 @@ class ApprovalWorkflowTest extends TestCase
         $this->assertTrue($student->hasRole(UserRole::Student));
         $this->assertSame($teacher->id, $student->created_by);
         $this->assertTrue($teacher->students()->where('users.id', $student->id)->exists());
+        $this->assertTrue($student->grades()->where('grades.id', $grade->id)->exists());
         $this->assertNotEmpty($result['plain_password']);
     }
 

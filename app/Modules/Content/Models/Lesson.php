@@ -22,6 +22,8 @@ class Lesson extends Model
         'type',
         'body',
         'bunny_video_id',
+        'meeting_url',
+        'scheduled_at',
         'ordering',
         'duration_seconds',
         'is_published',
@@ -34,6 +36,7 @@ class Lesson extends Model
             'ordering' => 'integer',
             'duration_seconds' => 'integer',
             'is_published' => 'boolean',
+            'scheduled_at' => 'datetime',
         ];
     }
 
@@ -65,5 +68,10 @@ class Lesson extends Model
     public function hasVideo(): bool
     {
         return filled($this->bunny_video_id);
+    }
+
+    public function hasMeeting(): bool
+    {
+        return $this->type === LessonType::Live && filled($this->meeting_url);
     }
 }

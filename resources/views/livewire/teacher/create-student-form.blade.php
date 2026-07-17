@@ -1,12 +1,12 @@
 <div>
     @if (session('status'))
-        <div class="mb-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md p-3">
+        <div class="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
             {{ session('status') }}
         </div>
     @endif
 
     @if ($generatedPassword)
-        <div class="mb-4 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-3 space-y-1">
+        <div class="mb-4 space-y-1 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             <div>
                 كلمة مرور الطالب المؤقتة:
                 <span class="font-mono font-semibold">{{ $generatedPassword }}</span>
@@ -24,17 +24,27 @@
     <form wire:submit="save" class="space-y-4">
         <div>
             <x-input-label value="اسم الطالب" />
-            <x-text-input wire:model="name" class="block mt-1 w-full" type="text" required />
+            <x-text-input wire:model="name" class="mt-1 block w-full" type="text" required />
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
         <div>
             <x-input-label value="البريد الإلكتروني" />
-            <x-text-input wire:model="email" class="block mt-1 w-full" type="email" required />
+            <x-text-input wire:model="email" class="mt-1 block w-full" type="email" required />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
         <div>
+            <x-input-label value="الصف الدراسي" />
+            <select wire:model="gradeId" class="mt-1 block w-full">
+                <option value="">اختر الصف — أولى ثانوي / تانية…</option>
+                @foreach ($grades as $grade)
+                    <option value="{{ $grade->id }}">{{ $grade->stage?->name }} — {{ $grade->name }}</option>
+                @endforeach
+            </select>
+            <x-input-error :messages="$errors->get('gradeId')" class="mt-2" />
+        </div>
+        <div>
             <x-input-label value="الهاتف (اختياري)" />
-            <x-text-input wire:model="phone" class="block mt-1 w-full" type="text" />
+            <x-text-input wire:model="phone" class="mt-1 block w-full" type="text" />
             <x-input-error :messages="$errors->get('phone')" class="mt-2" />
         </div>
         <x-primary-button>إضافة الطالب</x-primary-button>

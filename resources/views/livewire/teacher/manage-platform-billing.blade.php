@@ -18,15 +18,15 @@
         <div class="text-sm">الرسوم: <span class="font-semibold">{{ number_format((float) ($subscription->amount ?? $settings->monthly_fee), 2) }} ج.م</span> / {{ $settings->period_days }} يوم</div>
     </div>
 
-    <div class="rounded-lg border border-teal-200 bg-teal-50/50 p-4 space-y-3">
-        <h4 class="font-medium text-teal-950">فودافون كاش الإدارة</h4>
+    <div class="rounded-lg border border-brand-200 bg-brand-50/50 p-4 space-y-3">
+        <h4 class="font-medium text-brand-950">فودافون كاش الإدارة</h4>
         @if ($settings->vodafone_cash_number)
             <div class="font-mono text-lg">{{ $settings->vodafone_cash_number }}</div>
         @else
             <p class="text-sm text-amber-800">الإدارة لم تضبط رقم المحفظة بعد.</p>
         @endif
         @if ($settings->payment_instructions)
-            <p class="text-sm whitespace-pre-line text-teal-900/80">{{ $settings->payment_instructions }}</p>
+            <p class="text-sm whitespace-pre-line text-brand-900/80">{{ $settings->payment_instructions }}</p>
         @endif
 
         <form wire:submit="submit" class="space-y-3 pt-2">

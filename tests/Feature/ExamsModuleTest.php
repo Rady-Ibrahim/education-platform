@@ -277,6 +277,26 @@ class ExamsModuleTest extends TestCase
         $this->actingAs($this->student)->get(route('teacher.exams'))->assertForbidden();
     }
 
+    public function test_exam_can_be_created_with_schedule_window(): void
+    {
+        $starts = now()->addHour();
+        $ends = now()->addDays(2);
+
+        $exam = $this->exams->create($this->teacher, $this->subject, [
+            'title' => 'امتحان مجدول',
+            'starts_at' => $starts,
+            'ends_at' => $ends,
+            'pass_score' => 60,
+            'question_ids' => [$this->makeMcq('س', 'أ')->id],
+            'is_published' => true,
+        ]);
+
+        $this->assertNotNull($exam->starts_at);
+        $this->assertNotNull($exam->ends_at);
+        $this->assertEquals(60.0, (float) $exam->pass_score);
+        $this->assertFalse($exam->isAvailableNow());
+    }
+
     private function makeMcq(string $stem, string $correctLabel): Question
     {
         return $this->questions->create($this->teacher, $this->subject, [

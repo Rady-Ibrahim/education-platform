@@ -134,6 +134,31 @@ class ContentLessonsTest extends TestCase
         $this->assertTrue($lesson->hasVideo());
     }
 
+    public function test_live_lesson_requires_meeting_url(): void
+    {
+        $this->expectException(ValidationException::class);
+
+        $this->lessons->create($this->teacher, $this->unit, [
+            'title' => 'حصة زوم ناقصة',
+            'type' => LessonType::Live->value,
+        ]);
+    }
+
+    public function test_teacher_can_create_live_zoom_lesson(): void
+    {
+        $lesson = $this->lessons->create($this->teacher, $this->unit, [
+            'title' => 'مراجعة لايف',
+            'type' => LessonType::Live->value,
+            'meeting_url' => 'https://zoom.us/j/123456789',
+            'scheduled_at' => now()->addDay(),
+            'is_published' => true,
+        ]);
+
+        $this->assertTrue($lesson->hasMeeting());
+        $this->assertSame('https://zoom.us/j/123456789', $lesson->meeting_url);
+        $this->assertNull($lesson->bunny_video_id);
+    }
+
     public function test_teacher_can_publish_and_delete_own_lesson(): void
     {
         $lesson = $this->lessons->create($this->teacher, $this->unit, [

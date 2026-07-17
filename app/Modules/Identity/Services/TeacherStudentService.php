@@ -6,16 +6,22 @@ use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use App\Models\User;
 use App\Modules\Academic\Models\Branch;
+use App\Modules\Academic\Models\Grade;
+use App\Modules\Academic\Services\AcademicStructureService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class TeacherStudentService
 {
+    public function __construct(
+        private readonly AcademicStructureService $academic,
+    ) {}
+
     /**
      * المدرس يضيف طالبًا يدويًا → الحساب نشط مباشرة (بدون انتظار الأدمن).
      *
-     * @param  array{name: string, email: string, phone?: string|null, password?: string|null}  $data
+     * @param  array{name: string, email: string, phone?: string|null, password?: string|null, grade_id: int}  $data
      * @return array{user: User, plain_password: string}
      */
     public function createStudent(User $teacher, array $data): array
@@ -26,7 +32,14 @@ class TeacherStudentService
             ]);
         }
 
-        return DB::transaction(function () use ($teacher, $data) {
+        $grade = Grade::query()->whereKey((int) ($data['grade_id'] ?? 0))->where('is_active', true)->first();
+        if (! $grade) {
+            throw ValidationException::withMessages([
+                'grade_id' => 'اختر الصف الدراسي للطالب.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($teacher, $data, $grade) {
             $plainPassword = $data['password'] ?? Str::password(10);
             $branchId = $teacher->branch_id ?? Branch::defaultBranch()?->id;
 
@@ -45,6 +58,8 @@ class TeacherStudentService
             ]);
 
             $student->assignRole(UserRole::Student);
+
+            $this->academic->enrollStudentInGrade($student, $grade);
 
             $teacher->students()->syncWithoutDetaching([
                 $student->id => ['joined_at' => now()],

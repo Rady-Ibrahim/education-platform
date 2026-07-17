@@ -15,7 +15,7 @@
                         <button
                             type="button"
                             wire:click="selectStage({{ $stage->id }})"
-                            class="w-full text-start px-3 py-2 rounded-md text-sm {{ $selectedStageId === $stage->id ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-gray-50' }}"
+                            class="w-full text-start px-3 py-2 rounded-md text-sm {{ $selectedStageId === $stage->id ? 'bg-brand-50 text-brand-800' : 'hover:bg-gray-50' }}"
                         >
                             {{ $stage->name }}
                             @unless ($stage->is_active)
@@ -41,7 +41,7 @@
                         <button
                             type="button"
                             wire:click="selectGrade({{ $grade->id }})"
-                            class="w-full text-start px-3 py-2 rounded-md text-sm {{ $selectedGradeId === $grade->id ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-gray-50' }}"
+                            class="w-full text-start px-3 py-2 rounded-md text-sm {{ $selectedGradeId === $grade->id ? 'bg-brand-50 text-brand-800' : 'hover:bg-gray-50' }}"
                         >
                             {{ $grade->name }}
                         </button>
@@ -67,7 +67,7 @@
                         <button
                             type="button"
                             wire:click="selectSubject({{ $subject->id }})"
-                            class="w-full text-start px-3 py-2 rounded-md text-sm {{ $selectedSubjectId === $subject->id ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-gray-50' }}"
+                            class="w-full text-start px-3 py-2 rounded-md text-sm {{ $selectedSubjectId === $subject->id ? 'bg-brand-50 text-brand-800' : 'hover:bg-gray-50' }}"
                         >
                             {{ $subject->name }}
                         </button>

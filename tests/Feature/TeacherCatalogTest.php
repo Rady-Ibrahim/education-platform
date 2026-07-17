@@ -127,4 +127,54 @@ class TeacherCatalogTest extends TestCase
             'subject_id' => null,
         ]);
     }
+
+    public function test_catalog_can_filter_teachers_by_grade(): void
+    {
+        $stage = Stage::query()->create(['name' => 'ثانوي', 'code' => 'SECX', 'ordering' => 1, 'is_active' => true]);
+        $gradeA = Grade::query()->create(['stage_id' => $stage->id, 'name' => 'أولى', 'code' => 'GA', 'ordering' => 1, 'is_active' => true]);
+        $gradeB = Grade::query()->create(['stage_id' => $stage->id, 'name' => 'تانية', 'code' => 'GB', 'ordering' => 2, 'is_active' => true]);
+
+        $subjectA = Subject::query()->create([
+            'grade_id' => $gradeA->id,
+            'name' => 'عربي أولى',
+            'code' => 'ARA',
+            'ordering' => 1,
+            'is_active' => true,
+        ]);
+        $subjectB = Subject::query()->create([
+            'grade_id' => $gradeB->id,
+            'name' => 'عربي تانية',
+            'code' => 'ARB',
+            'ordering' => 1,
+            'is_active' => true,
+        ]);
+
+        $teacherA = User::factory()->create([
+            'name' => 'مدرس أولى',
+            'status' => UserStatus::Active,
+            'slug' => 'teacher-grade-a',
+            'is_publicly_visible' => true,
+            'vodafone_cash_number' => '01055555551',
+        ]);
+        $teacherA->assignRole(UserRole::Teacher);
+        $teacherA->teachingSubjects()->sync([$subjectA->id]);
+
+        $teacherB = User::factory()->create([
+            'name' => 'مدرس تانية',
+            'status' => UserStatus::Active,
+            'slug' => 'teacher-grade-b',
+            'is_publicly_visible' => true,
+            'vodafone_cash_number' => '01055555552',
+        ]);
+        $teacherB->assignRole(UserRole::Teacher);
+        $teacherB->teachingSubjects()->sync([$subjectB->id]);
+
+        $catalog = app(\App\Modules\Identity\Services\TeacherCatalogService::class);
+
+        $filtered = $catalog->paginate(null, null, $gradeA->id);
+        $names = $filtered->pluck('name')->all();
+
+        $this->assertContains('مدرس أولى', $names);
+        $this->assertNotContains('مدرس تانية', $names);
+    }
 }

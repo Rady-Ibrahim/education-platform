@@ -7,10 +7,12 @@ use App\Enums\ParentRelationship;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use App\Models\User;
+use App\Modules\Academic\Models\Grade;
 use App\Modules\Identity\Services\ParentLinkService;
 use App\Modules\Identity\Services\RegistrationService;
 use App\Modules\Identity\Services\StudentCodeService;
 use App\Modules\Reports\Services\DashboardReportService;
+use Database\Seeders\AcademicStructureSeeder;
 use Database\Seeders\BranchSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -34,6 +36,7 @@ class ParentLinkTest extends TestCase
         $this->seed([
             BranchSeeder::class,
             RolePermissionSeeder::class,
+            AcademicStructureSeeder::class,
         ]);
 
         $this->parent = User::factory()->create(['status' => UserStatus::Active]);
@@ -65,15 +68,19 @@ class ParentLinkTest extends TestCase
 
     public function test_student_self_registration_gets_student_code(): void
     {
+        $grade = Grade::query()->where('code', 'S1')->firstOrFail();
+
         $user = app(RegistrationService::class)->register([
             'name' => 'طالب',
             'email' => 'stu@test.com',
             'password' => 'password',
             'role' => 'student',
+            'grade_id' => $grade->id,
         ]);
 
         $this->assertNotEmpty($user->student_code);
         $this->assertStringStartsWith('STU-', $user->student_code);
+        $this->assertTrue($user->grades()->where('grades.id', $grade->id)->exists());
     }
 
     public function test_parent_link_by_code_is_active_immediately(): void

@@ -8,7 +8,7 @@
     @if ($subjects->isEmpty())
         <p class="text-sm text-gray-500">
             حدّد مادتك أولًا من
-            <a href="{{ route('profile') }}" class="text-teal-700 hover:underline" wire:navigate>البروفايل</a>
+            <a href="{{ route('profile') }}" class="text-brand-700 hover:underline" wire:navigate>البروفايل</a>
             (اختيار من الكتالوج أو كتابة اسم المادة)، بعدين ارجع هنا لإضافة الدروس.
         </p>
     @else
@@ -19,7 +19,7 @@
                     {{ $subjects->first()->grade?->stage?->name }} / {{ $subjects->first()->grade?->name }} / {{ $subjects->first()->name }}
                 </span>
                 —
-                <a href="{{ route('profile') }}" class="text-teal-700 hover:underline" wire:navigate>تعديل من البروفايل</a>
+                <a href="{{ route('profile') }}" class="text-brand-700 hover:underline" wire:navigate>تعديل من البروفايل</a>
             </p>
         @endif
         <form wire:submit="save" class="space-y-4 border rounded-lg p-4">
@@ -62,19 +62,36 @@
                 </div>
             </div>
 
+            @if ($type === 'live')
+                <div class="space-y-3 rounded-2xl border border-brand-200 bg-brand-50/40 p-4">
+                    <p class="text-sm text-brand-900">سجّل حصة لايف برابط زوم أو جوجل ميت أو أي رابط اجتماع.</p>
+                    <div>
+                        <x-input-label value="رابط الحصة" />
+                        <x-text-input wire:model="meetingUrl" class="mt-1 block w-full" placeholder="https://zoom.us/j/..." />
+                        <x-input-error :messages="$errors->get('meetingUrl')" class="mt-1" />
+                        <x-input-error :messages="$errors->get('meeting_url')" class="mt-1" />
+                    </div>
+                    <div>
+                        <x-input-label value="موعد الحصة (اختياري)" />
+                        <x-text-input wire:model="scheduledAt" type="datetime-local" class="mt-1 block w-full" />
+                        <x-input-error :messages="$errors->get('scheduledAt')" class="mt-1" />
+                    </div>
+                </div>
+            @endif
+
             @if (in_array($type, ['video', 'mixed'], true))
-                <div class="space-y-4 rounded-lg border border-teal-200 bg-teal-50/40 p-4">
+                <div class="space-y-4 rounded-lg border border-brand-200 bg-brand-50/40 p-4">
                     <div class="flex flex-wrap gap-3 text-sm">
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" wire:model.live="videoSource" value="upload" class="text-teal-700">
+                            <input type="radio" wire:model.live="videoSource" value="upload" class="text-brand-700">
                             رفع فيديو
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" wire:model.live="videoSource" value="record" class="text-teal-700">
+                            <input type="radio" wire:model.live="videoSource" value="record" class="text-brand-700">
                             تسجيل الحصة من المنصة
                         </label>
                         <label class="inline-flex items-center gap-2">
-                            <input type="radio" wire:model.live="videoSource" value="manual" class="text-teal-700">
+                            <input type="radio" wire:model.live="videoSource" value="manual" class="text-brand-700">
                             لصق Bunny ID
                         </label>
                     </div>
@@ -90,7 +107,7 @@
                             <x-input-label value="ملف الفيديو" />
                             <input type="file" wire:model="videoUpload" accept="video/*" class="mt-1 block w-full text-sm">
                             <p class="mt-1 text-xs text-gray-500">الحد الأقصى {{ $maxUploadMb }} ميجابايت — يُرفع مباشرة إلى Bunny Stream.</p>
-                            <div wire:loading wire:target="videoUpload" class="mt-1 text-sm text-teal-700">جاري تجهيز الملف…</div>
+                            <div wire:loading wire:target="videoUpload" class="mt-1 text-sm text-brand-700">جاري تجهيز الملف…</div>
                             <x-input-error :messages="$errors->get('videoUpload')" class="mt-1" />
                         </div>
                     @elseif ($videoSource === 'record')
@@ -98,8 +115,8 @@
                             <p class="text-sm text-gray-700">سجّل الشاشة أو الكاميرا من المتصفح، ثم ارفع التسجيل لـ Bunny.</p>
                             <video x-ref="preview" class="w-full max-w-lg rounded-md bg-black aspect-video" muted playsinline></video>
                             <div class="flex flex-wrap gap-2">
-                                <button type="button" @click="startCamera()" class="rounded-md bg-teal-700 px-3 py-1.5 text-sm text-white" :disabled="recording">كاميرا</button>
-                                <button type="button" @click="startScreen()" class="rounded-md bg-teal-700 px-3 py-1.5 text-sm text-white" :disabled="recording">شاشة + صوت</button>
+                                <button type="button" @click="startCamera()" class="rounded-md bg-brand-700 px-3 py-1.5 text-sm text-white" :disabled="recording">كاميرا</button>
+                                <button type="button" @click="startScreen()" class="rounded-md bg-brand-700 px-3 py-1.5 text-sm text-white" :disabled="recording">شاشة + صوت</button>
                                 <button type="button" @click="stop()" class="rounded-md bg-red-600 px-3 py-1.5 text-sm text-white" x-show="recording" x-cloak>إيقاف ورفع</button>
                             </div>
                             <p class="text-xs text-gray-500" x-text="status"></p>
@@ -121,7 +138,7 @@
                         </p>
                     @endif
                     @if ($uploadStatus !== '')
-                        <p class="text-sm text-teal-800">{{ $uploadStatus }}</p>
+                        <p class="text-sm text-brand-800">{{ $uploadStatus }}</p>
                     @endif
                 </div>
             @endif
@@ -132,7 +149,7 @@
             </div>
 
             <label class="inline-flex items-center gap-2 text-sm">
-                <input type="checkbox" wire:model="isPublished" class="rounded border-gray-300 text-indigo-600 shadow-sm">
+                <input type="checkbox" wire:model="isPublished" class="rounded border-gray-300 text-brand-700 shadow-sm">
                 نشر مباشرة
             </label>
 
@@ -144,7 +161,8 @@
         <div class="space-y-2">
             <h4 class="font-medium">دروس الوحدة المختارة</h4>
             @forelse ($lessons as $lesson)
-                <div class="border rounded-md px-3 py-2 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                <div class="space-y-3 rounded-xl border border-slate-200 px-3 py-3">
+                    <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                     <div class="text-sm">
                         <span class="font-medium">{{ $lesson->title }}</span>
                         <span class="text-gray-500">— {{ $lesson->type->label() }}</span>
@@ -153,12 +171,45 @@
                         @else
                             <span class="text-amber-600">مسودة</span>
                         @endif
+                        @if ($lesson->attachments->isNotEmpty())
+                            <span class="text-xs text-ink-muted">({{ $lesson->attachments->count() }} مرفق)</span>
+                        @endif
                     </div>
                     <div class="flex gap-2">
                         <x-secondary-button wire:click="togglePublish({{ $lesson->id }})">
                             {{ $lesson->is_published ? 'إلغاء النشر' : 'نشر' }}
                         </x-secondary-button>
                         <x-danger-button wire:click="deleteLesson({{ $lesson->id }})">حذف</x-danger-button>
+                    </div>
+                    </div>
+
+                    @if ($lesson->attachments->isNotEmpty())
+                        <ul class="space-y-1 text-xs text-ink-muted">
+                            @foreach ($lesson->attachments as $attachment)
+                                <li>{{ $attachment->name }}@if($attachment->is_downloadable) — قابل للتحميل @endif</li>
+                            @endforeach
+                        </ul>
+                    @endif
+
+                    <div class="rounded-xl bg-slate-50 p-3">
+                        <div class="mb-2 text-xs font-semibold text-ink-muted">رفع مرفق (PDF / ملف)</div>
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
+                            <div class="flex-1">
+                                <input
+                                    type="file"
+                                    wire:model="attachmentUpload"
+                                    accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg"
+                                    class="block w-full text-sm"
+                                >
+                                <x-input-error :messages="$errors->get('attachmentUpload')" class="mt-1" />
+                            </div>
+                            <label class="inline-flex items-center gap-2 text-xs text-ink-muted">
+                                <input type="checkbox" wire:model="attachmentDownloadable" class="rounded border-slate-300 text-brand-700">
+                                قابل للتحميل
+                            </label>
+                            <x-secondary-button type="button" wire:click="uploadAttachmentFor({{ $lesson->id }})">رفع</x-secondary-button>
+                        </div>
+                        <div wire:loading wire:target="attachmentUpload" class="mt-1 text-xs text-brand-700">جاري تجهيز الملف…</div>
                     </div>
                 </div>
             @empty

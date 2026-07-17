@@ -16,10 +16,10 @@
                     </div>
                 </div>
                 <div class="flex gap-2">
-                    <a href="{{ route('student.certificates.show', $certificate) }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
+                    <a href="{{ route('student.certificates.show', $certificate) }}" class="inline-flex items-center rounded-xl bg-brand-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-800">
                         عرض / طباعة
                     </a>
-                    <a href="{{ $certificate->verifyUrl() }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50">
+                    <a href="{{ $certificate->verifyUrl() }}" target="_blank" class="inline-flex items-center rounded-xl border border-brand-200 bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-brand-50">
                         صفحة التحقق
                     </a>
                 </div>

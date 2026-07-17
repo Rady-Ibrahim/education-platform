@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             AdminUserSeeder::class,
             AcademicStructureSeeder::class,
+            TeacherCatalogSeeder::class,
         ]);
     }
 }

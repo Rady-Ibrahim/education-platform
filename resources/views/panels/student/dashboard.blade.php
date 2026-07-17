@@ -1,100 +1,108 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">لوحة الطالب</h2>
-            <div class="flex gap-4 text-sm">
-                <a href="{{ route('student.lessons') }}" class="text-indigo-600 hover:text-indigo-800" wire:navigate>الدروس</a>
-                <a href="{{ route('student.exams') }}" class="text-indigo-600 hover:text-indigo-800" wire:navigate>الامتحانات</a>
-                <a href="{{ route('student.subscriptions') }}" class="text-indigo-600 hover:text-indigo-800" wire:navigate>الاشتراكات</a>
-                <a href="{{ route('student.certificates') }}" class="text-indigo-600 hover:text-indigo-800" wire:navigate>الشهادات</a>
-            </div>
-        </div>
-    </x-slot>
+    <x-panel-page title="لوحتي" subtitle="مرحبًا {{ auth()->user()->name }} — تابع دروسك واشتراكاتك من هنا.">
+        <x-slot:actions>
+            <a href="{{ route('student.lessons') }}" class="btn-brand" wire:navigate>ابدأ التعلم</a>
+            <a href="{{ route('teachers.index') }}" class="btn-accent" wire:navigate>تصفّح المدرسين</a>
+        </x-slot:actions>
 
-    @php
-        $stats = app(\App\Modules\Reports\Services\DashboardReportService::class)->forStudent(auth()->user());
-    @endphp
+        @php
+            $stats = app(\App\Modules\Reports\Services\DashboardReportService::class)->forStudent(auth()->user());
+        @endphp
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div class="bg-white shadow-sm sm:rounded-lg p-5">
-                    <div class="text-sm text-gray-500">اشتراكات نشطة</div>
-                    <div class="text-2xl font-semibold mt-1">{{ $stats['active_subscriptions'] }}</div>
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="surface-stat">
+                <div class="ps-3">
+                    <div class="text-sm text-ink-muted">اشتراكات نشطة</div>
+                    <div class="mt-2 text-3xl font-bold text-ink">{{ $stats['active_subscriptions'] }}</div>
                 </div>
-                <div class="bg-white shadow-sm sm:rounded-lg p-5">
-                    <div class="text-sm text-gray-500">بانتظار الدفع</div>
-                    <div class="text-2xl font-semibold mt-1">{{ $stats['pending_subscriptions'] }}</div>
+            </div>
+            <div class="surface-stat">
+                <div class="ps-3">
+                    <div class="text-sm text-ink-muted">بانتظار الدفع</div>
+                    <div class="mt-2 text-3xl font-bold text-ink">{{ $stats['pending_subscriptions'] }}</div>
                     @if ($stats['pending_subscriptions'] > 0)
-                        <a href="{{ route('student.subscriptions') }}" class="text-xs text-indigo-600 hover:underline" wire:navigate>إكمال الدفع</a>
+                        <a href="{{ route('student.subscriptions') }}" class="mt-1 inline-flex text-xs link-brand" wire:navigate>إكمال الدفع</a>
                     @endif
                 </div>
-                <div class="bg-white shadow-sm sm:rounded-lg p-5">
-                    <div class="text-sm text-gray-500">دروس مكتملة</div>
-                    <div class="text-2xl font-semibold mt-1">{{ $stats['completed_lessons'] }}</div>
-                </div>
-                <div class="bg-white shadow-sm sm:rounded-lg p-5">
-                    <div class="text-sm text-gray-500">إشعارات غير مقروءة</div>
-                    <div class="text-2xl font-semibold mt-1">{{ $stats['unread_notifications'] }}</div>
+            </div>
+            <div class="surface-stat">
+                <div class="ps-3">
+                    <div class="text-sm text-ink-muted">دروس مكتملة</div>
+                    <div class="mt-2 text-3xl font-bold text-ink">{{ $stats['completed_lessons'] }}</div>
                 </div>
             </div>
-
-            @if (auth()->user()->student_code)
-                <div class="bg-indigo-50 border border-indigo-100 shadow-sm sm:rounded-lg p-5">
-                    <div class="text-sm text-indigo-700">كود الطالب لولي الأمر</div>
-                    <div class="text-2xl font-mono font-semibold mt-1 text-indigo-900">{{ auth()->user()->student_code }}</div>
-                    <p class="text-xs text-indigo-600 mt-1">شارك هذا الكود مع ولي أمرك ليربط حسابه بحسابك.</p>
-                </div>
-            @endif
-
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <h3 class="font-medium mb-3">صفك الدراسي</h3>
-                    <ul class="space-y-2">
-                        @forelse (auth()->user()->grades as $grade)
-                            <li class="text-sm text-gray-700">{{ $grade->stage?->name }} / {{ $grade->name }}</li>
-                        @empty
-                            <li class="text-sm text-gray-500">لسه متعيّنش على صف. الإدارة هتسجّلك قريب.</li>
-                        @endforelse
-                    </ul>
-                </div>
-            </div>
-
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 border-b">
-                    <h3 class="font-medium">طلب الانضمام لمدرس</h3>
-                    <p class="text-sm text-gray-500 mt-1">اختَر مدرسًا من الكتالوج أو ابعت طلب انضمام وانتظر موافقة المدرس. أو خلّي المدرس يضيفك من مكتبه في السنتر.</p>
-                    <div class="mt-3">
-                        <a href="{{ route('teachers.index') }}" class="text-sm text-indigo-600 hover:underline" wire:navigate>تصفّح المدرسين</a>
-                    </div>
-                </div>
-                <div class="p-6">
-                    <livewire:student.request-teacher-join />
-                </div>
-            </div>
-
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 border-b">
-                    <h3 class="font-medium">أولياء الأمور</h3>
-                    <p class="text-sm text-gray-500 mt-1">وافق على طلبات الربط أو ألغِ الربط الحالي.</p>
-                </div>
-                <div class="p-6">
-                    <livewire:student.parent-link-requests />
-                </div>
-            </div>
-
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <h3 class="font-medium mb-3">مدرسوك</h3>
-                    <ul class="space-y-2">
-                        @forelse (auth()->user()->teachers as $teacher)
-                            <li class="text-sm text-gray-700">{{ $teacher->name }} — {{ $teacher->email }}</li>
-                        @empty
-                            <li class="text-sm text-gray-500">لسه منضمّتش لأي مدرس.</li>
-                        @endforelse
-                    </ul>
+            <div class="surface-stat">
+                <div class="ps-3">
+                    <div class="text-sm text-ink-muted">إشعارات</div>
+                    <div class="mt-2 text-3xl font-bold text-ink">{{ $stats['unread_notifications'] }}</div>
                 </div>
             </div>
         </div>
-    </div>
+
+        @if (auth()->user()->student_code)
+            <div class="rounded-2xl border border-brand-200 bg-brand-50 px-5 py-4">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <div class="text-sm font-semibold text-brand-800">كود الطالب لولي الأمر</div>
+                        <p class="mt-1 text-xs text-brand-700">شارك الكود مع ولي أمرك للربط والدفع بفودافون كاش.</p>
+                    </div>
+                    <div class="font-mono text-2xl font-bold tracking-wide text-brand-950">{{ auth()->user()->student_code }}</div>
+                </div>
+            </div>
+        @endif
+
+        <div class="grid gap-6 lg:grid-cols-2">
+            <x-panel-card title="اختصارات سريعة">
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <a href="{{ route('student.lessons') }}" class="rounded-2xl border border-slate-200 p-4 transition hover:border-brand-300 hover:bg-brand-50/50" wire:navigate>
+                        <div class="font-bold text-ink">الدروس</div>
+                        <div class="mt-1 text-sm text-ink-muted">شاهد وتابع تقدّمك</div>
+                    </a>
+                    <a href="{{ route('student.exams') }}" class="rounded-2xl border border-slate-200 p-4 transition hover:border-brand-300 hover:bg-brand-50/50" wire:navigate>
+                        <div class="font-bold text-ink">الامتحانات</div>
+                        <div class="mt-1 text-sm text-ink-muted">ادخل الاختبارات المتاحة</div>
+                    </a>
+                    <a href="{{ route('student.subscriptions') }}" class="rounded-2xl border border-slate-200 p-4 transition hover:border-brand-300 hover:bg-brand-50/50" wire:navigate>
+                        <div class="font-bold text-ink">الاشتراكات</div>
+                        <div class="mt-1 text-sm text-ink-muted">الخطط وإثبات الدفع</div>
+                    </a>
+                    <a href="{{ route('student.certificates') }}" class="rounded-2xl border border-slate-200 p-4 transition hover:border-brand-300 hover:bg-brand-50/50" wire:navigate>
+                        <div class="font-bold text-ink">الشهادات</div>
+                        <div class="mt-1 text-sm text-ink-muted">شهادات الاجتياز</div>
+                    </a>
+                </div>
+            </x-panel-card>
+
+            <x-panel-card title="مدرسوك">
+                <ul class="space-y-2">
+                    @forelse (auth()->user()->teachers as $teacher)
+                        <li class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2.5">
+                            <div>
+                                <div class="font-semibold text-ink">{{ $teacher->name }}</div>
+                                <div class="text-xs text-ink-muted">{{ $teacher->headline ?: $teacher->email }}</div>
+                            </div>
+                            @if ($teacher->slug)
+                                <a href="{{ route('teachers.show', $teacher->slug) }}" class="text-sm font-semibold text-brand-700" wire:navigate>عرض</a>
+                            @endif
+                        </li>
+                    @empty
+                        <li class="rounded-xl border border-dashed border-slate-200 px-4 py-6 text-center text-sm text-ink-muted">
+                            لسه منضمّتش لأي مدرس.
+                            <a href="{{ route('teachers.index') }}" class="mt-2 block link-brand" wire:navigate>تصفّح المدرسين</a>
+                        </li>
+                    @endforelse
+                </ul>
+            </x-panel-card>
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-2">
+            <x-panel-card title="طلب الانضمام لمدرس" subtitle="ابعت طلب وانتظر موافقة المدرس، أو خلّيه يضيفك من مكتبه.">
+                <livewire:student.request-teacher-join />
+            </x-panel-card>
+
+            <x-panel-card title="أولياء الأمور" subtitle="وافق على طلبات الربط أو ألغِ الربط الحالي.">
+                <livewire:student.parent-link-requests />
+            </x-panel-card>
+        </div>
+    </x-panel-page>
 </x-app-layout>

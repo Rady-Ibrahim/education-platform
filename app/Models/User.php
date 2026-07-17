@@ -10,6 +10,7 @@ use App\Modules\Academic\Models\Subject;
 use App\Modules\Identity\Models\ParentStudentLink;
 use App\Modules\Identity\Models\TeacherJoinRequest;
 use App\Modules\Payments\Models\Subscription;
+use App\Modules\Payments\Models\SubscriptionPlan;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -33,6 +34,8 @@ class User extends Authenticatable
         'slug',
         'headline',
         'bio',
+        'avatar_path',
+        'cover_path',
         'is_publicly_visible',
         'email',
         'phone',
@@ -148,6 +151,34 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Subject::class, 'teacher_subject', 'teacher_id', 'subject_id')
             ->withTimestamps();
+    }
+
+    public function subscriptionPlans(): HasMany
+    {
+        return $this->hasMany(SubscriptionPlan::class, 'teacher_id');
+    }
+
+    public function coverUrl(): ?string
+    {
+        return $this->publicAssetUrl($this->cover_path ?: $this->avatar_path);
+    }
+
+    public function avatarUrl(): ?string
+    {
+        return $this->publicAssetUrl($this->avatar_path ?: $this->cover_path);
+    }
+
+    private function publicAssetUrl(?string $path): ?string
+    {
+        if (! filled($path)) {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        return asset(ltrim($path, '/'));
     }
 
     public function grades(): BelongsToMany

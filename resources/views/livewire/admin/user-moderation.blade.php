@@ -41,7 +41,7 @@
                         </td>
                         <td class="py-3 space-x-2 space-x-reverse">
                             @if ($user->status === \App\Enums\UserStatus::Suspended)
-                                <button type="button" wire:click="unsuspend({{ $user->id }})" class="text-teal-700 hover:underline">إعادة تفعيل</button>
+                                <button type="button" wire:click="unsuspend({{ $user->id }})" class="text-brand-700 hover:underline">إعادة تفعيل</button>
                             @elseif ($user->id !== auth()->id())
                                 <button type="button" wire:click="suspend({{ $user->id }})" class="text-red-600 hover:underline" wire:confirm="إيقاف هذا الحساب؟">إيقاف</button>
                             @endif

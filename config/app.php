@@ -13,7 +13,11 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'سنتر'),
+    'name' => (static function (): string {
+        $name = (string) env('APP_NAME', 'سنتر');
+
+        return preg_match('/^\?+$/u', $name) || $name === '' ? 'سنتر' : $name;
+    })(),
 
     /*
     |--------------------------------------------------------------------------

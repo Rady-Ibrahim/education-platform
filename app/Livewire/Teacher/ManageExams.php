@@ -36,6 +36,12 @@ class ManageExams extends Component
 
     public int $maxAttempts = 1;
 
+    public string $startsAt = '';
+
+    public string $endsAt = '';
+
+    public string $passScore = '';
+
     /** @var list<int> */
     public array $selectedQuestionIds = [];
 
@@ -110,6 +116,9 @@ class ManageExams extends Component
             'examTitle' => ['required', 'string', 'max:255'],
             'durationMinutes' => ['required', 'integer', 'min:1'],
             'maxAttempts' => ['required', 'integer', 'min:1'],
+            'startsAt' => ['nullable', 'date'],
+            'endsAt' => ['nullable', 'date', 'after_or_equal:startsAt'],
+            'passScore' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'selectedQuestionIds' => ['required', 'array', 'min:1'],
         ]);
 
@@ -117,11 +126,14 @@ class ManageExams extends Component
             'title' => $validated['examTitle'],
             'duration_minutes' => $validated['durationMinutes'],
             'max_attempts' => $validated['maxAttempts'],
+            'starts_at' => $validated['startsAt'] ?: null,
+            'ends_at' => $validated['endsAt'] ?: null,
+            'pass_score' => $validated['passScore'] !== '' ? (float) $validated['passScore'] : null,
             'question_ids' => $validated['selectedQuestionIds'],
             'is_published' => true,
         ]);
 
-        $this->reset(['examTitle', 'selectedQuestionIds']);
+        $this->reset(['examTitle', 'selectedQuestionIds', 'startsAt', 'endsAt', 'passScore']);
         $this->durationMinutes = 30;
         $this->maxAttempts = 1;
         session()->flash('exam_status', 'تم إنشاء ونشر الامتحان: '.$exam->title);

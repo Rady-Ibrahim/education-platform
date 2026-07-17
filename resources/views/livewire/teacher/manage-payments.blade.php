@@ -1,74 +1,96 @@
 <div>
     @if (session('status'))
-        <div class="mb-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md p-3">
+        <div class="mb-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
             {{ session('status') }}
         </div>
     @endif
 
-    <div class="grid gap-6">
-        <div class="border rounded-lg p-4 bg-gray-50">
-            <div class="text-sm text-gray-600">إجمالي المحصّل المؤكد</div>
-            <div class="text-2xl font-semibold">{{ number_format($confirmedTotal, 2) }} ج.م</div>
-        </div>
-
-        <div class="border rounded-lg p-4 space-y-3">
-            <h4 class="font-medium">بيانات فودافون كاش للطلاب وأولياء الأمور</h4>
-            <livewire:teacher.payment-settings-form />
-        </div>
-
-        <div class="border rounded-lg p-4 space-y-3">
-            <h4 class="font-medium">إنشاء خطة اشتراك</h4>
-            <div class="grid gap-3 md:grid-cols-3">
-                <div>
-                    <x-input-label value="اسم الخطة" />
-                    <x-text-input wire:model="newPlanName" class="block mt-1 w-full" />
+    <div class="space-y-6">
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="surface-stat">
+                <div class="ps-3">
+                    <div class="text-sm text-ink-muted">إجمالي المحصّل المؤكد</div>
+                    <div class="mt-2 text-3xl font-bold text-ink">{{ number_format($confirmedTotal, 0) }} <span class="text-base text-ink-muted">ج.م</span></div>
                 </div>
-                <div>
-                    <x-input-label value="المادة" />
-                    <select wire:model="newPlanSubjectId" class="block mt-1 w-full border-gray-300 rounded-md">
-                        <option value="">اختر المادة</option>
-                        @foreach ($subjects as $subject)
-                            <option value="{{ $subject->id }}">{{ $subject->name }}</option>
+            </div>
+            <div class="surface-stat">
+                <div class="ps-3">
+                    <div class="text-sm text-ink-muted">مدفوعات بانتظار المراجعة</div>
+                    <div class="mt-2 text-3xl font-bold text-ink">{{ $pendingPayments->total() }}</div>
+                </div>
+            </div>
+            <div class="surface-stat">
+                <div class="ps-3">
+                    <div class="text-sm text-ink-muted">اشتراكات بانتظار الدفع</div>
+                    <div class="mt-2 text-3xl font-bold text-ink">{{ $pendingSubscriptions->count() }}</div>
+                </div>
+            </div>
+        </div>
+
+        <section class="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
+            <h3 class="text-base font-bold text-ink">بيانات فودافون كاش</h3>
+            <p class="mt-1 text-sm text-ink-muted">تظهر لأولياء الأمور عند الدفع.</p>
+            <div class="mt-4">
+                <livewire:teacher.payment-settings-form />
+            </div>
+        </section>
+
+        <div class="grid gap-6 xl:grid-cols-2">
+            <section class="rounded-2xl border border-slate-200 p-5">
+                <h3 class="text-base font-bold text-ink">إنشاء خطة اشتراك</h3>
+                <div class="mt-4 grid gap-3">
+                    <div>
+                        <x-input-label value="اسم الخطة" />
+                        <x-text-input wire:model="newPlanName" class="mt-1 block w-full" placeholder="اشتراك شهري" />
+                    </div>
+                    <div>
+                        <x-input-label value="المادة" />
+                        <select wire:model="newPlanSubjectId" class="mt-1 block w-full">
+                            <option value="">اختر المادة</option>
+                            @foreach ($subjects as $subject)
+                                <option value="{{ $subject->id }}">{{ $subject->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <x-input-label value="السعر (ج.م)" />
+                        <x-text-input wire:model="newPlanPrice" type="number" step="0.01" class="mt-1 block w-full" />
+                    </div>
+                    <x-primary-button type="button" wire:click="createPlan">حفظ الخطة</x-primary-button>
+                </div>
+            </section>
+
+            <section class="rounded-2xl border border-slate-200 p-5">
+                <h3 class="text-base font-bold text-ink">تسجيل طالب على خطة</h3>
+                <div class="mt-4 grid gap-3">
+                    <select wire:model="enrollStudentId" class="block w-full">
+                        <option value="">اختر الطالب</option>
+                        @foreach ($students as $student)
+                            <option value="{{ $student->id }}">{{ $student->name }}</option>
                         @endforeach
                     </select>
+                    <select wire:model="enrollPlanId" class="block w-full">
+                        <option value="">اختر الخطة</option>
+                        @foreach ($plans as $plan)
+                            <option value="{{ $plan->id }}">{{ $plan->name }} — {{ $plan->subject->name }}</option>
+                        @endforeach
+                    </select>
+                    <x-primary-button type="button" wire:click="enrollStudent">تسجيل على الخطة</x-primary-button>
                 </div>
-                <div>
-                    <x-input-label value="السعر (ج.م)" />
-                    <x-text-input wire:model="newPlanPrice" type="number" step="0.01" class="block mt-1 w-full" />
-                </div>
-            </div>
-            <x-primary-button wire:click="createPlan">حفظ الخطة</x-primary-button>
+            </section>
         </div>
 
-        <div class="border rounded-lg p-4 space-y-3">
-            <h4 class="font-medium">تسجيل طالب على خطة</h4>
-            <div class="grid gap-3 md:grid-cols-2">
-                <select wire:model="enrollStudentId" class="border-gray-300 rounded-md">
+        <section class="rounded-2xl border border-slate-200 p-5">
+            <h3 class="text-base font-bold text-ink">تسجيل دفعة كاش</h3>
+            <p class="mt-1 text-sm text-ink-muted">يسجّل الدفع ويفعّل الاشتراك مباشرة.</p>
+            <div class="mt-4 grid gap-3 md:grid-cols-2">
+                <select wire:model.live="cashStudentId" class="block w-full">
                     <option value="">اختر الطالب</option>
                     @foreach ($students as $student)
                         <option value="{{ $student->id }}">{{ $student->name }}</option>
                     @endforeach
                 </select>
-                <select wire:model="enrollPlanId" class="border-gray-300 rounded-md">
-                    <option value="">اختر الخطة</option>
-                    @foreach ($plans as $plan)
-                        <option value="{{ $plan->id }}">{{ $plan->name }} — {{ $plan->subject->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <x-primary-button wire:click="enrollStudent">تسجيل</x-primary-button>
-        </div>
-
-        <div class="border rounded-lg p-4 space-y-3">
-            <h4 class="font-medium">تسجيل دفعة كاش</h4>
-            <div class="grid gap-3 md:grid-cols-2">
-                <select wire:model.live="cashStudentId" class="border-gray-300 rounded-md">
-                    <option value="">اختر الطالب</option>
-                    @foreach ($students as $student)
-                        <option value="{{ $student->id }}">{{ $student->name }}</option>
-                    @endforeach
-                </select>
-                <select wire:model="cashSubscriptionId" class="border-gray-300 rounded-md">
+                <select wire:model="cashSubscriptionId" class="block w-full">
                     <option value="">اشتراك بانتظار الدفع</option>
                     @foreach ($pendingSubscriptions as $subscription)
                         <option value="{{ $subscription->id }}">
@@ -77,44 +99,55 @@
                     @endforeach
                 </select>
             </div>
-            <x-text-input wire:model="cashNotes" placeholder="ملاحظات (اختياري)" class="block w-full" />
-            <x-primary-button wire:click="recordCash">تسجيل وتفعيل</x-primary-button>
-        </div>
+            <div class="mt-3">
+                <x-text-input wire:model="cashNotes" placeholder="ملاحظات (اختياري)" class="block w-full" />
+            </div>
+            <div class="mt-3">
+                <x-primary-button type="button" wire:click="recordCash">تسجيل وتفعيل</x-primary-button>
+            </div>
+        </section>
 
-        <div>
-            <h4 class="font-medium mb-3">مدفوعات بانتظار المراجعة</h4>
-            <div class="space-y-4">
+        <section class="rounded-2xl border border-slate-200 p-5">
+            <div class="mb-4 flex items-center justify-between gap-3">
+                <h3 class="text-base font-bold text-ink">مدفوعات بانتظار المراجعة</h3>
+                <x-status-badge tone="warning">{{ $pendingPayments->total() }} معلّق</x-status-badge>
+            </div>
+
+            <div class="space-y-3">
                 @forelse ($pendingPayments as $payment)
-                    <div class="border rounded-lg p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                        <div>
-                            <div class="font-medium">{{ $payment->student->name }}</div>
-                            <div class="text-sm text-gray-600">
-                                {{ $payment->channel->label() }} — {{ number_format($payment->amount, 2) }} ج.م
+                    <div class="rounded-2xl border border-slate-200 p-4">
+                        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <div class="font-semibold text-ink">{{ $payment->student->name }}</div>
+                                <div class="mt-1 text-sm text-ink-muted">
+                                    {{ $payment->channel->label() }} — {{ number_format($payment->amount, 2) }} ج.م
+                                </div>
+                                @if ($payment->external_reference)
+                                    <div class="mt-1 text-sm text-ink-muted">رقم العملية: {{ $payment->external_reference }}</div>
+                                @endif
+                                @if ($payment->proof_path)
+                                    <a href="{{ asset('storage/'.$payment->proof_path) }}" target="_blank" class="mt-1 inline-flex text-sm font-semibold text-brand-700">عرض الإثبات</a>
+                                @endif
                             </div>
-                            @if ($payment->external_reference)
-                                <div class="text-sm text-gray-500">رقم العملية: {{ $payment->external_reference }}</div>
-                            @endif
-                            @if ($payment->proof_path)
-                                <a href="{{ asset('storage/'.$payment->proof_path) }}" target="_blank" class="text-sm text-indigo-600">عرض الإثبات</a>
-                            @endif
+                            <div class="flex flex-wrap gap-2">
+                                <x-primary-button type="button" wire:click="confirm({{ $payment->id }})">تأكيد</x-primary-button>
+                                <x-danger-button type="button" wire:click="startReject({{ $payment->id }})">رفض</x-danger-button>
+                            </div>
                         </div>
-                        <div class="flex gap-2">
-                            <x-primary-button wire:click="confirm({{ $payment->id }})">تأكيد</x-primary-button>
-                            <x-danger-button wire:click="startReject({{ $payment->id }})">رفض</x-danger-button>
-                        </div>
-                    </div>
 
-                    @if ($rejectingPaymentId === $payment->id)
-                        <div class="border rounded-lg p-4 bg-red-50 space-y-2">
-                            <x-text-input wire:model="rejectionReason" placeholder="سبب الرفض" class="block w-full" />
-                            <x-danger-button wire:click="confirmReject">تأكيد الرفض</x-danger-button>
-                        </div>
-                    @endif
+                        @if ($rejectingPaymentId === $payment->id)
+                            <div class="mt-3 space-y-2 rounded-xl border border-rose-200 bg-rose-50 p-3">
+                                <x-text-input wire:model="rejectionReason" placeholder="سبب الرفض" class="block w-full" />
+                                <x-danger-button type="button" wire:click="confirmReject">تأكيد الرفض</x-danger-button>
+                            </div>
+                        @endif
+                    </div>
                 @empty
-                    <p class="text-gray-600">لا توجد مدفوعات معلّقة.</p>
+                    <p class="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-ink-muted">لا توجد مدفوعات معلّقة.</p>
                 @endforelse
             </div>
+
             <div class="mt-4">{{ $pendingPayments->links() }}</div>
-        </div>
+        </section>
     </div>
 </div>

@@ -58,20 +58,28 @@ class StudentDesk extends Component
                 ->where(fn ($qq) => $qq->whereNull('ends_at')->orWhere('ends_at', '>', now())));
         }
 
-        $students = $query->orderBy('name')->paginate(12);
+        $students = $query->with('grades')->orderBy('name')->paginate(12);
+        $pageIds = $students->pluck('id');
 
         $pendingByStudent = Payment::query()
             ->where('teacher_id', $teacher->id)
             ->where('status', PaymentStatus::PendingReview)
-            ->whereIn('student_id', $students->pluck('id'))
+            ->whereIn('student_id', $pageIds)
             ->get()
             ->groupBy('student_id');
 
         $activeSubs = Subscription::query()
             ->where('teacher_id', $teacher->id)
             ->where('status', SubscriptionStatus::Active)
-            ->whereIn('student_id', $students->pluck('id'))
+            ->whereIn('student_id', $pageIds)
             ->where(fn ($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>', now()))
+            ->get()
+            ->groupBy('student_id');
+
+        $pendingSubs = Subscription::query()
+            ->where('teacher_id', $teacher->id)
+            ->where('status', SubscriptionStatus::PendingPayment)
+            ->whereIn('student_id', $pageIds)
             ->get()
             ->groupBy('student_id');
 
@@ -79,6 +87,7 @@ class StudentDesk extends Component
             'students' => $students,
             'pendingByStudent' => $pendingByStudent,
             'activeSubs' => $activeSubs,
+            'pendingSubs' => $pendingSubs,
         ]);
     }
 }

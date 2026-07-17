@@ -1,11 +1,7 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">اشتراك المنصة</h2>
-    </x-slot>
-
-    <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
+    <x-panel-page title="اشتراك المنصة" subtitle="فترة التجربة ورسوم المنصة للإدارة.">
+        <div class="mx-auto max-w-3xl">
             <livewire:teacher.manage-platform-billing />
         </div>
-    </div>
+    </x-panel-page>
 </x-app-layout>

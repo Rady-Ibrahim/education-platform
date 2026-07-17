@@ -1,15 +1,11 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">كشف حساب الطالب</h2>
-    </x-slot>
+    <x-panel-page title="كشف حساب الطالب" subtitle="الاشتراكات والمدفوعات المرتبطة بالطالب.">
+        <x-slot:actions>
+            <a href="{{ route('teacher.students') }}" class="link-brand" wire:navigate>رجوع للطلاب</a>
+        </x-slot:actions>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <livewire:teacher.student-account-statement :student-id="$studentId" />
-                </div>
-            </div>
-        </div>
-    </div>
+        <x-panel-card>
+            <livewire:teacher.student-account-statement :student-id="$studentId" />
+        </x-panel-card>
+    </x-panel-page>
 </x-app-layout>

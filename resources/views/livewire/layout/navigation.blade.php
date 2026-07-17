@@ -14,121 +14,121 @@ new class extends Component
     }
 
     /**
-     * @return list<array{label: string, route: string, active: bool}>
+     * @return list<array{label: string, route: string, active: bool, icon: string}>
      */
     public function roleLinks(): array
+    {
+        $role = auth()->user()?->primaryRole();
+
+        return match ($role) {
+            UserRole::Admin => [
+                ['label' => 'لوحة التحكم', 'route' => 'admin.dashboard', 'active' => request()->routeIs('admin.dashboard'), 'icon' => 'home'],
+                ['label' => 'الهيكل الأكاديمي', 'route' => 'admin.academic', 'active' => request()->routeIs('admin.academic'), 'icon' => 'academic'],
+                ['label' => 'مدفوعات الطلاب', 'route' => 'admin.payments', 'active' => request()->routeIs('admin.payments'), 'icon' => 'payments'],
+                ['label' => 'اشتراك المنصة', 'route' => 'admin.platform', 'active' => request()->routeIs('admin.platform'), 'icon' => 'platform'],
+            ],
+            UserRole::Teacher => [
+                ['label' => 'لوحة التحكم', 'route' => 'teacher.dashboard', 'active' => request()->routeIs('teacher.dashboard'), 'icon' => 'home'],
+                ['label' => 'الطلاب', 'route' => 'teacher.students', 'active' => request()->routeIs('teacher.students*'), 'icon' => 'students'],
+                ['label' => 'الدروس', 'route' => 'teacher.lessons', 'active' => request()->routeIs('teacher.lessons'), 'icon' => 'lessons'],
+                ['label' => 'الامتحانات', 'route' => 'teacher.exams', 'active' => request()->routeIs('teacher.exams'), 'icon' => 'exams'],
+                ['label' => 'المدفوعات', 'route' => 'teacher.payments', 'active' => request()->routeIs('teacher.payments'), 'icon' => 'payments'],
+                ['label' => 'اشتراك المنصة', 'route' => 'teacher.platform', 'active' => request()->routeIs('teacher.platform'), 'icon' => 'platform'],
+            ],
+            UserRole::Student => [
+                ['label' => 'لوحتي', 'route' => 'student.dashboard', 'active' => request()->routeIs('student.dashboard'), 'icon' => 'home'],
+                ['label' => 'الدروس', 'route' => 'student.lessons', 'active' => request()->routeIs('student.lessons'), 'icon' => 'lessons'],
+                ['label' => 'الامتحانات', 'route' => 'student.exams', 'active' => request()->routeIs('student.exams'), 'icon' => 'exams'],
+                ['label' => 'الاشتراكات', 'route' => 'student.subscriptions', 'active' => request()->routeIs('student.subscriptions'), 'icon' => 'payments'],
+                ['label' => 'الشهادات', 'route' => 'student.certificates', 'active' => request()->routeIs('student.certificates*'), 'icon' => 'certificate'],
+            ],
+            UserRole::Parent => [
+                ['label' => 'لوحة ولي الأمر', 'route' => 'parent.dashboard', 'active' => request()->routeIs('parent.*'), 'icon' => 'home'],
+            ],
+            default => [
+                ['label' => 'الرئيسية', 'route' => 'dashboard', 'active' => request()->routeIs('dashboard'), 'icon' => 'home'],
+            ],
+        };
+    }
+
+    /**
+     * @return array{label: string, route: string, params?: array}|null
+     */
+    public function primaryAction(): ?array
+    {
+        return match (auth()->user()?->primaryRole()) {
+            UserRole::Teacher => ['label' => 'إضافة درس', 'route' => 'teacher.lessons'],
+            UserRole::Student => ['label' => 'تصفّح المدرسين', 'route' => 'teachers.index'],
+            UserRole::Admin => ['label' => 'الهيكل الأكاديمي', 'route' => 'admin.academic'],
+            default => null,
+        };
+    }
+
+    public function roleLabel(): string
     {
         $user = auth()->user();
         $role = $user?->primaryRole();
 
         return match ($role) {
-            UserRole::Admin => [
-                ['label' => 'لوحة الإدارة', 'route' => 'admin.dashboard', 'active' => request()->routeIs('admin.dashboard')],
-                ['label' => 'الهيكل الأكاديمي', 'route' => 'admin.academic', 'active' => request()->routeIs('admin.academic')],
-                ['label' => 'مدفوعات الطلاب', 'route' => 'admin.payments', 'active' => request()->routeIs('admin.payments')],
-                ['label' => 'اشتراك المنصة', 'route' => 'admin.platform', 'active' => request()->routeIs('admin.platform')],
-            ],
-            UserRole::Teacher => [
-                ['label' => 'المكتب', 'route' => 'teacher.dashboard', 'active' => request()->routeIs('teacher.dashboard')],
-                ['label' => 'الطلاب', 'route' => 'teacher.students', 'active' => request()->routeIs('teacher.students*')],
-                ['label' => 'الدروس', 'route' => 'teacher.lessons', 'active' => request()->routeIs('teacher.lessons')],
-                ['label' => 'الامتحانات', 'route' => 'teacher.exams', 'active' => request()->routeIs('teacher.exams')],
-                ['label' => 'مدفوعات الطلاب', 'route' => 'teacher.payments', 'active' => request()->routeIs('teacher.payments')],
-                ['label' => 'اشتراك المنصة', 'route' => 'teacher.platform', 'active' => request()->routeIs('teacher.platform')],
-            ],
-            UserRole::Student => [
-                ['label' => 'لوحتي', 'route' => 'student.dashboard', 'active' => request()->routeIs('student.dashboard')],
-                ['label' => 'الدروس', 'route' => 'student.lessons', 'active' => request()->routeIs('student.lessons')],
-                ['label' => 'الامتحانات', 'route' => 'student.exams', 'active' => request()->routeIs('student.exams')],
-                ['label' => 'الاشتراكات', 'route' => 'student.subscriptions', 'active' => request()->routeIs('student.subscriptions')],
-                ['label' => 'الشهادات', 'route' => 'student.certificates', 'active' => request()->routeIs('student.certificates*')],
-            ],
-            UserRole::Parent => [
-                ['label' => 'لوحة ولي الأمر', 'route' => 'parent.dashboard', 'active' => request()->routeIs('parent.*')],
-            ],
-            default => [
-                ['label' => 'الرئيسية', 'route' => 'dashboard', 'active' => request()->routeIs('dashboard')],
-            ],
+            UserRole::Teacher => $user->headline ?: 'مدرس',
+            UserRole::Student => 'طالب',
+            UserRole::Parent => 'ولي أمر',
+            UserRole::Admin => 'مدير النظام',
+            default => 'مستخدم',
         };
     }
 }; ?>
 
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-            <div class="flex">
-                <div class="shrink-0 flex items-center gap-2">
-                    <a href="{{ route('dashboard') }}" wire:navigate class="flex items-center gap-2">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
-                        <span class="hidden sm:inline text-lg font-semibold text-teal-800">{{ config('app.name', 'سنتر') }}</span>
-                    </a>
+<div class="flex h-full min-h-screen flex-col px-4 py-5">
+    <a href="{{ route('dashboard') }}" wire:navigate class="mb-8 px-2 text-2xl font-bold tracking-tight text-brand-900">
+        {{ config('app.name', 'سنتر') }}
+    </a>
+
+    <nav class="space-y-1">
+        @foreach ($this->roleLinks() as $link)
+            <a
+                href="{{ route($link['route']) }}"
+                wire:navigate
+                @class(['sidebar-link', 'sidebar-link-active' => $link['active']])
+            >
+                @include('partials.nav-icon', ['icon' => $link['icon'], 'active' => $link['active']])
+                <span>{{ $link['label'] }}</span>
+            </a>
+        @endforeach
+    </nav>
+
+    <div class="mt-auto space-y-4 pt-8">
+        @if ($action = $this->primaryAction())
+            <a href="{{ route($action['route'], $action['params'] ?? []) }}" wire:navigate class="btn-accent w-full">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                {{ $action['label'] }}
+            </a>
+        @endif
+
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+            <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-700 text-sm font-bold text-white">
+                    {{ mb_substr(auth()->user()->name, 0, 1) }}
                 </div>
-
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    @foreach ($this->roleLinks() as $link)
-                        <x-nav-link :href="route($link['route'])" :active="$link['active']" wire:navigate>
-                            {{ $link['label'] }}
-                        </x-nav-link>
-                    @endforeach
+                <div class="min-w-0">
+                    <div class="truncate text-sm font-bold text-ink" x-data="{{ json_encode(['name' => auth()->user()->name]) }}" x-text="name" x-on:profile-updated.window="name = $event.detail.name"></div>
+                    <div class="truncate text-xs text-ink-muted">{{ $this->roleLabel() }}</div>
                 </div>
             </div>
-
-            <div class="hidden sm:flex sm:items-center sm:ms-6 gap-2">
-                <livewire:shared.notification-bell />
-
-                <x-dropdown align="right" width="48">
-                    <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                            <div x-data="{{ json_encode(['name' => auth()->user()->name]) }}" x-text="name" x-on:profile-updated.window="name = $event.detail.name"></div>
-                            <div class="ms-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                        </button>
-                    </x-slot>
-
-                    <x-slot name="content">
-                        <x-dropdown-link :href="route('profile')" wire:navigate>الملف الشخصي</x-dropdown-link>
-                        <button wire:click="logout" class="w-full text-start">
-                            <x-dropdown-link>تسجيل الخروج</x-dropdown-link>
-                        </button>
-                    </x-slot>
-                </x-dropdown>
-            </div>
-
-            <div class="-me-2 flex items-center sm:hidden">
-                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
-                    <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                        <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
         </div>
+
+        <div class="hidden items-center justify-between gap-2 px-1 lg:flex">
+            <livewire:shared.notification-bell />
+            <a href="{{ route('profile') }}" wire:navigate class="text-xs font-medium text-ink-muted hover:text-brand-800">الملف الشخصي</a>
+        </div>
+
+        <button type="button" wire:click="logout" class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            تسجيل الخروج
+        </button>
     </div>
-
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
-        <div class="pt-2 pb-3 space-y-1">
-            @foreach ($this->roleLinks() as $link)
-                <x-responsive-nav-link :href="route($link['route'])" :active="$link['active']" wire:navigate>
-                    {{ $link['label'] }}
-                </x-responsive-nav-link>
-            @endforeach
-        </div>
-
-        <div class="pt-4 pb-1 border-t border-gray-200">
-            <div class="px-4">
-                <div class="font-medium text-base text-gray-800" x-data="{{ json_encode(['name' => auth()->user()->name]) }}" x-text="name" x-on:profile-updated.window="name = $event.detail.name"></div>
-                <div class="font-medium text-sm text-gray-500">{{ auth()->user()->email }}</div>
-            </div>
-
-            <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile')" wire:navigate>الملف الشخصي</x-responsive-nav-link>
-                <button wire:click="logout" class="w-full text-start">
-                    <x-responsive-nav-link>تسجيل الخروج</x-responsive-nav-link>
-                </button>
-            </div>
-        </div>
-    </div>
-</nav>
+</div>

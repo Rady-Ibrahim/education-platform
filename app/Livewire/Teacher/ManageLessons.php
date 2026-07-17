@@ -28,6 +28,10 @@ class ManageLessons extends Component
 
     public string $bunnyVideoId = '';
 
+    public string $meetingUrl = '';
+
+    public string $scheduledAt = '';
+
     public bool $isPublished = false;
 
     /** @var mixed */
@@ -36,6 +40,13 @@ class ManageLessons extends Component
     public string $videoSource = 'upload';
 
     public string $uploadStatus = '';
+
+    public ?int $attachLessonId = null;
+
+    /** @var mixed */
+    public $attachmentUpload = null;
+
+    public bool $attachmentDownloadable = true;
 
     public function mount(): void
     {
@@ -82,9 +93,11 @@ class ManageLessons extends Component
             'subjectId' => ['required', 'exists:subjects,id'],
             'unitId' => ['required', 'exists:units,id'],
             'title' => ['required', 'string', 'max:255'],
-            'type' => ['required', 'in:text,video,mixed'],
+            'type' => ['required', 'in:text,video,mixed,live'],
             'body' => ['nullable', 'string'],
             'bunnyVideoId' => ['nullable', 'string', 'max:255'],
+            'meetingUrl' => ['nullable', 'url', 'max:500'],
+            'scheduledAt' => ['nullable', 'date'],
             'isPublished' => ['boolean'],
         ]);
 
@@ -95,10 +108,12 @@ class ManageLessons extends Component
             'type' => $validated['type'],
             'body' => $validated['body'] ?: null,
             'bunny_video_id' => $validated['bunnyVideoId'] ?: null,
+            'meeting_url' => $validated['meetingUrl'] ?: null,
+            'scheduled_at' => $validated['scheduledAt'] ?: null,
             'is_published' => $validated['isPublished'],
         ]);
 
-        $this->reset(['title', 'body', 'bunnyVideoId', 'isPublished', 'videoUpload', 'uploadStatus']);
+        $this->reset(['title', 'body', 'bunnyVideoId', 'meetingUrl', 'scheduledAt', 'isPublished', 'videoUpload', 'uploadStatus']);
         $this->type = 'text';
         $this->videoSource = 'upload';
         session()->flash('lesson_status', 'تم إنشاء الدرس.');
@@ -118,6 +133,29 @@ class ManageLessons extends Component
         session()->flash('lesson_status', 'تم حذف الدرس.');
     }
 
+    public function uploadAttachmentFor(int $lessonId, LessonService $service): void
+    {
+        $this->attachLessonId = $lessonId;
+
+        $this->validate([
+            'attachLessonId' => ['required', 'exists:lessons,id'],
+            'attachmentUpload' => ['required', 'file', 'mimes:pdf,doc,docx,ppt,pptx,png,jpg,jpeg', 'max:20480'],
+            'attachmentDownloadable' => ['boolean'],
+        ]);
+
+        $lesson = Lesson::query()->findOrFail($lessonId);
+        $service->addAttachment(
+            auth()->user(),
+            $lesson,
+            $this->attachmentUpload,
+            $this->attachmentDownloadable,
+        );
+
+        $this->reset(['attachLessonId', 'attachmentUpload']);
+        $this->attachmentDownloadable = true;
+        session()->flash('lesson_status', 'تم رفع المرفق للدرس.');
+    }
+
     public function render(BunnyStreamService $bunny)
     {
         $subjects = Subject::query()
@@ -132,7 +170,7 @@ class ManageLessons extends Component
             ->get();
 
         $lessons = Lesson::query()
-            ->with('unit')
+            ->with(['unit', 'attachments'])
             ->where('unit_id', $this->unitId)
             ->orderBy('ordering')
             ->get();

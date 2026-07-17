@@ -17,7 +17,7 @@ class LessonService
     ) {}
 
     /**
-     * @param  array{title: string, type?: string, body?: string|null, bunny_video_id?: string|null, ordering?: int|null, duration_seconds?: int|null, is_published?: bool}  $data
+     * @param  array{title: string, type?: string, body?: string|null, bunny_video_id?: string|null, meeting_url?: string|null, scheduled_at?: string|\DateTimeInterface|null, ordering?: int|null, duration_seconds?: int|null, is_published?: bool}  $data
      */
     public function create(User $teacher, Unit $unit, array $data): Lesson
     {
@@ -25,7 +25,7 @@ class LessonService
         $this->access->assertTeacherOwnsSubject($teacher, $unit->subject);
 
         $type = LessonType::from($data['type'] ?? LessonType::Text->value);
-        $this->assertVideoRules($type, $data['bunny_video_id'] ?? null);
+        $this->assertTypeRules($type, $data['bunny_video_id'] ?? null, $data['meeting_url'] ?? null);
 
         return Lesson::query()->create([
             'unit_id' => $unit->id,
@@ -33,7 +33,9 @@ class LessonService
             'title' => $data['title'],
             'type' => $type,
             'body' => $data['body'] ?? null,
-            'bunny_video_id' => $data['bunny_video_id'] ?? null,
+            'bunny_video_id' => $type === LessonType::Live ? null : ($data['bunny_video_id'] ?? null),
+            'meeting_url' => $type === LessonType::Live ? ($data['meeting_url'] ?? null) : null,
+            'scheduled_at' => $type === LessonType::Live ? ($data['scheduled_at'] ?? null) : null,
             'ordering' => $data['ordering'] ?? ((int) $unit->lessons()->max('ordering') + 1),
             'duration_seconds' => $data['duration_seconds'] ?? null,
             'is_published' => $data['is_published'] ?? false,
@@ -41,7 +43,7 @@ class LessonService
     }
 
     /**
-     * @param  array{title?: string, type?: string, body?: string|null, bunny_video_id?: string|null, ordering?: int|null, duration_seconds?: int|null, is_published?: bool}  $data
+     * @param  array{title?: string, type?: string, body?: string|null, bunny_video_id?: string|null, meeting_url?: string|null, scheduled_at?: string|\DateTimeInterface|null, ordering?: int|null, duration_seconds?: int|null, is_published?: bool}  $data
      */
     public function update(User $teacher, Lesson $lesson, array $data): Lesson
     {
@@ -50,13 +52,18 @@ class LessonService
 
         $type = isset($data['type']) ? LessonType::from($data['type']) : $lesson->type;
         $videoId = array_key_exists('bunny_video_id', $data) ? $data['bunny_video_id'] : $lesson->bunny_video_id;
-        $this->assertVideoRules($type, $videoId);
+        $meetingUrl = array_key_exists('meeting_url', $data) ? $data['meeting_url'] : $lesson->meeting_url;
+        $this->assertTypeRules($type, $videoId, $meetingUrl);
 
         $lesson->update([
             'title' => $data['title'] ?? $lesson->title,
             'type' => $type,
             'body' => array_key_exists('body', $data) ? $data['body'] : $lesson->body,
-            'bunny_video_id' => $videoId,
+            'bunny_video_id' => $type === LessonType::Live ? null : $videoId,
+            'meeting_url' => $type === LessonType::Live ? $meetingUrl : null,
+            'scheduled_at' => $type === LessonType::Live
+                ? (array_key_exists('scheduled_at', $data) ? $data['scheduled_at'] : $lesson->scheduled_at)
+                : null,
             'ordering' => $data['ordering'] ?? $lesson->ordering,
             'duration_seconds' => array_key_exists('duration_seconds', $data) ? $data['duration_seconds'] : $lesson->duration_seconds,
             'is_published' => $data['is_published'] ?? $lesson->is_published,
@@ -98,11 +105,17 @@ class LessonService
         ]);
     }
 
-    private function assertVideoRules(LessonType $type, ?string $videoId): void
+    private function assertTypeRules(LessonType $type, ?string $videoId, ?string $meetingUrl): void
     {
         if (in_array($type, [LessonType::Video, LessonType::Mixed], true) && blank($videoId)) {
             throw ValidationException::withMessages([
                 'bunny_video_id' => 'معرف فيديو Bunny مطلوب لهذا النوع من الدروس.',
+            ]);
+        }
+
+        if ($type === LessonType::Live && blank($meetingUrl)) {
+            throw ValidationException::withMessages([
+                'meeting_url' => 'رابط الحصة (زوم / ميت / أي رابط) مطلوب.',
             ]);
         }
     }

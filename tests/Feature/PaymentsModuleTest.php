@@ -202,4 +202,29 @@ class PaymentsModuleTest extends TestCase
 
         $this->assertTrue($subscription->fresh()->isActive());
     }
+
+    public function test_teacher_can_suspend_and_reactivate_subscription(): void
+    {
+        $access = app(ContentAccessService::class);
+        $enrollment = app(EnrollmentService::class);
+
+        $subscription = $this->grantActiveSubscription($this->student, $this->teacher, $this->subject);
+        $this->assertTrue($access->studentCanAccessSubject($this->student, $this->subject));
+
+        $enrollment->suspend($this->teacher, $subscription);
+        $this->assertSame(SubscriptionStatus::Suspended, $subscription->fresh()->status);
+        $this->assertFalse($access->studentCanAccessSubject($this->student, $this->subject));
+
+        $enrollment->reactivate($this->teacher, $subscription->fresh());
+        $this->assertSame(SubscriptionStatus::Active, $subscription->fresh()->status);
+        $this->assertTrue($access->studentCanAccessSubject($this->student, $this->subject));
+    }
+
+    public function test_other_teacher_cannot_suspend_subscription(): void
+    {
+        $subscription = $this->grantActiveSubscription($this->student, $this->teacher, $this->subject);
+
+        $this->expectException(ValidationException::class);
+        app(EnrollmentService::class)->suspend($this->otherTeacher, $subscription);
+    }
 }

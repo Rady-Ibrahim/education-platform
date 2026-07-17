@@ -81,6 +81,61 @@ class EnrollmentService
         return $subscription->refresh();
     }
 
+    public function suspend(User $teacher, Subscription $subscription): Subscription
+    {
+        $this->assertTeacherOwnsSubscription($teacher, $subscription);
+
+        if ($subscription->status !== SubscriptionStatus::Active) {
+            throw ValidationException::withMessages([
+                'subscription' => 'يمكن إيقاف الاشتراكات النشطة فقط.',
+            ]);
+        }
+
+        $subscription->update([
+            'status' => SubscriptionStatus::Suspended,
+        ]);
+
+        return $subscription->refresh();
+    }
+
+    public function reactivate(User $teacher, Subscription $subscription): Subscription
+    {
+        $this->assertTeacherOwnsSubscription($teacher, $subscription);
+
+        if ($subscription->status !== SubscriptionStatus::Suspended) {
+            throw ValidationException::withMessages([
+                'subscription' => 'يمكن إعادة تفعيل الاشتراكات الموقوفة فقط.',
+            ]);
+        }
+
+        if ($subscription->ends_at && $subscription->ends_at->isPast()) {
+            throw ValidationException::withMessages([
+                'subscription' => 'انتهت مدة الاشتراك. سجّل الطالب على خطة جديدة.',
+            ]);
+        }
+
+        $subscription->update([
+            'status' => SubscriptionStatus::Active,
+        ]);
+
+        return $subscription->refresh();
+    }
+
+    private function assertTeacherOwnsSubscription(User $teacher, Subscription $subscription): void
+    {
+        if (! $teacher->hasRole(UserRole::Teacher) || ! $teacher->isActive()) {
+            throw ValidationException::withMessages([
+                'teacher' => 'غير مصرح.',
+            ]);
+        }
+
+        if ($subscription->teacher_id !== $teacher->id) {
+            throw ValidationException::withMessages([
+                'subscription' => 'الاشتراك خارج نطاقك.',
+            ]);
+        }
+    }
+
     /**
      * تسجيل طالب على خطة من مكتب المدرس.
      */

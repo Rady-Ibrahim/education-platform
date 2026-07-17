@@ -5,7 +5,7 @@
         </div>
     @endif
 
-    <div class="mb-4 rounded-md border border-teal-200 bg-teal-50/60 p-3 text-sm text-teal-950">
+    <div class="mb-4 rounded-md border border-brand-200 bg-brand-50/60 p-3 text-sm text-brand-950">
         الدفع للمدرس:
         <strong>كاش في السنتر</strong> (المدرس يسجّله)، أو
         <strong>فودافون كاش من ولي الأمر</strong> لرقم المدرس.
