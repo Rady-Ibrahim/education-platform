@@ -30,6 +30,10 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'slug',
+        'headline',
+        'bio',
+        'is_publicly_visible',
         'email',
         'phone',
         'vodafone_cash_number',
@@ -60,7 +64,21 @@ class User extends Authenticatable
             'approved_at' => 'datetime',
             'password' => 'hashed',
             'status' => UserStatus::class,
+            'is_publicly_visible' => 'boolean',
         ];
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'id';
+    }
+
+    public function isPublicTeacher(): bool
+    {
+        return $this->hasRole(UserRole::Teacher)
+            && $this->isActive()
+            && $this->is_publicly_visible
+            && filled($this->slug);
     }
 
     public function branch(): BelongsTo

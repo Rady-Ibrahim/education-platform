@@ -30,7 +30,7 @@ class RequestChildLink extends Component
         );
 
         $this->reset(['studentCode', 'relationship', 'message']);
-        session()->flash('status', 'تم إرسال طلب الربط. بانتظار موافقة الطالب.');
+        session()->flash('status', 'تم ربط الابن بنجاح. تقدر تتابع تقدمه وتدفع فودافون كاش نيابة عنه.');
     }
 
     public function render()

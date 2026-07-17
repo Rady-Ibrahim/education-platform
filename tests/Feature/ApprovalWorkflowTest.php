@@ -29,7 +29,7 @@ class ApprovalWorkflowTest extends TestCase
         ]);
     }
 
-    public function test_self_registered_student_is_pending_admin(): void
+    public function test_self_registered_student_is_active_immediately(): void
     {
         $user = app(RegistrationService::class)->register([
             'name' => 'طالب تجريبي',
@@ -39,32 +39,53 @@ class ApprovalWorkflowTest extends TestCase
         ]);
 
         $this->assertTrue($user->hasRole(UserRole::Student));
-        $this->assertSame(UserStatus::PendingAdmin, $user->status);
-        $this->assertFalse($user->isActive());
+        $this->assertSame(UserStatus::Active, $user->status);
+        $this->assertTrue($user->isActive());
     }
 
-    public function test_pending_user_is_redirected_to_waiting_page(): void
+    public function test_self_registered_teacher_is_active_immediately(): void
     {
-        $user = User::factory()->pendingAdmin()->create();
-        $user->assignRole(UserRole::Student);
+        $user = app(RegistrationService::class)->register([
+            'name' => 'مدرس تجريبي',
+            'email' => 'teacher@test.com',
+            'password' => 'password',
+            'role' => 'teacher',
+            'headline' => 'رياضيات',
+            'vodafone_cash_number' => '01000000000',
+        ]);
 
-        $this->actingAs($user)
-            ->get(route('student.dashboard'))
-            ->assertRedirect(route('account.pending'));
+        $this->assertTrue($user->hasRole(UserRole::Teacher));
+        $this->assertTrue($user->isActive());
+        $this->assertNotEmpty($user->slug);
+        $this->assertFalse($user->is_publicly_visible);
     }
 
-    public function test_admin_can_approve_pending_teacher(): void
+    public function test_suspended_user_is_blocked_from_panels(): void
     {
         $admin = User::factory()->create();
         $admin->assignRole(UserRole::Admin);
 
-        $teacher = User::factory()->pendingAdmin()->create();
+        $student = User::factory()->create();
+        $student->assignRole(UserRole::Student);
+
+        app(UserApprovalService::class)->suspend($student, $admin, 'مخالفة');
+
+        $this->actingAs($student->fresh())
+            ->get(route('student.dashboard'))
+            ->assertRedirect();
+    }
+
+    public function test_admin_can_unsuspend_user(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(UserRole::Admin);
+
+        $teacher = User::factory()->create(['status' => UserStatus::Suspended]);
         $teacher->assignRole(UserRole::Teacher);
 
-        app(UserApprovalService::class)->approve($teacher, $admin);
+        app(UserApprovalService::class)->unsuspend($teacher, $admin);
 
         $this->assertTrue($teacher->fresh()->isActive());
-        $this->assertSame($admin->id, $teacher->fresh()->approved_by);
     }
 
     public function test_teacher_created_student_is_active_and_linked(): void

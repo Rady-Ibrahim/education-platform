@@ -15,7 +15,8 @@ class DashboardReportService
 {
     /**
      * @return array{
-     *     pending_approvals: int,
+     *     public_teachers: int,
+     *     suspended_users: int,
      *     active_subscriptions: int,
      *     pending_payments: int,
      *     confirmed_payments_total: float,
@@ -26,7 +27,12 @@ class DashboardReportService
     public function forAdmin(): array
     {
         return [
-            'pending_approvals' => User::query()->where('status', UserStatus::PendingAdmin)->count(),
+            'public_teachers' => User::query()
+                ->role('teacher')
+                ->where('status', UserStatus::Active)
+                ->where('is_publicly_visible', true)
+                ->count(),
+            'suspended_users' => User::query()->where('status', UserStatus::Suspended)->count(),
             'active_subscriptions' => Subscription::query()
                 ->where('status', SubscriptionStatus::Active)
                 ->where(fn ($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>', now()))

@@ -12,7 +12,7 @@
     <div class="py-12 print:py-0">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white border-2 border-gray-800 shadow-sm sm:rounded-lg p-10 text-center space-y-6">
-                <div class="text-sm tracking-widest text-gray-500 uppercase">Education Platform</div>
+                <div class="text-sm tracking-widest text-gray-500 uppercase">{{ config('app.name', 'سنتر') }}</div>
                 <h1 class="text-3xl font-bold text-gray-900">شهادة اجتياز</h1>
                 <p class="text-lg text-gray-700">يُشهد بأن الطالب</p>
                 <p class="text-2xl font-semibold text-gray-900">{{ $certificate->student->name }}</p>

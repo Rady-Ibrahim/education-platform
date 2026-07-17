@@ -49,12 +49,56 @@ class UserApprovalService
     {
         $this->assertAdmin($admin);
 
+        if ($user->id === $admin->id) {
+            throw ValidationException::withMessages([
+                'user' => 'لا يمكن إيقاف حسابك الحالي.',
+            ]);
+        }
+
         $user->forceFill([
             'status' => UserStatus::Suspended,
             'rejection_reason' => $reason,
+            'is_publicly_visible' => false,
         ])->save();
 
         return $user->refresh();
+    }
+
+    public function unsuspend(User $user, User $admin): User
+    {
+        $this->assertAdmin($admin);
+
+        if ($user->status !== UserStatus::Suspended) {
+            throw ValidationException::withMessages([
+                'user' => 'الحساب ليس موقوفًا.',
+            ]);
+        }
+
+        $user->forceFill([
+            'status' => UserStatus::Active,
+            'rejection_reason' => null,
+            'approved_at' => $user->approved_at ?? now(),
+            'approved_by' => $admin->id,
+        ])->save();
+
+        return $user->refresh();
+    }
+
+    public function hideFromCatalog(User $teacher, User $admin): User
+    {
+        $this->assertAdmin($admin);
+
+        if (! $teacher->hasRole(UserRole::Teacher)) {
+            throw ValidationException::withMessages([
+                'user' => 'الحساب ليس مدرسًا.',
+            ]);
+        }
+
+        $teacher->forceFill([
+            'is_publicly_visible' => false,
+        ])->save();
+
+        return $teacher->refresh();
     }
 
     private function assertAdmin(User $admin): void

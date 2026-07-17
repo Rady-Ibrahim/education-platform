@@ -10,7 +10,6 @@ use App\Models\User;
 use App\Modules\Identity\Services\ParentLinkService;
 use App\Modules\Identity\Services\RegistrationService;
 use App\Modules\Identity\Services\StudentCodeService;
-use App\Modules\Identity\Services\UserApprovalService;
 use App\Modules\Reports\Services\DashboardReportService;
 use Database\Seeders\BranchSeeder;
 use Database\Seeders\RolePermissionSeeder;
@@ -51,7 +50,7 @@ class ParentLinkTest extends TestCase
         $this->teacher->students()->attach($this->student->id, ['joined_at' => now()]);
     }
 
-    public function test_parent_can_register_as_pending(): void
+    public function test_parent_can_register_as_active(): void
     {
         $user = app(RegistrationService::class)->register([
             'name' => 'ولي أمر',
@@ -61,7 +60,7 @@ class ParentLinkTest extends TestCase
         ]);
 
         $this->assertTrue($user->hasRole(UserRole::Parent));
-        $this->assertSame(UserStatus::PendingAdmin, $user->status);
+        $this->assertSame(UserStatus::Active, $user->status);
     }
 
     public function test_student_self_registration_gets_student_code(): void
@@ -77,7 +76,7 @@ class ParentLinkTest extends TestCase
         $this->assertStringStartsWith('STU-', $user->student_code);
     }
 
-    public function test_parent_request_requires_student_approval(): void
+    public function test_parent_link_by_code_is_active_immediately(): void
     {
         $link = app(ParentLinkService::class)->requestByStudentCode(
             $this->parent,
@@ -85,30 +84,21 @@ class ParentLinkTest extends TestCase
             ParentRelationship::Father->value,
         );
 
-        $this->assertSame(ParentLinkStatus::Pending, $link->status);
-        $this->assertFalse(app(ParentLinkService::class)->parentCanViewStudent($this->parent, $this->student));
-
-        app(ParentLinkService::class)->approveByStudent($link, $this->student);
-
-        $this->assertTrue($link->fresh()->isActive());
+        $this->assertSame(ParentLinkStatus::Active, $link->status);
         $this->assertTrue(app(ParentLinkService::class)->parentCanViewStudent($this->parent, $this->student));
     }
 
-    public function test_other_student_cannot_approve_link(): void
+    public function test_student_can_revoke_parent_link(): void
     {
-        $other = User::factory()->create([
-            'status' => UserStatus::Active,
-            'student_code' => app(StudentCodeService::class)->generate(),
-        ]);
-        $other->assignRole(UserRole::Student);
-
         $link = app(ParentLinkService::class)->requestByStudentCode(
             $this->parent,
             $this->student->student_code,
         );
 
-        $this->expectException(ValidationException::class);
-        app(ParentLinkService::class)->approveByStudent($link, $other);
+        app(ParentLinkService::class)->revoke($this->student, $link);
+
+        $this->assertSame(ParentLinkStatus::Revoked, $link->fresh()->status);
+        $this->assertFalse(app(ParentLinkService::class)->parentCanViewStudent($this->parent, $this->student));
     }
 
     public function test_admin_can_link_directly(): void
@@ -152,20 +142,16 @@ class ParentLinkTest extends TestCase
         $this->assertSame($this->student->id, $stats['children'][0]['id']);
     }
 
-    public function test_parent_dashboard_page_loads_after_approval(): void
+    public function test_parent_dashboard_page_loads_after_registration(): void
     {
-        $admin = User::factory()->create(['status' => UserStatus::Active]);
-        $admin->assignRole(UserRole::Admin);
-
-        $pendingParent = app(RegistrationService::class)->register([
+        $parent = app(RegistrationService::class)->register([
             'name' => 'ولي',
             'email' => 'parent2@test.com',
             'password' => 'password',
             'role' => 'parent',
         ]);
-        app(UserApprovalService::class)->approve($pendingParent, $admin);
 
-        $this->actingAs($pendingParent->fresh())
+        $this->actingAs($parent->fresh())
             ->get(route('parent.dashboard'))
             ->assertOk()
             ->assertSee('ربط ابن بكود الطالب', false);

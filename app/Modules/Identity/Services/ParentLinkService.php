@@ -34,7 +34,47 @@ class ParentLinkService
             ]);
         }
 
-        return $this->upsertPendingLink($parent, $student, $relationship, $message, $parent);
+        return $this->linkByCodeImmediately($parent, $student, $relationship, $message);
+    }
+
+    /**
+     * ربط ولي الأمر بكود الطالب يصبح نشطًا فورًا (بدون موافقة الطالب).
+     * يمكن للطالب أو المدرس أو الأدمن إلغاء الربط لاحقًا.
+     */
+    private function linkByCodeImmediately(
+        User $parent,
+        User $student,
+        ?string $relationship,
+        ?string $message,
+    ): ParentStudentLink {
+        $existing = ParentStudentLink::query()
+            ->where('parent_id', $parent->id)
+            ->where('student_id', $student->id)
+            ->first();
+
+        if ($existing?->status === ParentLinkStatus::Active) {
+            throw ValidationException::withMessages([
+                'student_code' => 'هذا الابن مربوط بحسابك بالفعل.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($parent, $student, $relationship, $message, $existing) {
+            $link = $existing ?? new ParentStudentLink([
+                'parent_id' => $parent->id,
+                'student_id' => $student->id,
+            ]);
+
+            $link->fill([
+                'status' => ParentLinkStatus::Active,
+                'relationship' => $this->normalizeRelationship($relationship),
+                'linked_by' => $parent->id,
+                'approved_by' => $parent->id,
+                'approved_at' => now(),
+                'message' => $message,
+            ])->save();
+
+            return $link->refresh();
+        });
     }
 
     /**
@@ -168,53 +208,6 @@ class ParentLinkService
             ->where('student_id', $student->id)
             ->where('status', ParentLinkStatus::Active)
             ->exists();
-    }
-
-    private function upsertPendingLink(
-        User $parent,
-        User $student,
-        ?string $relationship,
-        ?string $message,
-        User $linkedBy,
-    ): ParentStudentLink {
-        $existing = ParentStudentLink::query()
-            ->where('parent_id', $parent->id)
-            ->where('student_id', $student->id)
-            ->first();
-
-        if ($existing?->status === ParentLinkStatus::Active) {
-            throw ValidationException::withMessages([
-                'student_code' => 'هذا الابن مربوط بحسابك بالفعل.',
-            ]);
-        }
-
-        if ($existing?->status === ParentLinkStatus::Pending) {
-            throw ValidationException::withMessages([
-                'student_code' => 'لديك طلب قيد انتظار موافقة الطالب.',
-            ]);
-        }
-
-        if ($existing) {
-            $existing->update([
-                'status' => ParentLinkStatus::Pending,
-                'relationship' => $this->normalizeRelationship($relationship),
-                'linked_by' => $linkedBy->id,
-                'approved_by' => null,
-                'approved_at' => null,
-                'message' => $message,
-            ]);
-
-            return $existing->refresh();
-        }
-
-        return ParentStudentLink::query()->create([
-            'parent_id' => $parent->id,
-            'student_id' => $student->id,
-            'status' => ParentLinkStatus::Pending,
-            'relationship' => $this->normalizeRelationship($relationship),
-            'linked_by' => $linkedBy->id,
-            'message' => $message,
-        ]);
     }
 
     private function assertActiveParent(User $parent): void

@@ -13,6 +13,15 @@
                 </div>
             </div>
 
+            @if (auth()->user()->hasRole('teacher'))
+                <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
+                    <div class="max-w-xl">
+                        <h3 class="mb-4 text-lg font-medium text-gray-900">بروفايل المدرس العام</h3>
+                        <livewire:teacher.teacher-profile-form />
+                    </div>
+                </div>
+            @endif
+
             <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
                 <div class="max-w-xl">
                     <livewire:profile.update-password-form />

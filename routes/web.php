@@ -5,10 +5,15 @@ use App\Http\Controllers\AttachmentDownloadController;
 use App\Http\Controllers\CertificateShowController;
 use App\Http\Controllers\CertificateVerifyController;
 use App\Http\Controllers\DashboardController;
+use App\Livewire\Public\TeacherCatalog;
+use App\Livewire\Public\TeacherShow;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome');
+
+Route::get('teachers', TeacherCatalog::class)->name('teachers.index');
+Route::get('teachers/{slug}', TeacherShow::class)->name('teachers.show');
 
 Route::get('dashboard', DashboardController::class)
     ->middleware(['auth'])

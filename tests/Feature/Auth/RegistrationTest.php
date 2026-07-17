@@ -34,7 +34,7 @@ class RegistrationTest extends TestCase
             ->assertSeeVolt('pages.auth.register');
     }
 
-    public function test_new_users_can_register_as_pending_student(): void
+    public function test_new_users_can_register_as_active_student(): void
     {
         $component = Volt::test('pages.auth.register')
             ->set('name', 'Test User')
@@ -47,13 +47,14 @@ class RegistrationTest extends TestCase
 
         $component
             ->assertHasNoErrors()
-            ->assertRedirect(route('account.pending', absolute: false));
+            ->assertRedirect(route('dashboard', absolute: false));
 
         $this->assertAuthenticated();
 
         $user = User::query()->where('email', 'test@example.com')->first();
         $this->assertNotNull($user);
-        $this->assertSame(UserStatus::PendingAdmin, $user->status);
+        $this->assertSame(UserStatus::Active, $user->status);
         $this->assertTrue($user->hasRole(UserRole::Student));
+        $this->assertNotEmpty($user->student_code);
     }
 }

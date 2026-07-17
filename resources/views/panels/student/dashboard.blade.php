@@ -63,7 +63,10 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 border-b">
                     <h3 class="font-medium">طلب الانضمام لمدرس</h3>
-                    <p class="text-sm text-gray-500 mt-1">بعد موافقة الإدارة على حسابك، ابعت طلب للمدرس اللي عايز تنضم له وانتظر موافقته.</p>
+                    <p class="text-sm text-gray-500 mt-1">اختَر مدرسًا من الكتالوج أو ابعت طلب انضمام وانتظر موافقة المدرس. أو خلّي المدرس يضيفك من مكتبه في السنتر.</p>
+                    <div class="mt-3">
+                        <a href="{{ route('teachers.index') }}" class="text-sm text-indigo-600 hover:underline" wire:navigate>تصفّح المدرسين</a>
+                    </div>
                 </div>
                 <div class="p-6">
                     <livewire:student.request-teacher-join />

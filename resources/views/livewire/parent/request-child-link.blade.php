@@ -21,9 +21,9 @@
             </select>
         </div>
         <div>
-            <x-input-label for="message" value="رسالة للطالب (اختياري)" />
+            <x-input-label for="message" value="ملاحظة (اختياري)" />
             <x-text-input wire:model="message" id="message" class="block mt-1 w-full" />
         </div>
-        <x-primary-button type="submit">إرسال طلب الربط</x-primary-button>
+        <x-primary-button type="submit">ربط الابن الآن</x-primary-button>
     </form>
 </div>
