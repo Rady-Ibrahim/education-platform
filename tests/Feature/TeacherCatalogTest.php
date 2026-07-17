@@ -78,7 +78,8 @@ class TeacherCatalogTest extends TestCase
             'bio' => 'خبرة 10 سنين',
             'vodafone_cash_number' => '01033333333',
             'is_publicly_visible' => true,
-            'subject_ids' => [$subject->id],
+            'subject_mode' => 'catalog',
+            'subject_id' => $subject->id,
         ]);
 
         $this->assertTrue($teacher->is_publicly_visible);
@@ -122,7 +123,8 @@ class TeacherCatalogTest extends TestCase
 
         app(TeacherProfileService::class)->update($teacher, [
             'is_publicly_visible' => true,
-            'subject_ids' => [],
+            'subject_mode' => 'catalog',
+            'subject_id' => null,
         ]);
     }
 }

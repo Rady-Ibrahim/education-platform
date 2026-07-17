@@ -33,6 +33,12 @@ class PaymentRecordService
         array $data,
         ?UploadedFile $proof = null,
     ): Payment {
+        if (! config('payments.student_vodafone_enabled')) {
+            throw ValidationException::withMessages([
+                'payment' => 'دفع فودافون كاش للمدرس يتم من حساب ولي الأمر فقط. ادفع كاش عند المدرس أو اطلب من ولي الأمر التحويل.',
+            ]);
+        }
+
         $this->assertStudentOwnsSubscription($student, $subscription);
 
         return $this->createVodafonePayment($student, $student, $subscription, $data, $proof);

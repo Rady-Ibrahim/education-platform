@@ -43,9 +43,23 @@ AWS_BUCKET=
 
 SENTRY_LARAVEL_DSN=
 SENTRY_TRACES_SAMPLE_RATE=0.1
+
+# Payments / Platform billing
+PAYMENTS_STUDENT_VODAFONE=false
+PLATFORM_TRIAL_DAYS=90
+PLATFORM_MONTHLY_FEE=200
+PLATFORM_PERIOD_DAYS=30
+BUNNY_STREAM_API_KEY=
 ```
 
 Secrets must never be committed. Use host env / vault.
+
+## Payments checklist (Prod)
+
+1. أدمن يضبط رقم فودافون كاش المنصة من `/admin/platform`
+2. كل مدرس يضبط رقم فودافون كاش طلابه من البروفايل / المدفوعات
+3. راجع `docs/PAYMENTS.md` (كاش + ولي أمر → مدرس، ومنصة → أدمن)
+4. `php artisan storage:link` لإثباتات الدفع إن كان القرص `public`
 
 ## Health check
 

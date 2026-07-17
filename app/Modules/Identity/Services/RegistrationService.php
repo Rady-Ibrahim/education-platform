@@ -28,7 +28,10 @@ class RegistrationService
      *     vodafone_cash_number?: string|null,
      *     payment_instructions?: string|null,
      *     is_publicly_visible?: bool,
-     *     subject_ids?: list<int>
+     *     subject_mode?: 'catalog'|'custom'|null,
+     *     subject_id?: int|null,
+     *     grade_id?: int|null,
+     *     subject_name?: string|null
      * }  $data
      */
     public function register(array $data): User
@@ -71,14 +74,23 @@ class RegistrationService
             $user->assignRole($role);
 
             if ($role === UserRole::Teacher) {
-                $this->teacherProfiles->update($user, [
+                $profileData = [
                     'headline' => $payload['headline'],
                     'bio' => $payload['bio'],
                     'vodafone_cash_number' => $payload['vodafone_cash_number'],
                     'payment_instructions' => $payload['payment_instructions'],
                     'is_publicly_visible' => (bool) ($data['is_publicly_visible'] ?? false),
-                    'subject_ids' => $data['subject_ids'] ?? [],
-                ]);
+                ];
+
+                if (($data['subject_mode'] ?? null) !== null) {
+                    $profileData['subject_mode'] = $data['subject_mode'];
+                    $profileData['subject_id'] = $data['subject_id'] ?? null;
+                    $profileData['grade_id'] = $data['grade_id'] ?? null;
+                    $profileData['subject_name'] = $data['subject_name'] ?? null;
+                }
+
+                $this->teacherProfiles->update($user, $profileData);
+                app(\App\Modules\Payments\Services\PlatformBillingService::class)->ensureSubscription($user->fresh());
             }
 
             event(new Registered($user->fresh()));

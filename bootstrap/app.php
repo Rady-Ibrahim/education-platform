@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'account.active' => \App\Http\Middleware\EnsureAccountIsActive::class,
+            'platform.access' => \App\Http\Middleware\EnsureTeacherPlatformAccess::class,
         ]);
 
         $middleware->appendToGroup('web', [

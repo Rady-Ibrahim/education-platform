@@ -20,12 +20,15 @@ class Subject extends Model
         'description',
         'ordering',
         'is_active',
+        'created_by',
+        'is_custom',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'is_custom' => 'boolean',
             'ordering' => 'integer',
         ];
     }
@@ -33,6 +36,11 @@ class Subject extends Model
     public function grade(): BelongsTo
     {
         return $this->belongsTo(Grade::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function units(): HasMany

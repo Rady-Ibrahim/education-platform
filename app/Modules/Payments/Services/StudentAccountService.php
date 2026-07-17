@@ -88,4 +88,13 @@ class StudentAccountService
 
         return ! $latest || $latest->status === PaymentStatus::Rejected;
     }
+
+    public function studentCanSubmitVodafone(Subscription $subscription): bool
+    {
+        if (! config('payments.student_vodafone_enabled')) {
+            return false;
+        }
+
+        return $this->canSubmitProof($subscription);
+    }
 }

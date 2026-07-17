@@ -7,7 +7,10 @@
                     الهيكل الأكاديمي
                 </a>
                 <a href="{{ route('admin.payments') }}" class="text-indigo-600 hover:text-indigo-800" wire:navigate>
-                    المدفوعات
+                    مدفوعات الطلاب
+                </a>
+                <a href="{{ route('admin.platform') }}" class="text-indigo-600 hover:text-indigo-800" wire:navigate>
+                    اشتراك المنصة
                 </a>
                 <a href="{{ route('teachers.index') }}" class="text-indigo-600 hover:text-indigo-800" wire:navigate>
                     كتالوج المدرسين

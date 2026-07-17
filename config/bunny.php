@@ -12,8 +12,11 @@ return [
     'library_id' => env('BUNNY_LIBRARY_ID'),
     'cdn_hostname' => env('BUNNY_CDN_HOSTNAME'),
     'token_auth_key' => env('BUNNY_TOKEN_AUTH_KEY'),
+    'stream_api_key' => env('BUNNY_STREAM_API_KEY'),
+    'api_base_url' => env('BUNNY_API_BASE_URL', 'https://video.bunnycdn.com'),
     'embed_base_url' => env('BUNNY_EMBED_BASE_URL', 'https://iframe.mediadelivery.net/embed'),
     'token_ttl_seconds' => (int) env('BUNNY_TOKEN_TTL', 3600),
     'max_token_ttl_seconds' => (int) env('BUNNY_MAX_TOKEN_TTL', 7200),
     'require_config' => (bool) env('BUNNY_REQUIRE_CONFIG', false),
+    'max_upload_mb' => (int) env('BUNNY_MAX_UPLOAD_MB', 512),
 ];

@@ -45,6 +45,8 @@ class ParentPaymentAndDeskTest extends TestCase
             AcademicStructureSeeder::class,
         ]);
 
+        config(['payments.student_vodafone_enabled' => true]);
+
         $this->teacher = User::factory()->create([
             'status' => UserStatus::Active,
             'vodafone_cash_number' => '01000000000',

@@ -4,13 +4,19 @@ namespace App\Modules\Identity\Services;
 
 use App\Enums\UserRole;
 use App\Models\User;
+use App\Modules\Academic\Models\Grade;
 use App\Modules\Academic\Models\Subject;
+use App\Modules\Academic\Services\AcademicStructureService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class TeacherProfileService
 {
+    public function __construct(
+        private readonly AcademicStructureService $academic,
+    ) {}
+
     /**
      * @param  array{
      *     name?: string,
@@ -20,7 +26,10 @@ class TeacherProfileService
      *     vodafone_cash_number?: string|null,
      *     payment_instructions?: string|null,
      *     is_publicly_visible?: bool,
-     *     subject_ids?: list<int>
+     *     subject_mode?: 'catalog'|'custom'|null,
+     *     subject_id?: int|null,
+     *     grade_id?: int|null,
+     *     subject_name?: string|null
      * }  $data
      */
     public function update(User $teacher, array $data): User
@@ -67,20 +76,97 @@ class TeacherProfileService
                 $teacher->slug = $this->uniqueSlug($teacher->name, $teacher->id);
             }
 
-            if ($teacher->is_publicly_visible && ! $this->canBePublic($teacher, $data['subject_ids'] ?? null)) {
-                throw ValidationException::withMessages([
-                    'is_publicly_visible' => 'لإظهار صفحتك للعامة أضف نبذة قصيرة ورقم فودافون كاش ومادة واحدة على الأقل.',
-                ]);
-            }
-
             $teacher->save();
 
-            if (array_key_exists('subject_ids', $data)) {
-                $this->syncSubjects($teacher, $data['subject_ids'] ?? []);
+            if (($data['subject_mode'] ?? null) !== null) {
+                $this->setSingleSubject($teacher, $data);
+            }
+
+            if ($teacher->fresh()->is_publicly_visible && ! $this->canBePublic($teacher->fresh())) {
+                throw ValidationException::withMessages([
+                    'is_publicly_visible' => 'لإظهار صفحتك للعامة أضف نبذة قصيرة ورقم فودافون كاش ومادتك.',
+                ]);
             }
 
             return $teacher->refresh();
         });
+    }
+
+    /**
+     * كل مدرس له مادة واحدة فقط: اختيار من الكتالوج أو كتابة اسم مادة جديدة.
+     *
+     * @param  array{
+     *     subject_mode: 'catalog'|'custom',
+     *     subject_id?: int|null,
+     *     grade_id?: int|null,
+     *     subject_name?: string|null
+     * }  $data
+     */
+    public function setSingleSubject(User $teacher, array $data): Subject
+    {
+        $mode = $data['subject_mode'] ?? null;
+
+        if ($mode === 'catalog') {
+            $subjectId = (int) ($data['subject_id'] ?? 0);
+            $subject = Subject::query()
+                ->whereKey($subjectId)
+                ->where('is_active', true)
+                ->where('is_custom', false)
+                ->first();
+
+            if (! $subject) {
+                throw ValidationException::withMessages([
+                    'subject_id' => 'اختر مادة من كتالوج السنتر.',
+                ]);
+            }
+
+            $teacher->teachingSubjects()->sync([$subject->id]);
+
+            return $subject;
+        }
+
+        if ($mode === 'custom') {
+            $gradeId = (int) ($data['grade_id'] ?? 0);
+            $name = trim((string) ($data['subject_name'] ?? ''));
+
+            if ($name === '') {
+                throw ValidationException::withMessages([
+                    'subject_name' => 'اكتب اسم مادتك.',
+                ]);
+            }
+
+            $grade = Grade::query()->whereKey($gradeId)->where('is_active', true)->first();
+            if (! $grade) {
+                throw ValidationException::withMessages([
+                    'grade_id' => 'اختر الصف لمادتك.',
+                ]);
+            }
+
+            $existing = $teacher->teachingSubjects()->first();
+
+            if ($existing && $existing->is_custom && (int) $existing->created_by === (int) $teacher->id) {
+                $existing->update([
+                    'name' => $name,
+                    'grade_id' => $grade->id,
+                ]);
+                $teacher->teachingSubjects()->sync([$existing->id]);
+
+                return $existing->refresh();
+            }
+
+            $subject = $this->academic->createSubjectForTeacher($teacher, $grade, [
+                'name' => $name,
+            ]);
+
+            // createSubjectForTeacher already assigns; enforce single subject
+            $teacher->teachingSubjects()->sync([$subject->id]);
+
+            return $subject;
+        }
+
+        throw ValidationException::withMessages([
+            'subject_mode' => 'حدّد مادتك: من الكتالوج أو اكتب اسمها.',
+        ]);
     }
 
     public function ensureSlug(User $teacher): string
@@ -118,45 +204,12 @@ class TeacherProfileService
         return $slug;
     }
 
-    /**
-     * @param  list<int>  $subjectIds
-     */
-    public function syncSubjects(User $teacher, array $subjectIds): void
-    {
-        $ids = collect($subjectIds)
-            ->map(fn ($id) => (int) $id)
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
-
-        if ($ids !== []) {
-            $validCount = Subject::query()
-                ->whereIn('id', $ids)
-                ->where('is_active', true)
-                ->count();
-
-            if ($validCount !== count($ids)) {
-                throw ValidationException::withMessages([
-                    'subject_ids' => 'بعض المواد غير صالحة.',
-                ]);
-            }
-        }
-
-        $teacher->teachingSubjects()->sync($ids);
-    }
-
-    /**
-     * @param  list<int>|null  $incomingSubjectIds
-     */
-    private function canBePublic(User $teacher, ?array $incomingSubjectIds): bool
+    private function canBePublic(User $teacher): bool
     {
         $hasHeadlineOrBio = filled($teacher->headline) || filled($teacher->bio);
         $hasWallet = filled($teacher->vodafone_cash_number);
-        $subjectCount = $incomingSubjectIds !== null
-            ? count(array_filter($incomingSubjectIds))
-            : $teacher->teachingSubjects()->count();
+        $hasSubject = $teacher->teachingSubjects()->exists();
 
-        return $hasHeadlineOrBio && $hasWallet && $subjectCount > 0;
+        return $hasHeadlineOrBio && $hasWallet && $hasSubject;
     }
 }

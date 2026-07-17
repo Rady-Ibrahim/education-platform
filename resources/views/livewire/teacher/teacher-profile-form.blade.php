@@ -44,26 +44,60 @@
             <textarea wire:model="paymentInstructions" id="paymentInstructions" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="حوّل باسم المدرس واكتب اسم الطالب في الملاحظات"></textarea>
             <x-input-error :messages="$errors->get('paymentInstructions')" class="mt-1" />
         </div>
-        <div>
-            <x-input-label value="المواد التي تدرّسها" />
-            <div class="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-md border border-gray-200 p-3">
-                @forelse ($subjects as $subject)
-                    <label class="flex items-center gap-2 text-sm">
-                        <input type="checkbox" wire:model="subjectIds" value="{{ $subject->id }}" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                        <span>{{ $subject->name }}@if($subject->grade) — {{ $subject->grade->name }}@endif</span>
-                    </label>
-                @empty
-                    <p class="text-sm text-gray-500">لا توجد مواد بعد. اطلب من الإدارة إنشاء الهيكل الأكاديمي.</p>
-                @endforelse
+
+        <div class="space-y-3 rounded-lg border border-teal-200 bg-teal-50/40 p-4">
+            <h4 class="font-medium text-teal-950">مادتك (مادة واحدة فقط)</h4>
+            <div class="flex flex-wrap gap-4 text-sm">
+                <label class="inline-flex items-center gap-2">
+                    <input type="radio" wire:model.live="subjectMode" value="catalog" class="text-teal-700">
+                    اختيار من كتالوج السنتر
+                </label>
+                <label class="inline-flex items-center gap-2">
+                    <input type="radio" wire:model.live="subjectMode" value="custom" class="text-teal-700">
+                    كتابة اسم مادتي
+                </label>
             </div>
-            <x-input-error :messages="$errors->get('subjectIds')" class="mt-1" />
-            <x-input-error :messages="$errors->get('subjectIds.*')" class="mt-1" />
+
+            @if ($subjectMode === 'catalog')
+                <div>
+                    <x-input-label value="المادة" />
+                    <select wire:model="subjectId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        <option value="">اختر مادة</option>
+                        @foreach ($catalogSubjects as $subject)
+                            <option value="{{ $subject->id }}">
+                                {{ $subject->grade?->stage?->name }} / {{ $subject->grade?->name }} / {{ $subject->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <x-input-error :messages="$errors->get('subjectId')" class="mt-1" />
+                    <x-input-error :messages="$errors->get('subject_id')" class="mt-1" />
+                </div>
+            @else
+                <div>
+                    <x-input-label value="الصف" />
+                    <select wire:model="gradeId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        <option value="">اختر الصف</option>
+                        @foreach ($grades as $grade)
+                            <option value="{{ $grade->id }}">{{ $grade->stage?->name }} — {{ $grade->name }}</option>
+                        @endforeach
+                    </select>
+                    <x-input-error :messages="$errors->get('gradeId')" class="mt-1" />
+                    <x-input-error :messages="$errors->get('grade_id')" class="mt-1" />
+                </div>
+                <div>
+                    <x-input-label value="اسم المادة" />
+                    <x-text-input wire:model="subjectName" class="mt-1 block w-full" placeholder="مثال: رياضيات" />
+                    <x-input-error :messages="$errors->get('subjectName')" class="mt-1" />
+                    <x-input-error :messages="$errors->get('subject_name')" class="mt-1" />
+                </div>
+            @endif
         </div>
+
         <label class="flex items-start gap-2 text-sm">
             <input type="checkbox" wire:model="isPubliclyVisible" class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
             <span>
                 أظهر صفحتي في كتالوج المدرسين للعامة
-                <span class="block text-xs text-gray-500">يلزم: نبذة أو عنوان + رقم فودافون + مادة واحدة على الأقل</span>
+                <span class="block text-xs text-gray-500">يلزم: نبذة أو عنوان + رقم فودافون + مادتك</span>
             </span>
         </label>
         <x-input-error :messages="$errors->get('isPubliclyVisible')" class="mt-1" />

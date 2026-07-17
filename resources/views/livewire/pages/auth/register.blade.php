@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Modules\Academic\Models\Grade;
 use App\Modules\Academic\Models\Subject;
 use App\Modules\Identity\Services\RegistrationService;
 use App\Modules\Identity\Services\TeacherCatalogService;
@@ -39,8 +40,13 @@ new #[Layout('layouts.guest')] class extends Component
 
     public bool $isPubliclyVisible = false;
 
-    /** @var list<int|string> */
-    public array $subjectIds = [];
+    public string $subjectMode = 'catalog';
+
+    public ?int $subjectId = null;
+
+    public ?int $gradeId = null;
+
+    public string $subjectName = '';
 
     public function register(
         RegistrationService $registration,
@@ -62,9 +68,15 @@ new #[Layout('layouts.guest')] class extends Component
                 'vodafoneCashNumber' => ['nullable', 'string', 'max:32'],
                 'paymentInstructions' => ['nullable', 'string', 'max:2000'],
                 'isPubliclyVisible' => ['boolean'],
-                'subjectIds' => ['array'],
-                'subjectIds.*' => ['integer', 'exists:subjects,id'],
+                'subjectMode' => ['required', 'in:catalog,custom'],
             ]);
+
+            if ($this->subjectMode === 'catalog') {
+                $rules['subjectId'] = ['required', 'exists:subjects,id'];
+            } else {
+                $rules['gradeId'] = ['required', 'exists:grades,id'];
+                $rules['subjectName'] = ['required', 'string', 'max:255'];
+            }
         }
 
         $validated = $this->validate($rules);
@@ -83,7 +95,10 @@ new #[Layout('layouts.guest')] class extends Component
             $payload['vodafone_cash_number'] = $this->vodafoneCashNumber !== '' ? $this->vodafoneCashNumber : null;
             $payload['payment_instructions'] = $this->paymentInstructions !== '' ? $this->paymentInstructions : null;
             $payload['is_publicly_visible'] = $this->isPubliclyVisible;
-            $payload['subject_ids'] = array_map('intval', $this->subjectIds);
+            $payload['subject_mode'] = $this->subjectMode;
+            $payload['subject_id'] = $this->subjectId;
+            $payload['grade_id'] = $this->gradeId;
+            $payload['subject_name'] = $this->subjectName !== '' ? $this->subjectName : null;
         }
 
         $user = $registration->register($payload);
@@ -133,7 +148,7 @@ new #[Layout('layouts.guest')] class extends Component
             </select>
             <x-input-error :messages="$errors->get('role')" class="mt-2" />
             <p class="mt-2 text-sm text-gray-500">
-                الحساب يتفعّل فورًا. المدرس يدير طلابه والدفع من مكتبه.
+                الحساب يتفعّل فورًا. المدرس له مادة واحدة يحدّدها هنا أو يعدّلها لاحقًا من البروفايل.
                 @if ($join !== '')
                     بعد التسجيل هنرسل طلب انضمام للمدرس الذي اخترته.
                 @endif
@@ -142,7 +157,7 @@ new #[Layout('layouts.guest')] class extends Component
 
         @if ($role === 'teacher')
             <div class="mt-4 space-y-4 rounded-md border border-teal-100 bg-teal-50/50 p-4">
-                <p class="text-sm font-medium text-teal-900">بيانات المدرس (تقدر تكمّلها لاحقًا من البروفايل)</p>
+                <p class="text-sm font-medium text-teal-900">بيانات المدرس</p>
                 <div>
                     <x-input-label for="headline" value="تخصص / عنوان قصير" />
                     <x-text-input wire:model="headline" id="headline" class="block mt-1 w-full" placeholder="مدرس فيزياء — أولى ثانوي" />
@@ -159,17 +174,52 @@ new #[Layout('layouts.guest')] class extends Component
                     <x-input-label for="paymentInstructions" value="تعليمات الدفع" />
                     <textarea wire:model="paymentInstructions" id="paymentInstructions" rows="2" class="block mt-1 w-full rounded-md border-gray-300 shadow-sm" placeholder="الدفع نهاية الشهر كاش أو فودافون باسم المدرس"></textarea>
                 </div>
-                <div>
-                    <x-input-label value="المواد" />
-                    <div class="mt-2 max-h-40 space-y-2 overflow-y-auto rounded-md border border-gray-200 bg-white p-3">
-                        @foreach (\App\Modules\Academic\Models\Subject::query()->where('is_active', true)->with('grade')->orderBy('name')->get() as $subject)
-                            <label class="flex items-center gap-2 text-sm">
-                                <input type="checkbox" wire:model="subjectIds" value="{{ $subject->id }}" class="rounded border-gray-300 text-indigo-600">
-                                <span>{{ $subject->name }}@if($subject->grade) — {{ $subject->grade->name }}@endif</span>
-                            </label>
-                        @endforeach
+
+                <div class="space-y-3 rounded-md border border-white bg-white/80 p-3">
+                    <p class="text-sm font-medium text-teal-950">مادتك (واحدة فقط)</p>
+                    <div class="flex flex-wrap gap-4 text-sm">
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" wire:model.live="subjectMode" value="catalog" class="text-teal-700">
+                            من كتالوج السنتر
+                        </label>
+                        <label class="inline-flex items-center gap-2">
+                            <input type="radio" wire:model.live="subjectMode" value="custom" class="text-teal-700">
+                            أكتب اسم مادتي
+                        </label>
                     </div>
+
+                    @if ($subjectMode === 'catalog')
+                        <div>
+                            <x-input-label value="اختر المادة" />
+                            <select wire:model="subjectId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <option value="">—</option>
+                                @foreach (Subject::query()->where('is_active', true)->where('is_custom', false)->with('grade.stage')->orderBy('name')->get() as $subject)
+                                    <option value="{{ $subject->id }}">
+                                        {{ $subject->grade?->stage?->name }} / {{ $subject->grade?->name }} / {{ $subject->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('subjectId')" class="mt-1" />
+                        </div>
+                    @else
+                        <div>
+                            <x-input-label value="الصف" />
+                            <select wire:model="gradeId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <option value="">—</option>
+                                @foreach (Grade::query()->where('is_active', true)->with('stage')->orderBy('ordering')->get() as $grade)
+                                    <option value="{{ $grade->id }}">{{ $grade->stage?->name }} — {{ $grade->name }}</option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('gradeId')" class="mt-1" />
+                        </div>
+                        <div>
+                            <x-input-label value="اسم المادة" />
+                            <x-text-input wire:model="subjectName" class="mt-1 block w-full" placeholder="رياضيات" />
+                            <x-input-error :messages="$errors->get('subjectName')" class="mt-1" />
+                        </div>
+                    @endif
                 </div>
+
                 <label class="flex items-start gap-2 text-sm">
                     <input type="checkbox" wire:model="isPubliclyVisible" class="mt-1 rounded border-gray-300 text-indigo-600">
                     <span>أظهر صفحتي في كتالوج المدرسين الآن</span>

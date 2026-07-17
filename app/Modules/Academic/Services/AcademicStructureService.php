@@ -77,7 +77,73 @@ class AcademicStructureService
             'description' => $data['description'] ?? null,
             'ordering' => $data['ordering'] ?? ((int) $grade->subjects()->max('ordering') + 1),
             'is_active' => $data['is_active'] ?? true,
+            'created_by' => $data['created_by'] ?? null,
+            'is_custom' => (bool) ($data['is_custom'] ?? false),
         ]);
+    }
+
+    /**
+     * المدرس يختار صفًا وينشئ مادته إن لم تكن في الكتالوج، مع وحدة افتراضية وربط تلقائي.
+     *
+     * @param  array{name: string, description?: string|null, unit_name?: string|null}  $data
+     */
+    public function createSubjectForTeacher(User $teacher, Grade $grade, array $data): Subject
+    {
+        $this->assertActiveTeacher($teacher);
+
+        if (! $grade->is_active) {
+            throw ValidationException::withMessages([
+                'grade_id' => 'الصف غير نشط.',
+            ]);
+        }
+
+        $name = trim($data['name'] ?? '');
+        if ($name === '') {
+            throw ValidationException::withMessages([
+                'name' => 'اسم المادة مطلوب.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($teacher, $grade, $data, $name) {
+            $subject = $this->createSubject($grade, [
+                'name' => $name,
+                'description' => $data['description'] ?? null,
+                'created_by' => $teacher->id,
+                'is_custom' => true,
+            ]);
+
+            $this->createUnit($subject, [
+                'name' => ($data['unit_name'] ?? null) ?: 'الوحدة الأولى',
+            ]);
+
+            $this->assignTeacherToSubject($teacher, $subject);
+
+            return $subject->load(['grade.stage', 'units']);
+        });
+    }
+
+    /**
+     * مواد الكتالوج العامة + المواد المخصصة التي أنشأها المدرس.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, Subject>
+     */
+    public function selectableSubjectsForTeacher(User $teacher)
+    {
+        $this->assertActiveTeacher($teacher);
+
+        return Subject::query()
+            ->with(['grade.stage'])
+            ->where('is_active', true)
+            ->where(function ($q) use ($teacher) {
+                $q->where('is_custom', false)
+                    ->orWhere(function ($inner) use ($teacher) {
+                        $inner->where('is_custom', true)
+                            ->where('created_by', $teacher->id);
+                    });
+            })
+            ->orderBy('is_custom')
+            ->orderBy('ordering')
+            ->get();
     }
 
     public function updateSubject(Subject $subject, array $data): Subject

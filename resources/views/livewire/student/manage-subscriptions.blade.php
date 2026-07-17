@@ -5,6 +5,15 @@
         </div>
     @endif
 
+    <div class="mb-4 rounded-md border border-teal-200 bg-teal-50/60 p-3 text-sm text-teal-950">
+        الدفع للمدرس:
+        <strong>كاش في السنتر</strong> (المدرس يسجّله)، أو
+        <strong>فودافون كاش من ولي الأمر</strong> لرقم المدرس.
+        @unless ($studentVodafoneEnabled)
+            حساب الطالب لا يرسل إثبات فودافون.
+        @endunless
+    </div>
+
     <div class="space-y-6">
         <div>
             <h4 class="font-medium mb-3">خطط الاشتراك المتاحة</h4>
@@ -57,16 +66,18 @@
                                 <x-secondary-button wire:click="startPayment({{ $subscription->id }})">إرسال إثبات فودافون</x-secondary-button>
                             @elseif ($latestPayment?->isPending())
                                 <span class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">بانتظار المراجعة</span>
+                            @elseif ($subscription->status === \App\Enums\SubscriptionStatus::PendingPayment)
+                                <span class="text-sm text-slate-600">انتظر تسجيل الكاش من المدرس أو دفع ولي الأمر</span>
                             @endif
                         </div>
 
                         @if ($subscription->status === \App\Enums\SubscriptionStatus::PendingPayment && ! empty($instructions[$subscription->id]))
                             <div class="bg-slate-50 border rounded-md p-3 text-sm text-gray-700 space-y-1">
-                                <div class="font-medium">تعليمات التحويل لفودافون كاش</div>
+                                <div class="font-medium">بيانات التحويل لولي الأمر (فودافون كاش المدرس)</div>
                                 @if ($instructions[$subscription->id]['vodafone_cash_number'])
                                     <div>رقم المحفظة: <span class="font-mono font-semibold">{{ $instructions[$subscription->id]['vodafone_cash_number'] }}</span></div>
                                 @else
-                                    <div class="text-amber-700">المدرس لم يضبط رقم المحفظة بعد — تواصل معه.</div>
+                                    <div class="text-amber-700">المدرس لم يضبط رقم المحفظة بعد.</div>
                                 @endif
                                 @if ($instructions[$subscription->id]['payment_instructions'])
                                     <div class="whitespace-pre-line">{{ $instructions[$subscription->id]['payment_instructions'] }}</div>
@@ -74,7 +85,7 @@
                             </div>
                         @endif
 
-                        @if ($payingSubscriptionId === $subscription->id)
+                        @if ($studentVodafoneEnabled && $payingSubscriptionId === $subscription->id)
                             <div class="border-t pt-4 space-y-3">
                                 <div>
                                     <x-input-label for="externalReference" value="رقم العملية" />

@@ -37,9 +37,10 @@ Route::middleware(['auth', 'account.active', 'role:admin'])
         Route::view('dashboard', 'panels.admin.dashboard')->name('dashboard');
         Route::view('academic', 'panels.admin.academic')->name('academic');
         Route::view('payments', 'panels.admin.payments')->name('payments');
+        Route::view('platform', 'panels.admin.platform')->name('platform');
     });
 
-Route::middleware(['auth', 'account.active', 'role:teacher'])
+Route::middleware(['auth', 'account.active', 'role:teacher', 'platform.access'])
     ->prefix('teacher')
     ->name('teacher.')
     ->group(function () {
@@ -51,6 +52,7 @@ Route::middleware(['auth', 'account.active', 'role:teacher'])
         Route::view('lessons', 'panels.teacher.lessons')->name('lessons');
         Route::view('exams', 'panels.teacher.exams')->name('exams');
         Route::view('payments', 'panels.teacher.payments')->name('payments');
+        Route::view('platform', 'panels.teacher.platform')->name('platform');
     });
 
 Route::middleware(['auth', 'account.active', 'role:student'])

@@ -25,17 +25,23 @@ class ManageSubscriptions extends Component
     {
         $plan = SubscriptionPlan::query()->where('is_active', true)->findOrFail($planId);
         $enrollment->enrollStudent(auth()->user(), $plan);
-        session()->flash('status', 'تم إنشاء الاشتراك. أكمل التحويل ثم أرسل الإثبات.');
+        session()->flash('status', 'تم إنشاء الاشتراك. ادفع كاش عند المدرس أو اطلب من ولي الأمر التحويل فودافون كاش.');
     }
 
     public function startPayment(int $subscriptionId, StudentAccountService $accounts): void
     {
+        if (! config('payments.student_vodafone_enabled')) {
+            session()->flash('status', 'فودافون كاش للمدرس يتم من حساب ولي الأمر فقط.');
+
+            return;
+        }
+
         $subscription = Subscription::query()
             ->where('student_id', auth()->id())
             ->where('status', SubscriptionStatus::PendingPayment)
             ->findOrFail($subscriptionId);
 
-        if (! $accounts->canSubmitProof($subscription)) {
+        if (! $accounts->studentCanSubmitVodafone($subscription)) {
             session()->flash('status', 'يوجد إثبات قيد المراجعة بالفعل.');
 
             return;
@@ -87,7 +93,7 @@ class ManageSubscriptions extends Component
         $instructions = [];
         $canSubmit = [];
         foreach ($subscriptions as $subscription) {
-            $canSubmit[$subscription->id] = $accounts->canSubmitProof($subscription);
+            $canSubmit[$subscription->id] = $accounts->studentCanSubmitVodafone($subscription);
             if ($subscription->status === SubscriptionStatus::PendingPayment) {
                 $instructions[$subscription->id] = $payments->paymentInstructionsForSubscription($subscription);
             }
@@ -98,6 +104,7 @@ class ManageSubscriptions extends Component
             'subscriptions' => $subscriptions,
             'instructions' => $instructions,
             'canSubmit' => $canSubmit,
+            'studentVodafoneEnabled' => (bool) config('payments.student_vodafone_enabled'),
         ]);
     }
 }

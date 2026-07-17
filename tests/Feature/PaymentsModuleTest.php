@@ -50,6 +50,8 @@ class PaymentsModuleTest extends TestCase
             AcademicStructureSeeder::class,
         ]);
 
+        config(['payments.student_vodafone_enabled' => true]);
+
         $this->teacher = User::factory()->create();
         $this->teacher->assignRole(UserRole::Teacher);
 

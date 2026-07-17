@@ -25,14 +25,16 @@ new class extends Component
             UserRole::Admin => [
                 ['label' => 'لوحة الإدارة', 'route' => 'admin.dashboard', 'active' => request()->routeIs('admin.dashboard')],
                 ['label' => 'الهيكل الأكاديمي', 'route' => 'admin.academic', 'active' => request()->routeIs('admin.academic')],
-                ['label' => 'المدفوعات', 'route' => 'admin.payments', 'active' => request()->routeIs('admin.payments')],
+                ['label' => 'مدفوعات الطلاب', 'route' => 'admin.payments', 'active' => request()->routeIs('admin.payments')],
+                ['label' => 'اشتراك المنصة', 'route' => 'admin.platform', 'active' => request()->routeIs('admin.platform')],
             ],
             UserRole::Teacher => [
                 ['label' => 'المكتب', 'route' => 'teacher.dashboard', 'active' => request()->routeIs('teacher.dashboard')],
                 ['label' => 'الطلاب', 'route' => 'teacher.students', 'active' => request()->routeIs('teacher.students*')],
                 ['label' => 'الدروس', 'route' => 'teacher.lessons', 'active' => request()->routeIs('teacher.lessons')],
                 ['label' => 'الامتحانات', 'route' => 'teacher.exams', 'active' => request()->routeIs('teacher.exams')],
-                ['label' => 'المدفوعات', 'route' => 'teacher.payments', 'active' => request()->routeIs('teacher.payments')],
+                ['label' => 'مدفوعات الطلاب', 'route' => 'teacher.payments', 'active' => request()->routeIs('teacher.payments')],
+                ['label' => 'اشتراك المنصة', 'route' => 'teacher.platform', 'active' => request()->routeIs('teacher.platform')],
             ],
             UserRole::Student => [
                 ['label' => 'لوحتي', 'route' => 'student.dashboard', 'active' => request()->routeIs('student.dashboard')],
