@@ -88,6 +88,16 @@
             </div>
 
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 border-b">
+                    <h3 class="font-medium">ربط ولي أمر بطالب</h3>
+                    <p class="text-sm text-gray-500 mt-1">لطلاب مجموعتك فقط — الربط ينشط فورًا.</p>
+                </div>
+                <div class="p-6">
+                    <livewire:teacher.link-parent-to-student />
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
                     <h3 class="font-medium mb-3">طلابك الحاليون</h3>
                     <ul class="space-y-2">

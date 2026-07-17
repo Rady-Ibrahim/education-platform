@@ -40,7 +40,7 @@ class TeacherStudentService
                 'status' => UserStatus::Active,
                 'approved_at' => now(),
                 'approved_by' => $teacher->id,
-                'student_code' => $this->generateStudentCode(),
+                'student_code' => app(StudentCodeService::class)->generate(),
                 'email_verified_at' => now(),
             ]);
 
@@ -55,14 +55,5 @@ class TeacherStudentService
                 'plain_password' => $plainPassword,
             ];
         });
-    }
-
-    private function generateStudentCode(): string
-    {
-        do {
-            $code = 'STU-'.now()->format('y').'-'.Str::upper(Str::random(5));
-        } while (User::query()->where('student_code', $code)->exists());
-
-        return $code;
     }
 }

@@ -101,13 +101,69 @@ class DashboardReportService
     }
 
     /**
-     * @return array{unread_notifications: int}
+     * @return array{
+     *     unread_notifications: int,
+     *     children_count: int,
+     *     children: list<array{
+     *         id: int,
+     *         name: string,
+     *         student_code: string|null,
+     *         active_subscriptions: int,
+     *         pending_subscriptions: int,
+     *         completed_lessons: int,
+     *         average_exam_score: float|null,
+     *         pending_payments: int
+     *     }>
+     * }
      */
     public function forParent(User $parent): array
     {
+        $children = $parent->children()
+            ->wherePivot('status', \App\Enums\ParentLinkStatus::Active->value)
+            ->get();
+
+        $childStats = [];
+
+        foreach ($children as $child) {
+            $studentStats = $this->forStudent($child);
+            $childStats[] = [
+                'id' => $child->id,
+                'name' => $child->name,
+                'student_code' => $child->student_code,
+                'active_subscriptions' => $studentStats['active_subscriptions'],
+                'pending_subscriptions' => $studentStats['pending_subscriptions'],
+                'completed_lessons' => $studentStats['completed_lessons'],
+                'average_exam_score' => $this->averageAttemptPercentForStudent($child),
+                'pending_payments' => Payment::query()
+                    ->where('student_id', $child->id)
+                    ->where('status', PaymentStatus::PendingReview)
+                    ->count(),
+            ];
+        }
+
         return [
             'unread_notifications' => $parent->unreadNotifications()->count(),
+            'children_count' => $children->count(),
+            'children' => $childStats,
         ];
+    }
+
+    private function averageAttemptPercentForStudent(User $student): ?float
+    {
+        $attempts = ExamAttempt::query()
+            ->where('student_id', $student->id)
+            ->whereNotNull('max_score')
+            ->where('max_score', '>', 0)
+            ->whereNotNull('score')
+            ->get(['score', 'max_score']);
+
+        if ($attempts->isEmpty()) {
+            return null;
+        }
+
+        $avg = $attempts->avg(fn (ExamAttempt $a) => ((float) $a->score / (float) $a->max_score) * 100);
+
+        return round((float) $avg, 1);
     }
 
     private function averageAttemptPercent(): ?float

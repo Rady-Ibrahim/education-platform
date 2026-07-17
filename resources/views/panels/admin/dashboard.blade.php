@@ -51,10 +51,20 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 border-b">
                     <h3 class="font-medium text-gray-900">طلبات الموافقة على الحسابات</h3>
-                    <p class="text-sm text-gray-500 mt-1">طلاب ومدرسون سجّلوا بأنفسهم وينتظروا التفعيل.</p>
+                    <p class="text-sm text-gray-500 mt-1">طلاب ومدرسون وأولياء أمور سجّلوا بأنفسهم وينتظروا التفعيل.</p>
                 </div>
                 <div class="p-6">
                     <livewire:admin.pending-approvals />
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 border-b">
+                    <h3 class="font-medium">ربط ولي أمر بطالب</h3>
+                    <p class="text-sm text-gray-500 mt-1">ربط مباشر نشط بدون انتظار موافقة الطالب.</p>
+                </div>
+                <div class="p-6">
+                    <livewire:admin.link-parent-student />
                 </div>
             </div>
         </div>

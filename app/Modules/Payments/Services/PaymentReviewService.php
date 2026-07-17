@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Models\User;
 use App\Modules\Payments\Models\Payment;
 use App\Modules\Notifications\Services\NotificationService;
+use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -48,6 +49,12 @@ class PaymentReviewService
         });
 
         $this->notifications->notifyPaymentConfirmed($confirmed);
+        AuditLogger::payment('confirmed', [
+            'payment_id' => $confirmed->id,
+            'student_id' => $confirmed->student_id,
+            'reviewer_id' => $reviewer->id,
+            'amount' => (float) $confirmed->amount,
+        ]);
 
         return $confirmed;
     }
@@ -71,6 +78,12 @@ class PaymentReviewService
 
         $rejected = $payment->fresh();
         $this->notifications->notifyPaymentRejected($rejected);
+        AuditLogger::payment('rejected', [
+            'payment_id' => $rejected->id,
+            'student_id' => $rejected->student_id,
+            'reviewer_id' => $reviewer->id,
+            'reason' => $reason,
+        ]);
 
         return $rejected;
     }

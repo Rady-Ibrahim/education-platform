@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use App\Support\AuditLogger;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
@@ -32,6 +33,7 @@ class LoginForm extends Form
 
         if (! Auth::attempt($this->only(['email', 'password']), $this->remember)) {
             RateLimiter::hit($this->throttleKey());
+            AuditLogger::authFailed($this->email, ['ip' => request()->ip()]);
 
             throw ValidationException::withMessages([
                 'form.email' => trans('auth.failed'),

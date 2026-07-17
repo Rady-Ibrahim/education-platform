@@ -20,8 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->appendToGroup('web', [
             \App\Http\Middleware\EnsureAccountIsActive::class,
+            \App\Http\Middleware\ForceHttps::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Sentry is wired automatically when sentry/sentry-laravel is installed + DSN set.
     })->create();

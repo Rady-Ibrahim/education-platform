@@ -7,6 +7,7 @@ use App\Enums\UserStatus;
 use App\Modules\Academic\Models\Branch;
 use App\Modules\Academic\Models\Grade;
 use App\Modules\Academic\Models\Subject;
+use App\Modules\Identity\Models\ParentStudentLink;
 use App\Modules\Identity\Models\TeacherJoinRequest;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -86,6 +87,30 @@ class User extends Authenticatable
         return $this->belongsToMany(self::class, 'teacher_student', 'student_id', 'teacher_id')
             ->withPivot('joined_at')
             ->withTimestamps();
+    }
+
+    public function children(): BelongsToMany
+    {
+        return $this->belongsToMany(self::class, 'parent_student', 'parent_id', 'student_id')
+            ->withPivot(['status', 'relationship', 'linked_by', 'approved_by', 'approved_at', 'message'])
+            ->withTimestamps();
+    }
+
+    public function parents(): BelongsToMany
+    {
+        return $this->belongsToMany(self::class, 'parent_student', 'student_id', 'parent_id')
+            ->withPivot(['status', 'relationship', 'linked_by', 'approved_by', 'approved_at', 'message'])
+            ->withTimestamps();
+    }
+
+    public function parentLinksAsParent(): HasMany
+    {
+        return $this->hasMany(ParentStudentLink::class, 'parent_id');
+    }
+
+    public function parentLinksAsStudent(): HasMany
+    {
+        return $this->hasMany(ParentStudentLink::class, 'student_id');
     }
 
     public function joinRequestsAsStudent(): HasMany

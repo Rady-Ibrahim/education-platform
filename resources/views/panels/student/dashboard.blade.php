@@ -36,6 +36,14 @@
                 </div>
             </div>
 
+            @if (auth()->user()->student_code)
+                <div class="bg-indigo-50 border border-indigo-100 shadow-sm sm:rounded-lg p-5">
+                    <div class="text-sm text-indigo-700">كود الطالب لولي الأمر</div>
+                    <div class="text-2xl font-mono font-semibold mt-1 text-indigo-900">{{ auth()->user()->student_code }}</div>
+                    <p class="text-xs text-indigo-600 mt-1">شارك هذا الكود مع ولي أمرك ليربط حسابه بحسابك.</p>
+                </div>
+            @endif
+
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
                     <h3 class="font-medium mb-3">صفك الدراسي</h3>
@@ -56,6 +64,16 @@
                 </div>
                 <div class="p-6">
                     <livewire:student.request-teacher-join />
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 border-b">
+                    <h3 class="font-medium">أولياء الأمور</h3>
+                    <p class="text-sm text-gray-500 mt-1">وافق على طلبات الربط أو ألغِ الربط الحالي.</p>
+                </div>
+                <div class="p-6">
+                    <livewire:student.parent-link-requests />
                 </div>
             </div>
 

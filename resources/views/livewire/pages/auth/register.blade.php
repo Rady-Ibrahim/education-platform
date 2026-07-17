@@ -27,7 +27,7 @@ new #[Layout('layouts.guest')] class extends Component
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:20', 'unique:users,phone'],
-            'role' => ['required', 'in:student,teacher'],
+            'role' => ['required', 'in:student,teacher,parent'],
             'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -64,9 +64,10 @@ new #[Layout('layouts.guest')] class extends Component
             <select wire:model="role" id="role" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
                 <option value="student">طالب</option>
                 <option value="teacher">مدرس</option>
+                <option value="parent">ولي أمر</option>
             </select>
             <x-input-error :messages="$errors->get('role')" class="mt-2" />
-            <p class="mt-2 text-sm text-gray-500">بعد التسجيل ينتظر حسابك موافقة الإدارة قبل الدخول للمنصة.</p>
+            <p class="mt-2 text-sm text-gray-500">بعد التسجيل ينتظر حسابك موافقة الإدارة قبل الدخول للمنصة. ولي الأمر يربط أبناءه لاحقًا بكود الطالب.</p>
         </div>
 
         <div class="mt-4">

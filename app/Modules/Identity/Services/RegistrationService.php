@@ -19,23 +19,29 @@ class RegistrationService
     {
         $role = UserRole::from($data['role']);
 
-        if (! in_array($role, [UserRole::Student, UserRole::Teacher], true)) {
+        if (! in_array($role, [UserRole::Student, UserRole::Teacher, UserRole::Parent], true)) {
             throw ValidationException::withMessages([
-                'role' => 'يمكن التسجيل كطالب أو مدرس فقط.',
+                'role' => 'يمكن التسجيل كطالب أو مدرس أو ولي أمر فقط.',
             ]);
         }
 
         return DB::transaction(function () use ($data, $role) {
             $branch = Branch::defaultBranch();
 
-            $user = User::query()->create([
+            $payload = [
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'phone' => ($data['phone'] ?? null) ?: null,
                 'password' => $data['password'],
                 'branch_id' => $branch?->id,
                 'status' => UserStatus::PendingAdmin,
-            ]);
+            ];
+
+            if ($role === UserRole::Student) {
+                $payload['student_code'] = app(StudentCodeService::class)->generate();
+            }
+
+            $user = User::query()->create($payload);
 
             $user->assignRole($role);
             event(new Registered($user));
