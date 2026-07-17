@@ -12,6 +12,10 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
 
+        if (! $user->isActive()) {
+            return redirect()->route('account.pending');
+        }
+
         foreach (UserRole::cases() as $role) {
             if ($user->hasRole($role->value)) {
                 return redirect()->route($role->homeRoute());

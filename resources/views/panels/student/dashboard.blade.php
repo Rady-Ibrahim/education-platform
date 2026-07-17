@@ -1,15 +1,49 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            لوحة الطالب
-        </h2>
+        <div class="flex items-center justify-between">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">لوحة الطالب</h2>
+            <div class="flex gap-4 text-sm">
+                <a href="{{ route('student.lessons') }}" class="text-indigo-600 hover:text-indigo-800" wire:navigate>الدروس</a>
+                <a href="{{ route('student.exams') }}" class="text-indigo-600 hover:text-indigo-800" wire:navigate>الامتحانات</a>
+            </div>
+        </div>
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    مرحبًا {{ auth()->user()->name }} — دروسك وامتحاناتك هتظهر هنا.
+                <div class="p-6">
+                    <h3 class="font-medium mb-3">صفك الدراسي</h3>
+                    <ul class="space-y-2">
+                        @forelse (auth()->user()->grades as $grade)
+                            <li class="text-sm text-gray-700">{{ $grade->stage?->name }} / {{ $grade->name }}</li>
+                        @empty
+                            <li class="text-sm text-gray-500">لسه متعيّنش على صف. الإدارة هتسجّلك قريب.</li>
+                        @endforelse
+                    </ul>
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 border-b">
+                    <h3 class="font-medium">طلب الانضمام لمدرس</h3>
+                    <p class="text-sm text-gray-500 mt-1">بعد موافقة الإدارة على حسابك، ابعت طلب للمدرس اللي عايز تنضم له وانتظر موافقته.</p>
+                </div>
+                <div class="p-6">
+                    <livewire:student.request-teacher-join />
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6">
+                    <h3 class="font-medium mb-3">مدرسوك</h3>
+                    <ul class="space-y-2">
+                        @forelse (auth()->user()->teachers as $teacher)
+                            <li class="text-sm text-gray-700">{{ $teacher->name }} — {{ $teacher->email }}</li>
+                        @empty
+                            <li class="text-sm text-gray-500">لسه منضمّتش لأي مدرس.</li>
+                        @endforelse
+                    </ul>
                 </div>
             </div>
         </div>

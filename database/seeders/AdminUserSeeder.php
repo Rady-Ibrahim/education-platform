@@ -3,10 +3,10 @@
 namespace Database\Seeders;
 
 use App\Enums\UserRole;
+use App\Enums\UserStatus;
 use App\Models\User;
 use App\Modules\Academic\Models\Branch;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class AdminUserSeeder extends Seeder
 {
@@ -20,7 +20,9 @@ class AdminUserSeeder extends Seeder
                 'name' => 'مدير النظام',
                 'phone' => '01000000000',
                 'branch_id' => $branch?->id,
-                'password' => Hash::make('password'),
+                'password' => 'password',
+                'status' => UserStatus::Active,
+                'approved_at' => now(),
                 'email_verified_at' => now(),
             ]
         );

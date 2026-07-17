@@ -38,6 +38,16 @@ class LoginForm extends Form
             ]);
         }
 
+        $user = Auth::user();
+
+        if ($user && $user->isSuspended()) {
+            Auth::logout();
+
+            throw ValidationException::withMessages([
+                'form.email' => 'تم إيقاف حسابك. تواصل مع الإدارة.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

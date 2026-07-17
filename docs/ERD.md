@@ -28,14 +28,48 @@
 |---|---|---|
 | id | bigint | PK |
 | name | string | |
-| email | string | unique (Breeze) |
-| phone | string nullable | unique — دخول بالهاتف في مرحلة لاحقة |
-| student_code | string nullable | unique — كود داخلي للطالب |
+| email | string | unique — **تسجيل الدخول بالإيميل** |
+| phone | string nullable | unique — تواصل فقط |
+| student_code | string nullable | unique |
 | branch_id | FK nullable | → branches |
-| created_by | FK nullable | → users (المدرس/الأدمن المنشئ) |
+| created_by | FK nullable | → users |
+| status | string | pending_admin / active / rejected / suspended |
+| approved_at / approved_by | | |
+| rejection_reason | text nullable | |
 | password | string | |
 | email_verified_at | timestamp nullable | |
 | softDeletes | | |
+
+### teacher_join_requests
+| العمود | ملاحظات |
+|---|---|
+| student_id, teacher_id | unique معًا |
+| status | pending / approved / rejected |
+| message, review_note, reviewed_at | |
+
+### teacher_student
+pivot انضمام فعلي بعد موافقة المدرس أو إضافة يدوية من المكتب
+
+### lessons / lesson_attachments / lesson_progress
+- Lesson: unit_id, created_by, title, type (text|video|mixed), body, bunny_video_id, ordering, is_published
+- Attachment: path, is_downloadable
+- Progress: student_id, percent, watched_seconds, is_completed
+- وصول الطالب: مرتبط بمدرس يدرّس المادة (+ اشتراك مدفوع لاحقًا)
+
+### questions / exams / exam_attempts / exam_answers
+- Question types: mcq, true_false, essay, fill_blank
+- exam_answers تُحفظ فورًا (autosave) عبر saved_at
+- Response للطالب أثناء الامتحان بدون correct_answer / is_correct
+
+### stages / grades / subjects / units
+- Stage 1──* Grade 1──* Subject 1──* Unit
+- كل مستوى: name, code, ordering, is_active, softDeletes
+
+### teacher_subject
+ربط معلم ↔ مادة (عزل محتوى المدرس)
+
+### student_grade
+تسجيل أكاديمي للطالب في صف (منفصل عن الاشتراك المدفوع)
 
 ### roles / permissions (Spatie)
 - أدوار: `admin`, `teacher`, `student`, `parent`
