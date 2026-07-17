@@ -5,6 +5,7 @@
             <div class="flex gap-4 text-sm">
                 <a href="{{ route('teacher.lessons') }}" class="text-indigo-600 hover:text-indigo-800" wire:navigate>الدروس</a>
                 <a href="{{ route('teacher.exams') }}" class="text-indigo-600 hover:text-indigo-800" wire:navigate>الامتحانات</a>
+                <a href="{{ route('teacher.payments') }}" class="text-indigo-600 hover:text-indigo-800" wire:navigate>المدفوعات</a>
             </div>
         </div>
     </x-slot>

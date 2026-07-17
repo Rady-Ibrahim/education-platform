@@ -24,6 +24,7 @@ Route::middleware(['auth', 'account.active', 'role:admin'])
     ->group(function () {
         Route::view('dashboard', 'panels.admin.dashboard')->name('dashboard');
         Route::view('academic', 'panels.admin.academic')->name('academic');
+        Route::view('payments', 'panels.admin.payments')->name('payments');
     });
 
 Route::middleware(['auth', 'account.active', 'role:teacher'])
@@ -33,6 +34,7 @@ Route::middleware(['auth', 'account.active', 'role:teacher'])
         Route::view('dashboard', 'panels.teacher.dashboard')->name('dashboard');
         Route::view('lessons', 'panels.teacher.lessons')->name('lessons');
         Route::view('exams', 'panels.teacher.exams')->name('exams');
+        Route::view('payments', 'panels.teacher.payments')->name('payments');
     });
 
 Route::middleware(['auth', 'account.active', 'role:student'])
@@ -42,6 +44,7 @@ Route::middleware(['auth', 'account.active', 'role:student'])
         Route::view('dashboard', 'panels.student.dashboard')->name('dashboard');
         Route::view('lessons', 'panels.student.lessons')->name('lessons');
         Route::view('exams', 'panels.student.exams')->name('exams');
+        Route::view('subscriptions', 'panels.student.subscriptions')->name('subscriptions');
     });
 
 Route::middleware(['auth', 'account.active', 'role:parent'])

@@ -21,10 +21,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Tests\Concerns\GrantsSubscriptionAccess;
 use Tests\TestCase;
 
 class ContentLessonsTest extends TestCase
 {
+    use GrantsSubscriptionAccess;
     use RefreshDatabase;
 
     private AcademicStructureService $academic;
@@ -79,6 +81,7 @@ class ContentLessonsTest extends TestCase
 
         $this->academic->assignTeacherToSubject($this->teacher, $this->subject);
         $this->teacher->students()->attach($this->student->id, ['joined_at' => now()]);
+        $this->grantActiveSubscription($this->student, $this->teacher, $this->subject);
     }
 
     public function test_teacher_can_create_text_lesson_on_assigned_subject(): void

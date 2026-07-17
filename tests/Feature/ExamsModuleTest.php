@@ -18,10 +18,12 @@ use Database\Seeders\BranchSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
+use Tests\Concerns\GrantsSubscriptionAccess;
 use Tests\TestCase;
 
 class ExamsModuleTest extends TestCase
 {
+    use GrantsSubscriptionAccess;
     use RefreshDatabase;
 
     private QuestionBankService $questions;
@@ -64,6 +66,7 @@ class ExamsModuleTest extends TestCase
         $this->subject = Subject::query()->firstOrFail();
         app(AcademicStructureService::class)->assignTeacherToSubject($this->teacher, $this->subject);
         $this->teacher->students()->attach($this->student->id, ['joined_at' => now()]);
+        $this->grantActiveSubscription($this->student, $this->teacher, $this->subject);
     }
 
     public function test_teacher_can_create_mcq_question(): void

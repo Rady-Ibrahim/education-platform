@@ -5,6 +5,9 @@
             <a href="{{ route('admin.academic') }}" class="text-sm text-indigo-600 hover:text-indigo-800" wire:navigate>
                 الهيكل الأكاديمي
             </a>
+            <a href="{{ route('admin.payments') }}" class="text-sm text-indigo-600 hover:text-indigo-800" wire:navigate>
+                المدفوعات
+            </a>
         </div>
     </x-slot>
 
