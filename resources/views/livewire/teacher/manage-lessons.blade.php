@@ -1,32 +1,33 @@
 <div class="space-y-6">
     @if (session('lesson_status'))
-        <div class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-md p-3">
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
             {{ session('lesson_status') }}
         </div>
     @endif
 
     @if ($subjects->isEmpty())
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-ink-muted">
             حدّد مادتك أولًا من
-            <a href="{{ route('profile') }}" class="text-brand-700 hover:underline" wire:navigate>البروفايل</a>
+            <a href="{{ route('profile') }}" class="link-brand" wire:navigate>البروفايل</a>
             (اختيار من الكتالوج أو كتابة اسم المادة)، بعدين ارجع هنا لإضافة الدروس.
         </p>
     @else
         @if ($subjects->count() === 1)
-            <p class="text-sm text-gray-600">
+            <p class="text-sm text-ink-muted">
                 مادتك:
-                <span class="font-medium text-gray-900">
+                <span class="font-semibold text-ink">
                     {{ $subjects->first()->grade?->stage?->name }} / {{ $subjects->first()->grade?->name }} / {{ $subjects->first()->name }}
                 </span>
                 —
-                <a href="{{ route('profile') }}" class="text-brand-700 hover:underline" wire:navigate>تعديل من البروفايل</a>
+                <a href="{{ route('profile') }}" class="link-brand" wire:navigate>تعديل من البروفايل</a>
             </p>
         @endif
-        <form wire:submit="save" class="space-y-4 border rounded-lg p-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <form wire:submit="save" class="space-y-5 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:p-5">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
                     <x-input-label value="المادة" />
-                    <select wire:model.live="subjectId" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                    <select wire:model.live="subjectId" class="mt-1.5 block w-full">
                         @foreach ($subjects as $subject)
                             <option value="{{ $subject->id }}">
                                 {{ $subject->grade?->stage?->name }} / {{ $subject->grade?->name }} / {{ $subject->name }}
@@ -36,7 +37,7 @@
                 </div>
                 <div>
                     <x-input-label value="الوحدة" />
-                    <select wire:model="unitId" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                    <select wire:model="unitId" class="mt-1.5 block w-full">
                         @foreach ($units as $unit)
                             <option value="{{ $unit->id }}">{{ $unit->name }}</option>
                         @endforeach
@@ -47,14 +48,14 @@
 
             <div>
                 <x-input-label value="عنوان الدرس" />
-                <x-text-input wire:model="title" class="mt-1 block w-full" />
+                <x-text-input wire:model="title" class="mt-1.5 block w-full" />
                 <x-input-error :messages="$errors->get('title')" />
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
                     <x-input-label value="النوع" />
-                    <select wire:model.live="type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                    <select wire:model.live="type" class="mt-1.5 block w-full">
                         @foreach ($types as $lessonType)
                             <option value="{{ $lessonType->value }}">{{ $lessonType->label() }}</option>
                         @endforeach
@@ -67,74 +68,118 @@
                     <p class="text-sm text-brand-900">سجّل حصة لايف برابط زوم أو جوجل ميت أو أي رابط اجتماع.</p>
                     <div>
                         <x-input-label value="رابط الحصة" />
-                        <x-text-input wire:model="meetingUrl" class="mt-1 block w-full" placeholder="https://zoom.us/j/..." />
+                        <x-text-input wire:model="meetingUrl" class="mt-1.5 block w-full" placeholder="https://zoom.us/j/..." />
                         <x-input-error :messages="$errors->get('meetingUrl')" class="mt-1" />
                         <x-input-error :messages="$errors->get('meeting_url')" class="mt-1" />
                     </div>
                     <div>
                         <x-input-label value="موعد الحصة (اختياري)" />
-                        <x-text-input wire:model="scheduledAt" type="datetime-local" class="mt-1 block w-full" />
+                        <x-text-input wire:model="scheduledAt" type="datetime-local" class="mt-1.5 block w-full" />
                         <x-input-error :messages="$errors->get('scheduledAt')" class="mt-1" />
                     </div>
                 </div>
             @endif
 
             @if (in_array($type, ['video', 'mixed'], true))
-                <div class="space-y-4 rounded-lg border border-brand-200 bg-brand-50/40 p-4">
-                    <div class="flex flex-wrap gap-3 text-sm">
-                        <label class="inline-flex items-center gap-2">
+                <div class="space-y-4 rounded-2xl border border-brand-200 bg-white p-4 sm:p-5">
+                    <div class="flex flex-wrap gap-2 text-sm">
+                        <label @class([
+                            'inline-flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 transition',
+                            'border-brand-600 bg-brand-50 text-brand-900' => $videoSource === 'upload',
+                            'border-slate-200 text-ink-muted hover:bg-slate-50' => $videoSource !== 'upload',
+                        ])>
                             <input type="radio" wire:model.live="videoSource" value="upload" class="text-brand-700">
                             رفع فيديو
                         </label>
-                        <label class="inline-flex items-center gap-2">
+                        <label @class([
+                            'inline-flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 transition',
+                            'border-brand-600 bg-brand-50 text-brand-900' => $videoSource === 'record',
+                            'border-slate-200 text-ink-muted hover:bg-slate-50' => $videoSource !== 'record',
+                        ])>
                             <input type="radio" wire:model.live="videoSource" value="record" class="text-brand-700">
-                            تسجيل الحصة من المنصة
+                            تسجيل الحصة
                         </label>
-                        <label class="inline-flex items-center gap-2">
+                        <label @class([
+                            'inline-flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 transition',
+                            'border-brand-600 bg-brand-50 text-brand-900' => $videoSource === 'manual',
+                            'border-slate-200 text-ink-muted hover:bg-slate-50' => $videoSource !== 'manual',
+                        ])>
                             <input type="radio" wire:model.live="videoSource" value="manual" class="text-brand-700">
                             لصق Bunny ID
                         </label>
                     </div>
 
                     @if (! $canUploadVideo)
-                        <p class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-2">
-                            الرفع/التسجيل يحتاج <code>BUNNY_STREAM_API_KEY</code> في الإعدادات. تقدر تلصق Video ID يدويًا كحل بديل.
-                        </p>
+                        <div class="space-y-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                            <p class="font-semibold">الرفع والتسجيل غير مفعّلين حاليًا</p>
+                            <p class="text-amber-900/90">
+                                أضف مفاتيح Bunny في ملف <code class="rounded bg-amber-100 px-1">.env</code> ثم نفّذ
+                                <code class="rounded bg-amber-100 px-1">php artisan config:clear</code>:
+                            </p>
+                            <ul class="list-inside list-disc space-y-1 text-xs text-amber-900/90 sm:text-sm">
+                                <li><code>BUNNY_LIBRARY_ID</code> — رقم مكتبة Stream</li>
+                                <li><code>BUNNY_TOKEN_AUTH_KEY</code> — مفتاح Token Authentication</li>
+                                <li><code>BUNNY_STREAM_API_KEY</code> — مفتاح API للرفع</li>
+                                <li><code>BUNNY_CDN_HOSTNAME</code> — (اختياري) لاستضافة التشغيل</li>
+                            </ul>
+                            <p class="text-xs text-amber-800">بديل مؤقت: اختر «لصق Bunny ID» بعد رفع الفيديو من لوحة Bunny مباشرة.</p>
+                        </div>
                     @endif
 
                     @if ($videoSource === 'upload')
                         <div>
                             <x-input-label value="ملف الفيديو" />
-                            <input type="file" wire:model="videoUpload" accept="video/*" class="mt-1 block w-full text-sm">
-                            <p class="mt-1 text-xs text-gray-500">الحد الأقصى {{ $maxUploadMb }} ميجابايت — يُرفع مباشرة إلى Bunny Stream.</p>
+                            <input type="file" wire:model="videoUpload" accept="video/*" class="mt-1.5 block w-full text-sm">
+                            <p class="mt-1 text-xs text-ink-muted">الحد الأقصى {{ $maxUploadMb }} ميجابايت — يُرفع مباشرة إلى Bunny Stream.</p>
                             <div wire:loading wire:target="videoUpload" class="mt-1 text-sm text-brand-700">جاري تجهيز الملف…</div>
                             <x-input-error :messages="$errors->get('videoUpload')" class="mt-1" />
                         </div>
                     @elseif ($videoSource === 'record')
-                        <div x-data="lessonRecorder()" class="space-y-3">
-                            <p class="text-sm text-gray-700">سجّل الشاشة أو الكاميرا من المتصفح، ثم ارفع التسجيل لـ Bunny.</p>
-                            <video x-ref="preview" class="w-full max-w-lg rounded-md bg-black aspect-video" muted playsinline></video>
-                            <div class="flex flex-wrap gap-2">
-                                <button type="button" @click="startCamera()" class="rounded-md bg-brand-700 px-3 py-1.5 text-sm text-white" :disabled="recording">كاميرا</button>
-                                <button type="button" @click="startScreen()" class="rounded-md bg-brand-700 px-3 py-1.5 text-sm text-white" :disabled="recording">شاشة + صوت</button>
-                                <button type="button" @click="stop()" class="rounded-md bg-red-600 px-3 py-1.5 text-sm text-white" x-show="recording" x-cloak>إيقاف ورفع</button>
+                        <div x-data="lessonRecorder()" class="space-y-4">
+                            <div class="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                    <h4 class="text-sm font-bold text-ink">استوديو التسجيل</h4>
+                                    <p class="mt-0.5 text-sm text-ink-muted">سجّل الشاشة أو الكاميرا من المتصفح، ثم ارفع لـ Bunny.</p>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" @click="startCamera()" class="btn-brand !px-3 !py-2 text-xs sm:text-sm" :disabled="recording">كاميرا</button>
+                                    <button type="button" @click="startScreen()" class="btn-brand !px-3 !py-2 text-xs sm:text-sm" :disabled="recording">شاشة + صوت</button>
+                                    <button type="button" @click="stop()" class="inline-flex items-center rounded-xl bg-rose-600 px-3 py-2 text-xs font-bold text-white sm:text-sm" x-show="recording" x-cloak>إيقاف ورفع</button>
+                                </div>
                             </div>
-                            <p class="text-xs text-gray-500" x-text="status"></p>
+
+                            <div class="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-panel">
+                                <div class="flex items-center justify-between border-b border-white/10 px-4 py-2 text-xs text-white/70">
+                                    <span x-show="recording" x-cloak class="inline-flex items-center gap-2 font-semibold text-rose-300">
+                                        <span class="h-2 w-2 animate-pulse rounded-full bg-rose-500"></span>
+                                        جاري التسجيل
+                                    </span>
+                                    <span x-show="! recording">معاينة</span>
+                                    <span x-text="status" class="truncate text-white/50"></span>
+                                </div>
+                                <video
+                                    x-ref="preview"
+                                    class="aspect-video w-full min-h-[280px] bg-black object-contain sm:min-h-[420px] lg:min-h-[520px]"
+                                    muted
+                                    playsinline
+                                ></video>
+                            </div>
+
                             <x-input-error :messages="$errors->get('videoUpload')" class="mt-1" />
                         </div>
                     @else
                         <div>
                             <x-input-label value="Bunny Video ID" />
-                            <x-text-input wire:model="bunnyVideoId" class="mt-1 block w-full" />
+                            <x-text-input wire:model="bunnyVideoId" class="mt-1.5 block w-full" dir="ltr" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
                             <x-input-error :messages="$errors->get('bunnyVideoId')" />
                             <x-input-error :messages="$errors->get('bunny_video_id')" />
                         </div>
                     @endif
 
                     @if ($bunnyVideoId !== '')
-                        <p class="text-sm text-green-800">
+                        <p class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
                             فيديو مرتبط:
-                            <span class="font-mono">{{ $bunnyVideoId }}</span>
+                            <span class="font-mono" dir="ltr">{{ $bunnyVideoId }}</span>
                         </p>
                     @endif
                     @if ($uploadStatus !== '')
@@ -145,7 +190,7 @@
 
             <div>
                 <x-input-label value="المحتوى النصي" />
-                <textarea wire:model="body" rows="4" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
+                <textarea wire:model="body" rows="4" class="mt-1.5 block w-full"></textarea>
             </div>
 
             <label class="inline-flex items-center gap-2 text-sm">
@@ -158,29 +203,29 @@
             </div>
         </form>
 
-        <div class="space-y-2">
-            <h4 class="font-medium">دروس الوحدة المختارة</h4>
+        <div class="space-y-3">
+            <h4 class="section-title">دروس الوحدة المختارة</h4>
             @forelse ($lessons as $lesson)
-                <div class="space-y-3 rounded-xl border border-slate-200 px-3 py-3">
+                <div class="space-y-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-soft">
                     <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <div class="text-sm">
-                        <span class="font-medium">{{ $lesson->title }}</span>
-                        <span class="text-gray-500">— {{ $lesson->type->label() }}</span>
-                        @if ($lesson->is_published)
-                            <span class="text-green-600">منشور</span>
-                        @else
-                            <span class="text-amber-600">مسودة</span>
-                        @endif
-                        @if ($lesson->attachments->isNotEmpty())
-                            <span class="text-xs text-ink-muted">({{ $lesson->attachments->count() }} مرفق)</span>
-                        @endif
-                    </div>
-                    <div class="flex gap-2">
-                        <x-secondary-button wire:click="togglePublish({{ $lesson->id }})">
-                            {{ $lesson->is_published ? 'إلغاء النشر' : 'نشر' }}
-                        </x-secondary-button>
-                        <x-danger-button wire:click="deleteLesson({{ $lesson->id }})">حذف</x-danger-button>
-                    </div>
+                        <div class="text-sm">
+                            <span class="font-bold text-ink">{{ $lesson->title }}</span>
+                            <span class="text-ink-muted">— {{ $lesson->type->label() }}</span>
+                            @if ($lesson->is_published)
+                                <span class="ms-1 text-emerald-600">منشور</span>
+                            @else
+                                <span class="ms-1 text-amber-600">مسودة</span>
+                            @endif
+                            @if ($lesson->attachments->isNotEmpty())
+                                <span class="text-xs text-ink-muted">({{ $lesson->attachments->count() }} مرفق)</span>
+                            @endif
+                        </div>
+                        <div class="flex gap-2">
+                            <x-secondary-button wire:click="togglePublish({{ $lesson->id }})">
+                                {{ $lesson->is_published ? 'إلغاء النشر' : 'نشر' }}
+                            </x-secondary-button>
+                            <x-danger-button wire:click="deleteLesson({{ $lesson->id }})">حذف</x-danger-button>
+                        </div>
                     </div>
 
                     @if ($lesson->attachments->isNotEmpty())
@@ -213,7 +258,7 @@
                     </div>
                 </div>
             @empty
-                <p class="text-sm text-gray-500">لا توجد دروس في هذه الوحدة بعد.</p>
+                <p class="text-sm text-ink-muted">لا توجد دروس في هذه الوحدة بعد.</p>
             @endforelse
         </div>
     @endif

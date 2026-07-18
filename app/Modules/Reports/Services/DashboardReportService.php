@@ -2,12 +2,14 @@
 
 namespace App\Modules\Reports\Services;
 
+use App\Enums\JoinRequestStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\SubscriptionStatus;
 use App\Enums\UserStatus;
 use App\Models\User;
 use App\Modules\Content\Models\LessonProgress;
 use App\Modules\Exams\Models\ExamAttempt;
+use App\Modules\Identity\Models\TeacherJoinRequest;
 use App\Modules\Payments\Models\Payment;
 use App\Modules\Payments\Models\Subscription;
 
@@ -52,6 +54,7 @@ class DashboardReportService
      *     confirmed_total: float,
      *     pending_payments: int,
      *     late_subscriptions: int,
+     *     pending_join_requests: int,
      *     average_exam_score: float|null
      * }
      */
@@ -73,6 +76,10 @@ class DashboardReportService
                 ->where('teacher_id', $teacher->id)
                 ->where('status', SubscriptionStatus::PendingPayment)
                 ->where('created_at', '<', now()->subDays(3))
+                ->count(),
+            'pending_join_requests' => TeacherJoinRequest::query()
+                ->where('teacher_id', $teacher->id)
+                ->where('status', JoinRequestStatus::Pending)
                 ->count(),
             'average_exam_score' => $this->averageAttemptPercentForTeacher($teacher),
         ];
