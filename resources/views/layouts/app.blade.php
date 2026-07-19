@@ -49,10 +49,16 @@
 
                                 <div class="min-w-0">
                                     <div class="truncate text-base font-bold tracking-tight text-brand-950 sm:text-lg">
-                                        مرحبًا، {{ auth()->user()->name }}
+                                        {{ auth()->user()->name }}
                                     </div>
-                                    <div class="hidden truncate text-xs text-ink-muted sm:block">
-                                        {{ config('app.name', 'سنتر') }}
+                                    <div class="mt-0.5 hidden truncate text-xs text-ink-muted sm:block">
+                                        {{ match (auth()->user()?->primaryRole()) {
+                                            \App\Enums\UserRole::Teacher => 'لوحة المدرس',
+                                            \App\Enums\UserRole::Student => 'لوحة الطالب',
+                                            \App\Enums\UserRole::Parent => 'لوحة ولي الأمر',
+                                            \App\Enums\UserRole::Admin => 'لوحة الإدارة',
+                                            default => config('app.name', 'سنتر'),
+                                        } }}
                                     </div>
                                 </div>
                             </div>

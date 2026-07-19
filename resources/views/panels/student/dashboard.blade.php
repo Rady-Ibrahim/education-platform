@@ -7,36 +7,36 @@
         $needsPay = $stats['pending_subscriptions'] > 0;
     @endphp
 
-    <x-panel-page title="لوحتي" subtitle="ثلاث حاجات بس: انضم لمدرسك، ادفع الاشتراك، اتعلم وحل الامتحانات.">
+    <x-panel-page title="لوحتي" subtitle="مسار واضح: الانضمام، الاشتراك، ثم الدروس والامتحانات.">
         <x-slot:actions>
             @if ($needsJoin)
                 <a href="{{ route('teachers.index') }}" class="btn-brand" wire:navigate>تصفّح المدرسين</a>
             @elseif ($needsPay)
-                <a href="{{ route('student.subscriptions') }}" class="btn-accent" wire:navigate>أكمل الدفع</a>
+                <a href="{{ route('student.subscriptions') }}" class="btn-accent" wire:navigate>إكمال الدفع</a>
             @else
-                <a href="{{ route('student.lessons') }}" class="btn-brand" wire:navigate>ابدأ التعلم</a>
+                <a href="{{ route('student.lessons') }}" class="btn-brand" wire:navigate>متابعة التعلم</a>
             @endif
         </x-slot:actions>
 
         <div class="dashboard-hero">
-            <div class="relative z-10 flex flex-wrap items-end justify-between gap-4">
+            <div class="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <div class="text-xs font-semibold text-white/70">مرحباً</div>
-                    <div class="mt-1 text-xl font-bold">{{ $user->name }}</div>
-                    <p class="mt-2 text-sm text-white/75">
+                    <div class="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">حساب الطالب</div>
+                    <h2 class="mt-2 text-xl font-bold tracking-tight sm:text-2xl">{{ $user->name }}</h2>
+                    <p class="mt-2 max-w-lg text-sm leading-6 text-white/75">
                         @if ($needsJoin)
-                            ابدأ بطلب الانضمام لمدرسك.
+                            ابدأ بطلب الانضمام لمدرسك أو سلّم كودك له لإضافتك.
                         @elseif ($needsPay)
-                            عندك اشتراك بانتظار الدفع — ولي الأمر يقدر يدفع فودافون كاش.
+                            يوجد اشتراك بانتظار الدفع. يمكن لولي الأمر التحويل عبر فودافون كاش.
                         @else
                             {{ $stats['active_subscriptions'] }} اشتراك نشط · {{ $stats['groups_count'] }} مجموعة
                         @endif
                     </p>
                 </div>
                 @if ($user->student_code)
-                    <div class="rounded-2xl bg-white/10 px-4 py-3 text-center backdrop-blur">
-                        <div class="text-[11px] font-semibold text-white/70">كود ولي الأمر</div>
-                        <div class="mt-1 font-mono text-2xl font-bold tracking-[0.2em]" dir="ltr">{{ $user->student_code }}</div>
+                    <div class="rounded-2xl bg-white/10 px-5 py-3.5 text-center ring-1 ring-white/15 backdrop-blur">
+                        <div class="text-[11px] font-semibold tracking-wide text-white/65">كود ولي الأمر</div>
+                        <div class="mt-1.5 font-mono text-2xl font-bold tracking-[0.22em]" dir="ltr">{{ $user->student_code }}</div>
                     </div>
                 @endif
             </div>
@@ -46,12 +46,12 @@
             <div class="attention-strip">
                 <span class="font-bold">مطلوب منك:</span>
                 @if ($needsPay)
-                    <a href="{{ route('student.subscriptions') }}" class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold underline-offset-2 hover:underline" wire:navigate>
-                        دفع / إثبات اشتراك ({{ $stats['pending_subscriptions'] }})
+                    <a href="{{ route('student.subscriptions') }}" class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold ring-1 ring-amber-200" wire:navigate>
+                        دفع الاشتراك ({{ $stats['pending_subscriptions'] }})
                     </a>
                 @endif
                 @if ($stats['unread_notifications'] > 0)
-                    <span class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold">
+                    <span class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold ring-1 ring-amber-200">
                         {{ $stats['unread_notifications'] }} إشعار جديد
                     </span>
                 @endif
@@ -59,53 +59,45 @@
         @endif
 
         <section>
-            <div class="mb-3">
-                <h2 class="section-title">مسارك</h2>
-                <p class="section-subtitle">اتبع الخطوات بالترتيب — من غير لف.</p>
+            <div class="section-head">
+                <div>
+                    <h2 class="section-title">المسار الدراسي</h2>
+                    <p class="section-subtitle">ثلاث خطوات فقط — بدون تعقيد.</p>
+                </div>
             </div>
             <div class="grid gap-3 sm:grid-cols-3">
-                <x-flow-step
-                    step="1"
-                    title="انضم لمدرس"
-                    description="اطلب الانضمام أو انتظر إضافة المدرس لك."
-                    :href="$needsJoin ? route('teachers.index') : route('student.dashboard')"
-                    :tone="$needsJoin ? 'warning' : 'success'"
-                />
-                <x-flow-step
-                    step="2"
-                    title="الاشتراك والدفع"
-                    description="ولي الأمر يدفع فودافون، أو كاش في السنتر."
-                    :href="route('student.subscriptions')"
-                    tone="accent"
-                    :badge="$stats['pending_subscriptions']"
-                />
-                <x-flow-step
-                    step="3"
-                    title="دروس وامتحانات"
-                    description="شاهد الدروس وحل الاختبارات المتاحة."
-                    :href="route('student.lessons')"
-                />
+                <x-flow-step step="1" title="الانضمام لمدرس" description="طلب انضمام أو إضافة يدوية من المدرس." :href="$needsJoin ? route('teachers.index') : route('student.dashboard')" :tone="$needsJoin ? 'warning' : 'success'" />
+                <x-flow-step step="2" title="الاشتراك والدفع" description="كاش في السنتر أو فودافون من ولي الأمر." :href="route('student.subscriptions')" tone="accent" :badge="$stats['pending_subscriptions']" />
+                <x-flow-step step="3" title="الدروس والامتحانات" description="متابعة المحتوى والاختبارات." :href="route('student.lessons')" />
             </div>
         </section>
 
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <x-stat-tile label="اشتراك نشط" :value="$stats['active_subscriptions']" :href="route('student.subscriptions')" tone="success">ن</x-stat-tile>
-            <x-stat-tile label="بانتظار الدفع" :value="$stats['pending_subscriptions']" :href="route('student.subscriptions')" :tone="$needsPay ? 'warning' : 'default'">د</x-stat-tile>
-            <x-stat-tile label="دروس مكتملة" :value="$stats['completed_lessons']" :href="route('student.lessons')">د</x-stat-tile>
-            <x-stat-tile label="مجموعاتك" :value="$stats['groups_count']" hint="ضمن مدرسيك">م</x-stat-tile>
+            <x-stat-tile label="اشتراك نشط" :value="$stats['active_subscriptions']" :href="route('student.subscriptions')" tone="success">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </x-stat-tile>
+            <x-stat-tile label="بانتظار الدفع" :value="$stats['pending_subscriptions']" :href="route('student.subscriptions')" :tone="$needsPay ? 'warning' : 'default'">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 10h18M7 15h1m4 0h1M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z"/></svg>
+            </x-stat-tile>
+            <x-stat-tile label="دروس مكتملة" :value="$stats['completed_lessons']" :href="route('student.lessons')">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            </x-stat-tile>
+            <x-stat-tile label="المجموعات" :value="$stats['groups_count']" hint="ضمن مدرسيك">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            </x-stat-tile>
         </div>
 
         @if ($needsJoin)
-            <x-panel-card title="انضم لمدرس" subtitle="ابعت طلب وانتظر الموافقة — أو سلّم كودك للمدرس ليضيفك.">
+            <x-panel-card title="الانضمام لمدرس" subtitle="أرسل طلبًا وانتظر الموافقة، أو سلّم كودك للمدرس.">
                 <div class="max-w-xl">
                     <livewire:student.request-teacher-join />
                 </div>
             </x-panel-card>
         @else
-            <x-panel-card title="مدرسوك" :padding="false">
+            <x-panel-card title="مدرّسوك" :padding="false">
                 <ul class="divide-y divide-slate-100">
                     @foreach ($teachers as $teacher)
-                        <li class="flex items-center justify-between gap-3 px-5 py-3.5">
+                        <li class="flex items-center justify-between gap-3 px-5 py-4">
                             <div class="min-w-0">
                                 <div class="truncate font-semibold text-ink">{{ $teacher->name }}</div>
                                 <div class="truncate text-xs text-ink-muted">{{ $teacher->headline ?: 'مدرس' }}</div>
@@ -113,7 +105,7 @@
                             <div class="flex shrink-0 items-center gap-3">
                                 <a href="{{ route('student.exams') }}" class="text-sm font-semibold text-brand-700" wire:navigate>امتحانات</a>
                                 @if ($teacher->slug)
-                                    <a href="{{ route('teachers.show', $teacher->slug) }}" class="text-sm text-ink-muted hover:text-ink" wire:navigate>عرض</a>
+                                    <a href="{{ route('teachers.show', $teacher->slug) }}" class="text-sm text-ink-muted hover:text-ink" wire:navigate>الملف</a>
                                 @endif
                             </div>
                         </li>

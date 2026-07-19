@@ -30,45 +30,75 @@
     }
 
     .surface-panel {
-        @apply overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 shadow-panel backdrop-blur-sm;
+        @apply overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-panel;
     }
 
     .surface-stat {
-        @apply relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 p-5 shadow-soft backdrop-blur-sm;
-    }
-
-    .surface-stat::before {
-        content: '';
-        @apply pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-l from-brand-500/80 via-brand-300/50 to-transparent;
+        @apply relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft;
     }
 
     .dashboard-hero {
-        @apply relative overflow-hidden rounded-3xl border border-brand-900/10 bg-hero-wash p-5 text-white shadow-panel sm:p-6;
+        @apply relative overflow-hidden rounded-[1.35rem] border border-white/10 bg-hero-wash p-6 text-white shadow-panel sm:p-7;
+    }
+
+    .dashboard-hero::before {
+        content: '';
+        @apply pointer-events-none absolute inset-0 opacity-40;
+        background-image:
+            linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+        background-size: 28px 28px;
+        mask-image: linear-gradient(180deg, black, transparent 85%);
     }
 
     .dashboard-hero::after {
         content: '';
-        @apply pointer-events-none absolute -start-10 -top-16 h-40 w-40 rounded-full bg-accent/20 blur-3xl;
+        @apply pointer-events-none absolute -end-16 top-1/2 h-56 w-56 -translate-y-1/2 rounded-full;
+        background: radial-gradient(circle, rgba(226, 160, 8, 0.28), transparent 68%);
     }
 
     .page-shell {
-        @apply mx-auto w-full max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8;
+        @apply mx-auto w-full max-w-6xl space-y-7 px-4 py-6 sm:px-6 lg:px-8 lg:py-8;
     }
 
     .section-title {
-        @apply text-[0.95rem] font-bold text-ink;
+        @apply text-sm font-bold tracking-tight text-ink;
     }
 
     .section-subtitle {
-        @apply mt-0.5 text-sm text-ink-muted;
+        @apply mt-1 text-xs leading-5 text-ink-muted sm:text-sm;
+    }
+
+    .section-head {
+        @apply mb-4 flex flex-wrap items-end justify-between gap-2;
     }
 
     .attention-strip {
-        @apply flex flex-wrap items-center gap-2 rounded-2xl border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-sm text-amber-950;
+        @apply flex flex-wrap items-center gap-2 rounded-2xl border border-amber-200/70 bg-gradient-to-l from-amber-50 to-white px-4 py-3 text-sm text-amber-950 shadow-soft;
     }
 
     .child-card {
-        @apply rounded-2xl border border-slate-200/90 bg-gradient-to-bl from-white to-brand-50/40 p-4 shadow-soft transition hover:border-brand-300;
+        @apply rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft transition duration-200 hover:border-brand-300 hover:shadow-panel;
+    }
+
+    .metric-chip {
+        @apply inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-semibold text-white/90 ring-1 ring-white/10;
+    }
+
+    .hero-btn {
+        @apply inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-bold transition;
+    }
+
+    .hero-btn-ghost {
+        @apply hero-btn bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/20;
+    }
+
+    .hero-btn-accent {
+        @apply hero-btn bg-accent text-ink hover:bg-accent-dark hover:text-white;
+    }
+
+    .empty-state {
+        @apply rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-10 text-center;
     }
 
     .link-brand {
