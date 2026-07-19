@@ -159,7 +159,14 @@ class PaymentRecordService
         }
 
         $subscription->loadMissing('plan', 'teacher');
-        $proofPath = $proof?->store('payment-proofs', 'public');
+
+        if (! $proof) {
+            throw ValidationException::withMessages([
+                'proof' => 'صورة وصل فودافون كاش مطلوبة.',
+            ]);
+        }
+
+        $proofPath = $proof->store('payment-proofs', 'public');
 
         $payment = DB::transaction(function () use ($recorder, $student, $subscription, $data, $proofPath) {
             return Payment::query()->create([

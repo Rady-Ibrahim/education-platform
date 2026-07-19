@@ -18,6 +18,7 @@ use Database\Seeders\AcademicStructureSeeder;
 use Database\Seeders\BranchSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
 use Tests\Concerns\GrantsSubscriptionAccess;
 use Tests\TestCase;
@@ -85,6 +86,7 @@ class ParentPaymentAndDeskTest extends TestCase
             $this->student,
             $subscription,
             ['external_reference' => 'VC-PARENT-1'],
+            UploadedFile::fake()->image('parent-proof.jpg'),
         );
 
         $this->assertSame(PaymentStatus::PendingReview, $payment->status);
@@ -113,6 +115,7 @@ class ParentPaymentAndDeskTest extends TestCase
             $other,
             $subscription,
             ['external_reference' => 'VC-X'],
+            UploadedFile::fake()->image('x.jpg'),
         );
     }
 
@@ -125,6 +128,7 @@ class ParentPaymentAndDeskTest extends TestCase
             $this->student,
             $subscription,
             ['external_reference' => 'VC-1'],
+            UploadedFile::fake()->image('p1.jpg'),
         );
 
         $this->expectException(ValidationException::class);
@@ -132,6 +136,7 @@ class ParentPaymentAndDeskTest extends TestCase
             $this->student,
             $subscription,
             ['external_reference' => 'VC-2'],
+            UploadedFile::fake()->image('p2.jpg'),
         );
     }
 

@@ -11,6 +11,8 @@ use App\Modules\Payments\Services\PlatformPaymentService;
 use Database\Seeders\BranchSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
@@ -81,11 +83,14 @@ class PlatformBillingTest extends TestCase
             'trial_ends_at' => now()->subDay(),
         ]);
 
+        Storage::fake('public');
+
         $payment = app(PlatformPaymentService::class)->submitVodafoneProof($this->teacher, [
             'external_reference' => 'PLAT-1234',
-        ]);
+        ], UploadedFile::fake()->image('platform-proof.jpg'));
 
         $this->assertSame(PaymentStatus::PendingReview, $payment->status);
+        $this->assertNotNull($payment->proof_path);
 
         app(PlatformPaymentService::class)->confirm($this->admin, $payment);
 

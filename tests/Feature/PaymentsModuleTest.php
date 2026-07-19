@@ -145,6 +145,7 @@ class PaymentsModuleTest extends TestCase
             $this->student,
             $subscription,
             ['external_reference' => 'VC-99999'],
+            UploadedFile::fake()->image('proof.jpg'),
         );
 
         app(PaymentReviewService::class)->reject($this->teacher, $payment, 'رقم العملية غير صحيح');
@@ -162,6 +163,7 @@ class PaymentsModuleTest extends TestCase
             $this->student,
             $subscription,
             ['external_reference' => 'VC-00001'],
+            UploadedFile::fake()->image('proof.jpg'),
         );
 
         $this->expectException(ValidationException::class);

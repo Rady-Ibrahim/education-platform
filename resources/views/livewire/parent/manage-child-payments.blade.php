@@ -80,8 +80,9 @@
                                     <x-input-error :messages="$errors->get('externalReference')" class="mt-1" />
                                 </div>
                                 <div>
-                                    <x-input-label value="صورة الإثبات (اختياري)" />
+                                    <x-input-label value="صورة وصل فودافون كاش (مطلوبة)" />
                                     <input type="file" wire:model="proof" class="block mt-1 w-full text-sm" accept="image/*" />
+                                    <x-input-error :messages="$errors->get('proof')" class="mt-1" />
                                 </div>
                                 <x-primary-button wire:click="submitProof">إرسال للمراجعة</x-primary-button>
                             </div>

@@ -26,6 +26,12 @@ class ExamAttemptService
     {
         $exam->loadMissing('subject');
 
+        if ($exam->isPaper()) {
+            throw ValidationException::withMessages([
+                'exam' => 'هذا امتحان ورقي — الدرجة تُسجَّل يدويًا من المدرس.',
+            ]);
+        }
+
         if (! $this->access->studentCanAccessSubject($student, $exam->subject)) {
             throw ValidationException::withMessages([
                 'exam' => 'غير مصرح بدخول هذا الامتحان.',
@@ -190,6 +196,54 @@ class ExamAttemptService
             'score' => $score,
             'max_score' => $maxScore,
         ]);
+    }
+
+    /**
+     * تسجيل درجة يدوية لامتحان ورقي (أو تعديل درجة يدوية).
+     */
+    public function recordManualScore(User $teacher, Exam $exam, User $student, float $score, ?string $notes = null): ExamAttempt
+    {
+        $exam->loadMissing('subject');
+        $this->access->assertTeacherOwnsSubject($teacher, $exam->subject);
+
+        if (! $exam->isPaper()) {
+            throw ValidationException::withMessages([
+                'exam' => 'التسجيل اليدوي للدرجة متاح للامتحانات الورقية فقط.',
+            ]);
+        }
+
+        if (! $teacher->students()->where('users.id', $student->id)->exists()) {
+            throw ValidationException::withMessages([
+                'student' => 'الطالب غير مرتبط بك.',
+            ]);
+        }
+
+        $maxScore = (float) ($exam->manual_max_score ?: 0);
+        if ($maxScore <= 0) {
+            throw ValidationException::withMessages([
+                'exam' => 'الامتحان بدون درجة نهائية محددة.',
+            ]);
+        }
+
+        $score = max(0, min($maxScore, $score));
+
+        $attempt = ExamAttempt::query()->updateOrCreate(
+            [
+                'exam_id' => $exam->id,
+                'student_id' => $student->id,
+            ],
+            [
+                'status' => ExamAttemptStatus::Graded,
+                'started_at' => now(),
+                'submitted_at' => now(),
+                'score' => $score,
+                'max_score' => $maxScore,
+            ]
+        );
+
+        $this->certificates->issueForPassedAttempt($attempt->fresh(['exam', 'student']));
+
+        return $attempt->refresh();
     }
 
     /**

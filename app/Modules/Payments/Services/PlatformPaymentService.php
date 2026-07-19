@@ -51,10 +51,13 @@ class PlatformPaymentService
         }
 
         return DB::transaction(function () use ($teacher, $subscription, $settings, $data, $proof) {
-            $path = null;
-            if ($proof) {
-                $path = $proof->store('platform-payment-proofs', 'public');
+            if (! $proof) {
+                throw ValidationException::withMessages([
+                    'proof' => 'صورة وصل فودافون كاش مطلوبة.',
+                ]);
             }
+
+            $path = $proof->store('platform-payment-proofs', 'public');
 
             $payment = PlatformPayment::query()->create([
                 'teacher_id' => $teacher->id,

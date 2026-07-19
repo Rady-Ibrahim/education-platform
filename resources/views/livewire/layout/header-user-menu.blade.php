@@ -28,7 +28,7 @@ new class extends Component
 }; ?>
 
 <div class="flex items-center gap-1 sm:gap-2">
-    <livewire:shared.notification-bell />
+    <livewire:shared.notification-bell lazy />
 
     <div class="relative" x-data="{ open: false }" @click.outside="open = false">
         <button

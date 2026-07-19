@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Student;
 
+use App\Enums\ExamDeliveryMode;
 use App\Modules\Exams\Models\Exam;
 use App\Modules\Exams\Models\ExamAnswer;
 use App\Modules\Exams\Models\ExamAttempt;
@@ -78,6 +79,7 @@ class TakeExam extends Component
         $availableExams = Exam::query()
             ->with('subject.grade')
             ->where('is_published', true)
+            ->where('delivery_mode', ExamDeliveryMode::Online)
             ->whereHas('subject.teachers', fn ($q) => $q->whereIn('users.id', $teacherIds))
             ->latest()
             ->get()

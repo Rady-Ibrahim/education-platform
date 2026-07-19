@@ -163,54 +163,39 @@ class DashboardReportService
 
     private function averageAttemptPercentForStudent(User $student): ?float
     {
-        $attempts = ExamAttempt::query()
+        $avg = ExamAttempt::query()
             ->where('student_id', $student->id)
             ->whereNotNull('max_score')
             ->where('max_score', '>', 0)
             ->whereNotNull('score')
-            ->get(['score', 'max_score']);
+            ->selectRaw('AVG((score / max_score) * 100) as avg_percent')
+            ->value('avg_percent');
 
-        if ($attempts->isEmpty()) {
-            return null;
-        }
-
-        $avg = $attempts->avg(fn (ExamAttempt $a) => ((float) $a->score / (float) $a->max_score) * 100);
-
-        return round((float) $avg, 1);
+        return $avg === null ? null : round((float) $avg, 1);
     }
 
     private function averageAttemptPercent(): ?float
     {
-        $attempts = ExamAttempt::query()
+        $avg = ExamAttempt::query()
             ->whereNotNull('max_score')
             ->where('max_score', '>', 0)
             ->whereNotNull('score')
-            ->get(['score', 'max_score']);
+            ->selectRaw('AVG((score / max_score) * 100) as avg_percent')
+            ->value('avg_percent');
 
-        if ($attempts->isEmpty()) {
-            return null;
-        }
-
-        $avg = $attempts->avg(fn (ExamAttempt $a) => ((float) $a->score / (float) $a->max_score) * 100);
-
-        return round((float) $avg, 1);
+        return $avg === null ? null : round((float) $avg, 1);
     }
 
     private function averageAttemptPercentForTeacher(User $teacher): ?float
     {
-        $attempts = ExamAttempt::query()
+        $avg = ExamAttempt::query()
             ->whereHas('exam', fn ($q) => $q->where('created_by', $teacher->id))
             ->whereNotNull('max_score')
             ->where('max_score', '>', 0)
             ->whereNotNull('score')
-            ->get(['score', 'max_score']);
+            ->selectRaw('AVG((score / max_score) * 100) as avg_percent')
+            ->value('avg_percent');
 
-        if ($attempts->isEmpty()) {
-            return null;
-        }
-
-        $avg = $attempts->avg(fn (ExamAttempt $a) => ((float) $a->score / (float) $a->max_score) * 100);
-
-        return round((float) $avg, 1);
+        return $avg === null ? null : round((float) $avg, 1);
     }
 }

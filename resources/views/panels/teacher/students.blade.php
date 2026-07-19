@@ -1,28 +1,14 @@
 <x-app-layout>
-    <x-panel-page title="إدارة الطلاب" subtitle="قائمة المجموعة، طلبات الانضمام، وإضافة طالب جديد.">
+    <x-panel-page title="طلاب المجموعة" subtitle="بحث وتصفية ومتابعة الاشتراك والدفع.">
         <x-slot:actions>
-            <a href="#add-student" class="btn-brand">إضافة طالب</a>
-            <a href="{{ route('teacher.payments') }}" class="link-brand" wire:navigate>المدفوعات</a>
+            <a href="{{ route('teacher.students.join') }}" class="link-brand" wire:navigate>طلبات الانضمام</a>
+            <a href="{{ route('teacher.students.add') }}" class="btn-brand" wire:navigate>إضافة طالب</a>
         </x-slot:actions>
 
-        <div id="join-requests">
-            <x-panel-card title="طلبات الانضمام" subtitle="قبول أو رفض الطلاب اللي طلبوا الانضمام لمجموعتك.">
-                <livewire:teacher.join-requests />
-            </x-panel-card>
-        </div>
-
-        <x-panel-card title="طلاب المجموعة" subtitle="بحث وتصفية حسب حالة الاشتراك." :padding="false">
+        <x-panel-card :padding="false">
             <div class="p-5 sm:p-6">
                 <livewire:teacher.student-desk />
             </div>
         </x-panel-card>
-
-        <div id="add-student">
-            <x-panel-card title="إضافة طالب يدويًا" subtitle="ينضم لمجموعتك مباشرة ويتفعّل الحساب.">
-                <div class="max-w-xl">
-                    <livewire:teacher.create-student-form />
-                </div>
-            </x-panel-card>
-        </div>
     </x-panel-page>
 </x-app-layout>

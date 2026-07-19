@@ -77,6 +77,7 @@ class NotificationsAndReportsTest extends TestCase
             $this->student,
             $subscription,
             ['external_reference' => 'VC-555'],
+            \Illuminate\Http\UploadedFile::fake()->image('proof.jpg'),
         );
 
         Notification::assertSentTo($this->teacher, PaymentPendingReviewNotification::class);

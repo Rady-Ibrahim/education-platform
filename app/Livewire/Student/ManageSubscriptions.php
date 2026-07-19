@@ -56,7 +56,7 @@ class ManageSubscriptions extends Component
     {
         $this->validate([
             'externalReference' => ['required', 'string', 'min:4', 'max:100'],
-            'proof' => ['nullable', 'image', 'max:4096'],
+            'proof' => ['required', 'image', 'max:4096'],
         ]);
 
         $subscription = Subscription::query()

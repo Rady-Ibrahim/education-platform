@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Modules\Exams\Models\ExamAttempt;
+use App\Modules\Identity\Services\ParentLinkService;
 
 class ExamAttemptPolicy
 {
@@ -22,6 +23,16 @@ class ExamAttemptPolicy
             $attempt->loadMissing('exam');
 
             return $attempt->exam?->created_by === $user->id;
+        }
+
+        if ($user->hasRole(UserRole::Parent)) {
+            $student = $attempt->relationLoaded('student')
+                ? $attempt->student
+                : User::query()->find($attempt->student_id);
+
+            return $student
+                ? app(ParentLinkService::class)->parentCanViewStudent($user, $student)
+                : false;
         }
 
         return false;

@@ -93,7 +93,7 @@
                                     <x-input-error :messages="$errors->get('externalReference')" class="mt-1" />
                                 </div>
                                 <div>
-                                    <x-input-label for="proof" value="صورة الإثبات (اختياري)" />
+                                    <x-input-label for="proof" value="صورة وصل فودافون كاش (مطلوبة)" />
                                     <input type="file" wire:model="proof" id="proof" class="block mt-1 w-full text-sm" accept="image/*" />
                                     <x-input-error :messages="$errors->get('proof')" class="mt-1" />
                                 </div>

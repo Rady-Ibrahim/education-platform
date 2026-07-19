@@ -2,6 +2,7 @@
 
 namespace App\Modules\Exams\Models;
 
+use App\Enums\ExamDeliveryMode;
 use App\Models\User;
 use App\Modules\Academic\Models\Subject;
 use Illuminate\Database\Eloquent\Model;
@@ -26,6 +27,11 @@ class Exam extends Model
         'is_published',
         'starts_at',
         'ends_at',
+        'delivery_mode',
+        'manual_max_score',
+        'paper_path',
+        'paper_disk',
+        'paper_original_name',
     ];
 
     protected function casts(): array
@@ -38,7 +44,14 @@ class Exam extends Model
             'is_published' => 'boolean',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
+            'delivery_mode' => ExamDeliveryMode::class,
+            'manual_max_score' => 'decimal:2',
         ];
+    }
+
+    public function isPaper(): bool
+    {
+        return $this->delivery_mode === ExamDeliveryMode::Paper;
     }
 
     public function subject(): BelongsTo
@@ -68,6 +81,10 @@ class Exam extends Model
     {
         if (! $this->is_published) {
             return false;
+        }
+
+        if ($this->isPaper()) {
+            return true;
         }
 
         $now = now();
