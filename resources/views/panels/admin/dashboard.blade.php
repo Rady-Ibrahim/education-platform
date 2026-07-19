@@ -3,11 +3,37 @@
         $stats = app(\App\Modules\Reports\Services\DashboardReportService::class)->forAdmin();
     @endphp
 
-    <x-panel-page title="لوحة الإدارة" subtitle="مؤشرات المنصة — التفاصيل من القوائم.">
+    <x-panel-page title="لوحة الإدارة" subtitle="إشراف المنصة — الحسابات، المدفوعات، والهيكل الأكاديمي.">
         <x-slot:actions>
             <a href="{{ route('admin.users') }}" class="btn-brand" wire:navigate>الحسابات</a>
             <a href="{{ route('admin.payments') }}" class="btn-accent" wire:navigate>المدفوعات</a>
         </x-slot:actions>
+
+        <div class="dashboard-hero">
+            <div class="relative z-10">
+                <div class="text-xs font-semibold text-white/70">سنتر</div>
+                <div class="mt-1 text-xl font-bold">نظرة عامة على المنصة</div>
+                <p class="mt-2 max-w-xl text-sm text-white/75">
+                    المدرسون يديرون مكاتبهم يوميًا — أنت تشرف على الحسابات والتحصيل العام.
+                </p>
+            </div>
+        </div>
+
+        @if ($stats['pending_payments'] > 0 || $stats['suspended_users'] > 0)
+            <div class="attention-strip">
+                <span class="font-bold">يحتاج مراجعة:</span>
+                @if ($stats['pending_payments'] > 0)
+                    <a href="{{ route('admin.payments') }}" class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold underline-offset-2 hover:underline" wire:navigate>
+                        {{ $stats['pending_payments'] }} دفعة معلّقة
+                    </a>
+                @endif
+                @if ($stats['suspended_users'] > 0)
+                    <a href="{{ route('admin.users') }}" class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold underline-offset-2 hover:underline" wire:navigate>
+                        {{ $stats['suspended_users'] }} حساب موقوف
+                    </a>
+                @endif
+            </div>
+        @endif
 
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <x-stat-tile label="مدرسون ظاهرون" :value="$stats['public_teachers']" :href="route('teachers.index')">م</x-stat-tile>
@@ -17,7 +43,7 @@
         </div>
 
         <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <x-quick-link href="{{ route('admin.academic') }}" title="الهيكل الأكاديمي" description="مراحل وصفوف">
+            <x-quick-link href="{{ route('admin.academic') }}" title="الهيكل الأكاديمي" description="مراحل وصفوف ومواد">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
             </x-quick-link>
             <x-quick-link href="{{ route('admin.users') }}" title="الحسابات" description="إيقاف وإشراف">

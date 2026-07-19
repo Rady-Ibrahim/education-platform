@@ -11,9 +11,9 @@
             <div class="mt-1 text-2xl font-bold text-ink">{{ number_format($confirmedTotal, 0) }} <span class="text-sm text-ink-muted">ج.م</span></div>
         </div>
         <div class="rounded-2xl border border-amber-200 bg-amber-50/60 p-4">
-            <div class="text-xs font-semibold text-amber-800">كاش مستحق (دفتر التحصيل)</div>
-            <div class="mt-1 text-2xl font-bold text-amber-950">{{ number_format($cashDueTotal, 0) }} <span class="text-sm">ج.م</span></div>
-            <div class="mt-0.5 text-xs text-amber-800">{{ $pendingCash->count() }} طالب</div>
+            <div class="text-xs font-semibold text-amber-800">عليه فلوس الشهر</div>
+            <div class="mt-1 text-2xl font-bold text-amber-950">{{ number_format($owingTotal, 0) }} <span class="text-sm">ج.م</span></div>
+            <div class="mt-0.5 text-xs text-amber-800">{{ $owingCount }} طالب</div>
         </div>
         <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
             <div class="text-xs font-semibold text-ink-muted">فودافون بانتظارك</div>
@@ -23,7 +23,7 @@
 
     <div class="mb-5 flex flex-wrap gap-2 border-b border-slate-200 pb-3">
         @foreach ([
-            'cash' => 'تحصيل الكاش',
+            'cash' => 'دفتر الشهر',
             'vodafone' => 'مراجعة فودافون',
             'plans' => 'الخطط والتسجيل',
             'settings' => 'إعدادات الدفع',
@@ -38,8 +38,8 @@
                 ])
             >
                 {{ $label }}
-                @if ($key === 'cash' && $pendingCash->isNotEmpty())
-                    <span @class(['ms-1 rounded-md px-1.5 py-0.5 text-[10px]', 'bg-white/20' => $tab === $key, 'bg-amber-100 text-amber-800' => $tab !== $key])>{{ $pendingCash->count() }}</span>
+                @if ($key === 'cash' && $owingCount > 0)
+                    <span @class(['ms-1 rounded-md px-1.5 py-0.5 text-[10px]', 'bg-white/20' => $tab === $key, 'bg-amber-100 text-amber-800' => $tab !== $key])>{{ $owingCount }}</span>
                 @endif
                 @if ($key === 'vodafone' && $pendingVodafoneCount > 0)
                     <span @class(['ms-1 rounded-md px-1.5 py-0.5 text-[10px]', 'bg-white/20' => $tab === $key, 'bg-rose-100 text-rose-800' => $tab !== $key])>{{ $pendingVodafoneCount }}</span>
@@ -51,63 +51,112 @@
     @if ($tab === 'cash')
         <section class="space-y-4">
             <div class="rounded-2xl border border-brand-100 bg-brand-50/40 px-4 py-3 text-sm text-brand-950">
-                <span class="font-bold">دفتر تحصيل نهاية الشهر:</span>
-                الطلاب المسجّلين على خطة ولسه ما دفعوش — اضغط «استلمت الكاش» لما الطالب يدفع في السنتر.
+                <span class="font-bold">دفتر تحصيل شهري:</span>
+                اختار الشهر → ولّد المستحقات → سجّل كامل أو جزئي مع خصم وإيصال.
             </div>
 
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-end">
+                <div>
+                    <x-input-label value="الشهر" />
+                    <x-text-input wire:model.live="billingMonth" type="month" class="mt-1.5 block w-full" />
+                </div>
                 <div class="flex-1">
-                    <x-input-label value="بحث في دفتر التحصيل" />
-                    <x-text-input wire:model.live.debounce.300ms="cashSearch" class="mt-1.5 block w-full" placeholder="اسم الطالب أو الكود أو الموبايل" />
+                    <x-input-label value="بحث" />
+                    <x-text-input wire:model.live.debounce.300ms="cashSearch" class="mt-1.5 block w-full" placeholder="اسم / كود / موبايل" />
                 </div>
-                <div class="sm:w-64">
-                    <x-input-label value="ملاحظة عامة (اختياري)" />
-                    <x-text-input wire:model="cashNotes" class="mt-1.5 block w-full" placeholder="مثال: تحصيل مارس" />
-                </div>
+                <label class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm">
+                    <input type="checkbox" wire:model.live="owingOnly" class="rounded border-slate-300 text-brand-700 focus:ring-brand-500">
+                    عليه فلوس فقط
+                </label>
+                <x-secondary-button type="button" wire:click="generateMonth">توليد مستحقات الشهر</x-secondary-button>
             </div>
+
+            @if ($collectCharge)
+                <div class="rounded-2xl border border-accent/40 bg-accent-soft/30 p-4">
+                    <div class="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                            <div class="text-sm font-bold text-ink">تحصيل — {{ $collectCharge->student?->name }}</div>
+                            <div class="mt-0.5 text-xs text-ink-muted">
+                                متبقي {{ number_format($collectCharge->remainingAmount(), 0) }} ج.م من أصل {{ number_format((float) $collectCharge->expected_amount, 0) }}
+                            </div>
+                        </div>
+                        <button type="button" class="text-sm text-ink-muted hover:text-ink" wire:click="cancelCollect">إلغاء</button>
+                    </div>
+                    <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                        <div>
+                            <x-input-label value="المبلغ المستلم" />
+                            <x-text-input wire:model="collectAmount" type="number" step="0.5" class="mt-1.5 block w-full" />
+                            <x-input-error :messages="$errors->get('collectAmount')" />
+                        </div>
+                        <div>
+                            <x-input-label value="خصم على الشهر" />
+                            <x-text-input wire:model="collectDiscount" type="number" step="0.5" class="mt-1.5 block w-full" />
+                            <x-input-error :messages="$errors->get('collectDiscount')" />
+                        </div>
+                        <div>
+                            <x-input-label value="ملاحظة" />
+                            <x-text-input wire:model="cashNotes" class="mt-1.5 block w-full" />
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <x-primary-button type="button" wire:click="collectCharge">حفظ التحصيل + إيصال</x-primary-button>
+                    </div>
+                </div>
+            @endif
 
             <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
                 <table class="data-table">
                     <thead>
                         <tr>
                             <th>الطالب</th>
-                            <th>الخطة</th>
-                            <th>المبلغ</th>
-                            <th>من متى منتظر</th>
+                            <th>الشهر</th>
+                            <th>المستحق</th>
+                            <th>المدفوع</th>
+                            <th>المتبقي</th>
+                            <th>الحالة</th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($pendingCash as $subscription)
+                        @forelse ($charges as $charge)
                             <tr>
                                 <td>
-                                    <div class="font-semibold text-ink">{{ $subscription->student?->name }}</div>
-                                    <div class="font-mono text-xs text-ink-muted" dir="ltr">{{ $subscription->student?->student_code }}</div>
+                                    <div class="font-semibold text-ink">{{ $charge->student?->name }}</div>
+                                    <div class="font-mono text-xs text-ink-muted" dir="ltr">{{ $charge->student?->student_code }}</div>
+                                    <div class="text-xs text-ink-muted">{{ $charge->subscription?->plan?->name }}</div>
+                                </td>
+                                <td class="text-sm">{{ $charge->monthLabel() }}</td>
+                                <td class="font-bold">{{ number_format((float) $charge->expected_amount, 0) }}</td>
+                                <td>{{ number_format($charge->paidAmount(), 0) }}</td>
+                                <td @class(['font-bold', 'text-amber-800' => $charge->remainingAmount() > 0])>
+                                    {{ number_format($charge->remainingAmount(), 0) }}
                                 </td>
                                 <td>
-                                    <div>{{ $subscription->plan?->name }}</div>
-                                    <div class="text-xs text-ink-muted">{{ $subscription->subject?->name }}</div>
+                                    <span @class([
+                                        'rounded-lg px-2 py-1 text-xs font-bold',
+                                        'bg-amber-50 text-amber-900' => $charge->status === \App\Enums\ChargeStatus::Due,
+                                        'bg-orange-50 text-orange-900' => $charge->status === \App\Enums\ChargeStatus::Partial,
+                                        'bg-emerald-50 text-emerald-800' => $charge->status === \App\Enums\ChargeStatus::Paid,
+                                        'bg-slate-100 text-slate-700' => $charge->status === \App\Enums\ChargeStatus::Waived,
+                                    ])>{{ $charge->status->label() }}</span>
                                 </td>
-                                <td class="font-bold text-ink">{{ number_format((float) $subscription->plan?->price, 0) }} ج.م</td>
-                                <td class="text-sm text-ink-muted">{{ $subscription->created_at?->diffForHumans() }}</td>
-                                <td class="text-end">
-                                    <button
-                                        type="button"
-                                        wire:click="collectCash({{ $subscription->id }})"
-                                        wire:confirm="تأكيد استلام كاش {{ $subscription->student?->name }} بمبلغ {{ number_format((float) $subscription->plan?->price, 0) }} ج.م؟"
-                                        class="btn-brand !px-3 !py-2 text-xs"
-                                    >
-                                        استلمت الكاش
-                                    </button>
+                                <td class="space-x-2 space-x-reverse text-end text-sm">
+                                    @if ($charge->status->isOpen())
+                                        <button type="button" class="btn-brand !px-3 !py-2 text-xs" wire:click="collectFull({{ $charge->id }})" wire:confirm="تحصيل المتبقي كاملًا؟">
+                                            كامل
+                                        </button>
+                                        <button type="button" class="link-brand" wire:click="startCollect({{ $charge->id }})">جزئي</button>
+                                    @else
+                                        <span class="text-xs text-ink-muted">—</span>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="py-10 text-center text-sm text-ink-muted">
-                                    مفيش مستحقات كاش دلوقتي.
-                                    @if ($plans->isNotEmpty())
-                                        سجّل الطلاب على خطة من تاب «الخطط والتسجيل».
-                                    @endif
+                                <td colspan="7" class="py-10 text-center text-sm text-ink-muted">
+                                    مفيش مستحقات للشهر ده.
+                                    اضغط «توليد مستحقات الشهر» بعد تسجيل الطلاب على خطة،
+                                    أو سجّل من تاب «الخطط والتسجيل».
                                 </td>
                             </tr>
                         @endforelse

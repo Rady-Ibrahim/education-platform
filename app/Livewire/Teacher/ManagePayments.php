@@ -8,9 +8,10 @@ use App\Enums\SubscriptionStatus;
 use App\Models\User;
 use App\Modules\Payments\Models\Payment;
 use App\Modules\Payments\Models\Subscription;
+use App\Modules\Payments\Models\SubscriptionCharge;
 use App\Modules\Payments\Models\SubscriptionPlan;
 use App\Modules\Payments\Services\EnrollmentService;
-use App\Modules\Payments\Services\PaymentRecordService;
+use App\Modules\Payments\Services\MonthlyCollectionService;
 use App\Modules\Payments\Services\PaymentReviewService;
 use App\Modules\Payments\Services\SubscriptionPlanService;
 use Livewire\Attributes\Url;
@@ -24,13 +25,23 @@ class ManagePayments extends Component
     #[Url]
     public string $tab = 'cash';
 
+    public string $billingMonth = '';
+
+    public bool $owingOnly = true;
+
     public string $cashSearch = '';
+
+    public ?int $collectChargeId = null;
+
+    public string $collectAmount = '';
+
+    public string $collectDiscount = '0';
+
+    public string $cashNotes = '';
 
     public ?int $enrollStudentId = null;
 
     public ?int $enrollPlanId = null;
-
-    public string $cashNotes = '';
 
     public ?int $rejectingPaymentId = null;
 
@@ -44,6 +55,11 @@ class ManagePayments extends Component
 
     public int $newPlanDays = 30;
 
+    public function mount(): void
+    {
+        $this->billingMonth = now()->format('Y-m');
+    }
+
     public function setTab(string $tab): void
     {
         if (! in_array($tab, ['cash', 'vodafone', 'plans', 'settings'], true)) {
@@ -53,6 +69,76 @@ class ManagePayments extends Component
         $this->tab = $tab;
         $this->resetPage();
         $this->rejectingPaymentId = null;
+        $this->collectChargeId = null;
+    }
+
+    public function generateMonth(MonthlyCollectionService $collection): void
+    {
+        $count = $collection->generateMonthDues(auth()->user(), $this->billingMonth.'-01')->count();
+        session()->flash('status', 'تم تجهيز مستحقات الشهر لـ '.$count.' اشتراك.');
+    }
+
+    public function startCollect(int $chargeId, MonthlyCollectionService $collection): void
+    {
+        $charge = SubscriptionCharge::query()
+            ->where('teacher_id', auth()->id())
+            ->findOrFail($chargeId);
+
+        $collection->refreshChargeStatus($charge);
+        $charge = $charge->fresh();
+
+        $this->collectChargeId = $charge->id;
+        $this->collectAmount = (string) $charge->remainingAmount();
+        $this->collectDiscount = (string) $charge->discount_amount;
+        $this->cashNotes = 'تحصيل '.$charge->monthLabel();
+    }
+
+    public function cancelCollect(): void
+    {
+        $this->collectChargeId = null;
+        $this->collectAmount = '';
+        $this->collectDiscount = '0';
+        $this->cashNotes = '';
+    }
+
+    public function collectCharge(MonthlyCollectionService $collection): void
+    {
+        $validated = $this->validate([
+            'collectChargeId' => ['required', 'exists:subscription_charges,id'],
+            'collectAmount' => ['required', 'numeric', 'min:0.5'],
+            'collectDiscount' => ['nullable', 'numeric', 'min:0'],
+            'cashNotes' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $charge = SubscriptionCharge::query()->findOrFail($validated['collectChargeId']);
+
+        $payment = $collection->collectCash(auth()->user(), $charge, [
+            'amount' => (float) $validated['collectAmount'],
+            'discount' => $validated['collectDiscount'] !== '' ? (float) $validated['collectDiscount'] : null,
+            'notes' => $validated['cashNotes'] ?: null,
+        ]);
+
+        $this->cancelCollect();
+        session()->flash(
+            'status',
+            'تم التحصيل — إيصال '.$payment->receipt_number.' بمبلغ '.number_format((float) $payment->amount, 0).' ج.م'
+        );
+    }
+
+    public function collectFull(int $chargeId, MonthlyCollectionService $collection): void
+    {
+        $charge = SubscriptionCharge::query()
+            ->where('teacher_id', auth()->id())
+            ->findOrFail($chargeId);
+
+        $payment = $collection->collectCash(auth()->user(), $charge, [
+            'notes' => $this->cashNotes !== '' ? $this->cashNotes : null,
+        ]);
+
+        session()->flash(
+            'status',
+            'تم تحصيل كامل — إيصال '.$payment->receipt_number
+        );
     }
 
     public function createPlan(SubscriptionPlanService $plans): void
@@ -91,24 +177,8 @@ class ManagePayments extends Component
         $enrollment->enrollStudentByTeacher(auth()->user(), $student, $plan);
 
         $this->reset(['enrollStudentId', 'enrollPlanId']);
-        session()->flash('status', 'اتسجّل على الخطة — هيظهر في دفتر التحصيل لحد ما تستلم الكاش.');
+        session()->flash('status', 'اتسجّل على الخطة — هيظهر في دفتر الشهر الحالي.');
         $this->tab = 'cash';
-    }
-
-    public function collectCash(int $subscriptionId, PaymentRecordService $payments): void
-    {
-        $subscription = Subscription::query()
-            ->with('student')
-            ->where('teacher_id', auth()->id())
-            ->where('status', SubscriptionStatus::PendingPayment)
-            ->findOrFail($subscriptionId);
-
-        $payments->recordCash(auth()->user(), $subscription->student, $subscription, [
-            'notes' => $this->cashNotes !== '' ? $this->cashNotes : 'تحصيل كاش — نهاية الشهر',
-        ]);
-
-        $this->cashNotes = '';
-        session()->flash('status', 'تم استلام كاش '.$subscription->student->name.' وتفعيل الاشتراك.');
     }
 
     public function confirm(int $paymentId, PaymentReviewService $review): void
@@ -138,24 +208,20 @@ class ManagePayments extends Component
         session()->flash('status', 'تم رفض الدفع.');
     }
 
-    public function render()
+    public function render(MonthlyCollectionService $collection)
     {
         $teacher = auth()->user();
+        $monthKey = $this->billingMonth !== '' ? $this->billingMonth.'-01' : now()->toDateString();
 
-        $pendingCash = Subscription::query()
-            ->with(['student', 'plan', 'subject'])
-            ->where('teacher_id', $teacher->id)
-            ->where('status', SubscriptionStatus::PendingPayment)
-            ->when($this->cashSearch !== '', function ($q) {
-                $term = '%'.$this->cashSearch.'%';
-                $q->whereHas('student', function ($student) use ($term) {
-                    $student->where('name', 'like', $term)
-                        ->orWhere('student_code', 'like', $term)
-                        ->orWhere('phone', 'like', $term);
-                });
-            })
-            ->latest()
-            ->get();
+        $charges = $collection->listForTeacher(
+            $teacher,
+            $monthKey,
+            $this->owingOnly,
+            $this->cashSearch !== '' ? $this->cashSearch : null,
+        );
+
+        $owingTotal = $collection->owingTotalForMonth($teacher, $monthKey);
+        $owingCount = $collection->owingCountForMonth($teacher, $monthKey);
 
         $pendingVodafone = Payment::query()
             ->with(['student', 'subscription.plan'])
@@ -181,20 +247,28 @@ class ManagePayments extends Component
             ->where('status', PaymentStatus::Confirmed)
             ->sum('amount');
 
-        $cashDueTotal = (float) $pendingCash->sum(fn (Subscription $s) => (float) ($s->plan?->price ?? 0));
+        $collectCharge = $this->collectChargeId
+            ? SubscriptionCharge::query()->with('student')->find($this->collectChargeId)
+            : null;
 
         return view('livewire.teacher.manage-payments', [
-            'pendingCash' => $pendingCash,
+            'charges' => $charges,
+            'collectCharge' => $collectCharge,
             'pendingVodafone' => $pendingVodafone,
             'students' => $students,
             'plans' => $plans,
             'subjects' => $subjects,
             'confirmedTotal' => $confirmedTotal,
-            'cashDueTotal' => $cashDueTotal,
+            'owingTotal' => $owingTotal,
+            'owingCount' => $owingCount,
             'pendingVodafoneCount' => Payment::query()
                 ->where('teacher_id', $teacher->id)
                 ->where('status', PaymentStatus::PendingReview)
                 ->where('channel', PaymentChannel::VodafoneCash)
+                ->count(),
+            'pendingCashCount' => Subscription::query()
+                ->where('teacher_id', $teacher->id)
+                ->where('status', SubscriptionStatus::PendingPayment)
                 ->count(),
         ]);
     }

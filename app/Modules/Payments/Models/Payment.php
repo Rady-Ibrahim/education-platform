@@ -19,10 +19,12 @@ class Payment extends Model
         'student_id',
         'teacher_id',
         'subscription_id',
+        'subscription_charge_id',
         'branch_id',
         'channel',
         'provider',
         'amount',
+        'discount_amount',
         'external_reference',
         'proof_path',
         'status',
@@ -31,6 +33,7 @@ class Payment extends Model
         'reviewed_at',
         'rejection_reason',
         'notes',
+        'receipt_number',
     ];
 
     protected function casts(): array
@@ -39,6 +42,7 @@ class Payment extends Model
             'channel' => PaymentChannel::class,
             'status' => PaymentStatus::class,
             'amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
             'reviewed_at' => 'datetime',
         ];
     }
@@ -56,6 +60,11 @@ class Payment extends Model
     public function subscription(): BelongsTo
     {
         return $this->belongsTo(Subscription::class);
+    }
+
+    public function subscriptionCharge(): BelongsTo
+    {
+        return $this->belongsTo(SubscriptionCharge::class, 'subscription_charge_id');
     }
 
     public function branch(): BelongsTo

@@ -47,6 +47,7 @@ Route::middleware(['auth', 'account.active', 'role:teacher', 'platform.access'])
     ->group(function () {
         Route::view('dashboard', 'panels.teacher.dashboard')->name('dashboard');
         Route::view('groups', 'panels.teacher.groups')->name('groups');
+        Route::view('attendance', 'panels.teacher.attendance')->name('attendance');
         Route::view('students', 'panels.teacher.students')->name('students');
         Route::view('students/add', 'panels.teacher.students-add')->name('students.add');
         Route::view('students/join-requests', 'panels.teacher.students-join')->name('students.join');

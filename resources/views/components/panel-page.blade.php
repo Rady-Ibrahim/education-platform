@@ -4,11 +4,14 @@
 ])
 
 <div {{ $attributes->merge(['class' => 'page-shell']) }}>
-    <div class="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200/70 pb-5">
+    <div class="flex flex-wrap items-end justify-between gap-4">
         <div class="min-w-0">
-            <h1 class="text-2xl font-bold tracking-tight text-brand-950 sm:text-[1.75rem]">{{ $title }}</h1>
+            @isset($eyebrow)
+                <div class="mb-2">{{ $eyebrow }}</div>
+            @endisset
+            <h1 class="text-2xl font-bold tracking-tight text-brand-950 sm:text-[1.85rem]">{{ $title }}</h1>
             @if ($subtitle)
-                <p class="mt-1 max-w-2xl text-sm text-ink-muted">{{ $subtitle }}</p>
+                <p class="mt-1.5 max-w-2xl text-sm leading-relaxed text-ink-muted">{{ $subtitle }}</p>
             @endif
         </div>
         @isset($actions)

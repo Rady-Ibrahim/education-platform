@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TeacherGroup extends Model
@@ -56,6 +57,11 @@ class TeacherGroup extends Model
     public function activeStudents(): BelongsToMany
     {
         return $this->students()->wherePivot('status', GroupMembershipStatus::Active->value);
+    }
+
+    public function attendanceSessions(): HasMany
+    {
+        return $this->hasMany(GroupAttendanceSession::class, 'group_id');
     }
 
     public function displayLabel(): string

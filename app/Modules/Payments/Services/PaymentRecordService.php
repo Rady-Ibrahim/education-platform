@@ -88,18 +88,25 @@ class PaymentRecordService
         }
 
         return DB::transaction(function () use ($recorder, $student, $subscription, $data) {
+            $charge = app(MonthlyCollectionService::class)->ensureChargeForSubscription($subscription);
+
             $payment = Payment::query()->create([
                 'student_id' => $student->id,
                 'teacher_id' => $subscription->teacher_id,
                 'subscription_id' => $subscription->id,
+                'subscription_charge_id' => $charge->id,
                 'branch_id' => $student->branch_id ?? Branch::defaultBranch()?->id,
                 'channel' => PaymentChannel::Cash,
                 'provider' => 'manual',
                 'amount' => $data['amount'] ?? $subscription->plan->price,
+                'discount_amount' => 0,
                 'external_reference' => $data['external_reference'] ?? null,
                 'status' => PaymentStatus::PendingReview,
                 'recorded_by' => $recorder->id,
                 'notes' => $data['notes'] ?? null,
+                'receipt_number' => app(MonthlyCollectionService::class)->nextReceiptNumber(
+                    $subscription->teacher ?? $recorder
+                ),
             ]);
 
             if ($recorder->hasAnyRole([UserRole::Teacher, UserRole::Admin])) {

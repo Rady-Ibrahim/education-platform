@@ -3,54 +3,147 @@
         $stats = app(\App\Modules\Reports\Services\DashboardReportService::class)->forParent(auth()->user());
     @endphp
 
-    <x-panel-page title="لوحة ولي الأمر" subtitle="تابع أبناءك — النتائج والمدفوعات من صفحة كل ابن.">
+    <x-panel-page title="متابعة الأبناء" subtitle="درجات · مصاريف · رسائل المدرس — كل ابن من كارت واحد.">
         <x-slot:actions>
             <a href="{{ route('parent.link') }}" class="btn-brand" wire:navigate>ربط ابن</a>
+            <a href="{{ route('parent.messages') }}" class="btn-accent" wire:navigate>
+                الرسائل
+                @if ($stats['unread_messages'] > 0)
+                    ({{ $stats['unread_messages'] }})
+                @endif
+            </a>
         </x-slot:actions>
 
-        <div class="grid gap-4 sm:grid-cols-2">
+        <div class="dashboard-hero">
+            <div class="relative z-10 flex flex-wrap items-end justify-between gap-4">
+                <div>
+                    <div class="text-xs font-semibold text-white/70">ولي الأمر</div>
+                    <div class="mt-1 text-xl font-bold">{{ $stats['children_count'] }} {{ $stats['children_count'] === 1 ? 'ابن مرتبط' : 'أبناء مرتبطون' }}</div>
+                    <p class="mt-2 max-w-lg text-sm text-white/75">
+                        ادفع فودافون كاش من صفحة الابن، وشوف الدرجات، ورد على رسائل المدرس.
+                    </p>
+                </div>
+                <a href="{{ route('parent.exams') }}" class="rounded-xl bg-white/15 px-4 py-2.5 text-sm font-bold text-white backdrop-blur transition hover:bg-white/25" wire:navigate>
+                    كل النتائج
+                </a>
+            </div>
+        </div>
+
+        @if ($stats['attention_count'] > 0)
+            <div class="attention-strip">
+                <span class="font-bold">يحتاج متابعتك:</span>
+                @if ($stats['unread_messages'] > 0)
+                    <a href="{{ route('parent.messages') }}" class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold underline-offset-2 hover:underline" wire:navigate>
+                        {{ $stats['unread_messages'] }} رسالة من مدرس
+                    </a>
+                @endif
+                @foreach ($stats['children'] as $child)
+                    @if ($child['pending_subscriptions'] > 0 || $child['pending_payments'] > 0)
+                        <a href="{{ route('parent.children.payments', $child['id']) }}" class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold underline-offset-2 hover:underline" wire:navigate>
+                            دفع — {{ $child['name'] }}
+                        </a>
+                    @endif
+                @endforeach
+            </div>
+        @endif
+
+        <section>
+            <div class="mb-3">
+                <h2 class="section-title">إيه تعمله؟</h2>
+                <p class="section-subtitle">ثلاث مسارات واضحة لكل ولي أمر.</p>
+            </div>
+            <div class="grid gap-3 sm:grid-cols-3">
+                <x-flow-step
+                    step="1"
+                    title="اربط ابنك"
+                    description="بكود الطالب من المدرس أو من حساب الطالب."
+                    :href="route('parent.link')"
+                    :tone="$stats['children_count'] === 0 ? 'warning' : 'success'"
+                />
+                <x-flow-step
+                    step="2"
+                    title="ادفع المصاريف"
+                    description="فودافون كاش بإثبات — المدرس يراجع."
+                    :href="$stats['children_count'] ? route('parent.children.payments', $stats['children'][0]['id']) : route('parent.link')"
+                    tone="accent"
+                />
+                <x-flow-step
+                    step="3"
+                    title="تابع الدرجات"
+                    description="نتائج إلكترونية وورقية + رسائل المدرس."
+                    :href="route('parent.exams')"
+                    :badge="$stats['unread_messages']"
+                />
+            </div>
+        </section>
+
+        <div class="grid gap-4 sm:grid-cols-3">
             <x-stat-tile label="الأبناء" :value="$stats['children_count']" tone="success">أ</x-stat-tile>
+            <x-stat-tile label="رسائل غير مقروءة" :value="$stats['unread_messages']" :href="route('parent.messages')" :tone="$stats['unread_messages'] > 0 ? 'warning' : 'default'">ر</x-stat-tile>
             <x-stat-tile label="إشعارات" :value="$stats['unread_notifications']" :tone="$stats['unread_notifications'] > 0 ? 'warning' : 'default'">إ</x-stat-tile>
         </div>
 
-        <x-panel-card title="أبناؤك">
+        <x-panel-card title="أبناؤك" subtitle="كل ابن: مجموعته، فلوسه، ونتائجه.">
             <div class="space-y-3">
                 @forelse ($stats['children'] as $child)
-                    <div class="rounded-2xl border border-slate-200 p-4">
+                    <div class="child-card">
                         <div class="flex flex-wrap items-start justify-between gap-3">
-                            <div>
+                            <div class="min-w-0">
                                 <div class="font-bold text-ink">{{ $child['name'] }}</div>
                                 <div class="mt-0.5 font-mono text-xs text-ink-muted" dir="ltr">{{ $child['student_code'] ?? '—' }}</div>
+                                @if (count($child['groups']) > 0)
+                                    <div class="mt-2 flex flex-wrap gap-1.5">
+                                        @foreach ($child['groups'] as $groupLabel)
+                                            <span class="rounded-lg bg-white/80 px-2 py-0.5 text-[11px] font-semibold text-brand-900 ring-1 ring-brand-100">
+                                                {{ $groupLabel }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @endif
                             </div>
                             <div class="flex flex-wrap gap-2">
                                 <a href="{{ route('parent.children.exams', $child['id']) }}" class="btn-brand !px-3 !py-2 text-xs" wire:navigate>النتائج</a>
                                 <a href="{{ route('parent.children.payments', $child['id']) }}" class="btn-accent !px-3 !py-2 text-xs" wire:navigate>المدفوعات</a>
                             </div>
                         </div>
+
                         <div class="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
                             <div>
                                 <div class="text-xs text-ink-muted">اشتراك نشط</div>
-                                <div class="font-bold">{{ $child['active_subscriptions'] }}</div>
+                                <div class="font-bold text-ink">{{ $child['active_subscriptions'] }}</div>
                             </div>
                             <div>
                                 <div class="text-xs text-ink-muted">بانتظار الدفع</div>
-                                <div class="font-bold">{{ $child['pending_subscriptions'] }}</div>
+                                <div @class(['font-bold', 'text-amber-800' => $child['pending_subscriptions'] > 0, 'text-ink' => $child['pending_subscriptions'] === 0])>
+                                    {{ $child['pending_subscriptions'] }}
+                                </div>
                             </div>
                             <div>
                                 <div class="text-xs text-ink-muted">دروس مكتملة</div>
-                                <div class="font-bold">{{ $child['completed_lessons'] }}</div>
+                                <div class="font-bold text-ink">{{ $child['completed_lessons'] }}</div>
                             </div>
                             <div>
                                 <div class="text-xs text-ink-muted">متوسط الدرجات</div>
-                                <div class="font-bold">{{ $child['average_exam_score'] !== null ? $child['average_exam_score'].'%' : '—' }}</div>
+                                <div class="font-bold text-ink">{{ $child['average_exam_score'] !== null ? $child['average_exam_score'].'%' : '—' }}</div>
                             </div>
                         </div>
+
+                        @if (count($child['recent_absences']) > 0)
+                            <div class="mt-4 rounded-xl bg-rose-50/80 px-3 py-2.5">
+                                <div class="text-xs font-bold text-rose-900">حضور آخر 7 أيام</div>
+                                <ul class="mt-1.5 space-y-1 text-xs text-rose-900/90">
+                                    @foreach ($child['recent_absences'] as $absence)
+                                        <li>{{ $absence['date'] }} — {{ $absence['group'] }} ({{ $absence['status'] }})</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
                     </div>
                 @empty
-                    <p class="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-ink-muted">
-                        لا يوجد أبناء مرتبطون.
-                        <a href="{{ route('parent.link') }}" class="mt-2 block link-brand" wire:navigate>اربط ابنًا بكود الطالب</a>
-                    </p>
+                    <div class="rounded-xl border border-dashed border-slate-200 px-4 py-10 text-center">
+                        <p class="text-sm text-ink-muted">لا يوجد أبناء مرتبطون بعد.</p>
+                        <a href="{{ route('parent.link') }}" class="btn-brand mt-4" wire:navigate>ربط ابن بكود الطالب</a>
+                    </div>
                 @endforelse
             </div>
         </x-panel-card>

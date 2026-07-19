@@ -2,10 +2,13 @@
 
 namespace App\Modules\Payments\Services;
 
+use App\Enums\ChargeStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\SubscriptionStatus;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Modules\Payments\Models\Payment;
+use App\Modules\Payments\Models\SubscriptionCharge;
 use App\Modules\Notifications\Services\NotificationService;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
@@ -37,11 +40,23 @@ class PaymentReviewService
                 'rejection_reason' => null,
             ]);
 
-            if ($payment->subscription_id) {
-                $subscription = $payment->subscription;
-                if ($subscription && ! $subscription->isActive()) {
-                    $this->enrollment->activate($subscription);
+            $subscription = $payment->subscription_id ? $payment->subscription : null;
+            $wasActive = $subscription?->isActive() ?? false;
+
+            if ($payment->subscription_charge_id) {
+                $this->refreshLinkedCharge($payment->subscription_charge_id);
+            }
+
+            if ($subscription && ! $wasActive) {
+                $this->enrollment->activate($subscription);
+            } elseif ($subscription && $wasActive && $payment->subscription_charge_id) {
+                $charge = SubscriptionCharge::query()->find($payment->subscription_charge_id);
+                if ($charge?->fresh()->status === ChargeStatus::Paid) {
+                    $this->extendSubscriptionForRenewal($subscription);
                 }
+            }
+
+            if ($payment->subscription_id) {
                 $this->invoices->issueForPayment($payment->fresh());
             }
 
@@ -106,6 +121,43 @@ class PaymentReviewService
 
         throw ValidationException::withMessages([
             'payment' => 'غير مصرح بمراجعة الدفع.',
+        ]);
+    }
+
+    private function refreshLinkedCharge(int $chargeId): void
+    {
+        $charge = SubscriptionCharge::query()->find($chargeId);
+        if (! $charge || $charge->status === ChargeStatus::Waived) {
+            return;
+        }
+
+        $paid = (float) $charge->payments()
+            ->where('status', PaymentStatus::Confirmed)
+            ->sum('amount');
+        $net = max(0, (float) $charge->expected_amount - (float) $charge->discount_amount);
+
+        $status = match (true) {
+            $paid <= 0 => ChargeStatus::Due,
+            $paid + 0.001 >= $net => ChargeStatus::Paid,
+            default => ChargeStatus::Partial,
+        };
+
+        if ($charge->status !== $status) {
+            $charge->update(['status' => $status]);
+        }
+    }
+
+    private function extendSubscriptionForRenewal(\App\Modules\Payments\Models\Subscription $subscription): void
+    {
+        $subscription->loadMissing('plan');
+        $days = (int) ($subscription->plan?->duration_days ?: 30);
+        $base = $subscription->ends_at && $subscription->ends_at->isFuture()
+            ? $subscription->ends_at->copy()
+            : now();
+
+        $subscription->update([
+            'ends_at' => $base->addDays($days),
+            'status' => SubscriptionStatus::Active,
         ]);
     }
 }

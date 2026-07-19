@@ -56,7 +56,7 @@ class EnrollmentService
             ]);
         }
 
-        return Subscription::query()->create([
+        $subscription = Subscription::query()->create([
             'student_id' => $student->id,
             'subject_id' => $plan->subject_id,
             'teacher_id' => $teacher->id,
@@ -64,6 +64,10 @@ class EnrollmentService
             'branch_id' => $student->branch_id ?? Branch::defaultBranch()?->id,
             'status' => SubscriptionStatus::PendingPayment,
         ]);
+
+        app(MonthlyCollectionService::class)->ensureChargeForSubscription($subscription);
+
+        return $subscription->fresh();
     }
 
     public function activate(Subscription $subscription): Subscription

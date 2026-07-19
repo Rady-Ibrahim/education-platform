@@ -1,5 +1,5 @@
 <x-app-layout>
-    <x-panel-page title="مكتب التحصيل" subtitle="اشتراك شهري — كاش نهاية الشهر في السنتر، أو فودافون من ولي الأمر.">
+    <x-panel-page title="مكتب التحصيل" subtitle="دفتر شهري: مين عليه فلوس · كامل/جزئي/خصم/إيصال — وفودافون من ولي الأمر.">
         <x-slot:actions>
             <a href="{{ route('teacher.students') }}" class="link-brand" wire:navigate>الطلاب</a>
         </x-slot:actions>
