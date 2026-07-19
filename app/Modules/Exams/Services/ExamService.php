@@ -29,7 +29,11 @@ class ExamService
 
         $mode = ExamDeliveryMode::from($data['delivery_mode'] ?? ExamDeliveryMode::Online->value);
 
-        if ($mode === ExamDeliveryMode::Online && empty($data['question_ids'])) {
+        if (
+            $mode === ExamDeliveryMode::Online
+            && ($data['is_published'] ?? false)
+            && empty($data['question_ids'])
+        ) {
             throw ValidationException::withMessages([
                 'question_ids' => 'الامتحان الإلكتروني يحتاج سؤال واحد على الأقل.',
             ]);
