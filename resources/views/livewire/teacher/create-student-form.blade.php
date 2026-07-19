@@ -34,13 +34,32 @@
         </div>
         <div>
             <x-input-label value="الصف الدراسي" />
-            <select wire:model="gradeId" class="mt-1 block w-full">
+            <select wire:model.live="gradeId" class="mt-1 block w-full">
                 <option value="">اختر الصف — أولى ثانوي / تانية…</option>
                 @foreach ($grades as $grade)
                     <option value="{{ $grade->id }}">{{ $grade->stage?->name }} — {{ $grade->name }}</option>
                 @endforeach
             </select>
             <x-input-error :messages="$errors->get('gradeId')" class="mt-2" />
+        </div>
+        <div>
+            <x-input-label value="المجموعة (اختياري)" />
+            <select wire:model="groupId" class="mt-1 block w-full" @disabled(! $gradeId)>
+                <option value="">بدون مجموعة الآن</option>
+                @foreach ($groups as $group)
+                    <option value="{{ $group->id }}">
+                        {{ $group->name }}
+                        @if ($group->schedule_note) — {{ $group->schedule_note }} @endif
+                    </option>
+                @endforeach
+            </select>
+            <x-input-error :messages="$errors->get('groupId')" class="mt-2" />
+            @if ($gradeId && $groups->isEmpty())
+                <p class="mt-1 text-xs text-ink-muted">
+                    لا توجد مجموعات لهذا الصف —
+                    <a href="{{ route('teacher.groups') }}" class="link-brand" wire:navigate>أنشئ مجموعة</a>
+                </p>
+            @endif
         </div>
         <div>
             <x-input-label value="الهاتف (اختياري)" />

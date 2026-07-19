@@ -14,6 +14,7 @@
         ],
         UserRole::Teacher => [
             ['label' => 'لوحة التحكم', 'route' => 'teacher.dashboard', 'active' => request()->routeIs('teacher.dashboard'), 'icon' => 'home'],
+            ['label' => 'المجموعات', 'route' => 'teacher.groups', 'active' => request()->routeIs('teacher.groups'), 'icon' => 'groups'],
             ['label' => 'الطلاب', 'route' => 'teacher.students', 'active' => request()->routeIs('teacher.students*'), 'icon' => 'students'],
             ['label' => 'رسائل أولياء الأمور', 'route' => 'teacher.messages', 'active' => request()->routeIs('teacher.messages'), 'icon' => 'messages'],
             ['label' => 'الدروس', 'route' => 'teacher.lessons', 'active' => request()->routeIs('teacher.lessons'), 'icon' => 'lessons'],

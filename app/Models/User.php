@@ -7,6 +7,7 @@ use App\Enums\UserStatus;
 use App\Modules\Academic\Models\Branch;
 use App\Modules\Academic\Models\Grade;
 use App\Modules\Academic\Models\Subject;
+use App\Modules\Academic\Models\TeacherGroup;
 use App\Modules\Identity\Models\ParentStudentLink;
 use App\Modules\Identity\Models\TeacherJoinRequest;
 use App\Modules\Payments\Models\Subscription;
@@ -150,6 +151,18 @@ class User extends Authenticatable
     public function teachingSubjects(): BelongsToMany
     {
         return $this->belongsToMany(Subject::class, 'teacher_subject', 'teacher_id', 'subject_id')
+            ->withTimestamps();
+    }
+
+    public function teacherGroups(): HasMany
+    {
+        return $this->hasMany(TeacherGroup::class, 'teacher_id');
+    }
+
+    public function studentGroups(): BelongsToMany
+    {
+        return $this->belongsToMany(TeacherGroup::class, 'teacher_group_student', 'student_id', 'group_id')
+            ->withPivot(['status', 'joined_at', 'left_at'])
             ->withTimestamps();
     }
 

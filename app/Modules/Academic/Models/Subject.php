@@ -53,4 +53,9 @@ class Subject extends Model
         return $this->belongsToMany(User::class, 'teacher_subject', 'subject_id', 'teacher_id')
             ->withTimestamps();
     }
+
+    public function teacherGroups(): HasMany
+    {
+        return $this->hasMany(TeacherGroup::class, 'subject_id');
+    }
 }

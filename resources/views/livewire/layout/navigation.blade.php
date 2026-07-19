@@ -21,6 +21,7 @@ new class extends Component
             ],
             UserRole::Teacher => [
                 ['label' => 'لوحة التحكم', 'route' => 'teacher.dashboard', 'active' => request()->routeIs('teacher.dashboard'), 'icon' => 'home'],
+                ['label' => 'المجموعات', 'route' => 'teacher.groups', 'active' => request()->routeIs('teacher.groups'), 'icon' => 'groups'],
                 ['label' => 'الطلاب', 'route' => 'teacher.students', 'active' => request()->routeIs('teacher.students*'), 'icon' => 'students'],
                 ['label' => 'الدروس', 'route' => 'teacher.lessons', 'active' => request()->routeIs('teacher.lessons'), 'icon' => 'lessons'],
                 ['label' => 'الامتحانات', 'route' => 'teacher.exams', 'active' => request()->routeIs('teacher.exams'), 'icon' => 'exams'],

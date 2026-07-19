@@ -39,6 +39,11 @@ class Grade extends Model
         return $this->hasMany(Subject::class)->orderBy('ordering');
     }
 
+    public function teacherGroups(): HasMany
+    {
+        return $this->hasMany(TeacherGroup::class, 'grade_id');
+    }
+
     public function students(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'student_grade', 'grade_id', 'student_id')
