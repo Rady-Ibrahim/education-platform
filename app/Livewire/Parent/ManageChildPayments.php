@@ -5,11 +5,13 @@ namespace App\Livewire\Parent;
 use App\Enums\SubscriptionStatus;
 use App\Models\User;
 use App\Modules\Identity\Services\ParentLinkService;
+use App\Modules\Payments\Models\StudentFee;
 use App\Modules\Payments\Models\Subscription;
+use App\Modules\Payments\Models\SubscriptionPlan;
 use App\Modules\Payments\Services\EnrollmentService;
 use App\Modules\Payments\Services\PaymentRecordService;
 use App\Modules\Payments\Services\StudentAccountService;
-use App\Modules\Payments\Models\SubscriptionPlan;
+use App\Modules\Payments\Services\StudentFeeService;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -20,6 +22,8 @@ class ManageChildPayments extends Component
     public int $studentId;
 
     public ?int $payingSubscriptionId = null;
+
+    public ?int $payingFeeId = null;
 
     public string $externalReference = '';
 
@@ -58,7 +62,30 @@ class ManageChildPayments extends Component
             return;
         }
 
+        $this->payingFeeId = null;
         $this->payingSubscriptionId = $subscription->id;
+        $this->externalReference = '';
+        $this->proof = null;
+    }
+
+    public function startFeePayment(int $feeId, ParentLinkService $links, StudentFeeService $fees): void
+    {
+        $student = $this->student($links);
+        $fee = StudentFee::query()
+            ->where('student_id', $student->id)
+            ->findOrFail($feeId);
+
+        $fees->refreshFeeStatus($fee);
+        $fee = $fee->fresh();
+
+        if (! $fee->status->isOpen()) {
+            session()->flash('status', 'هذا المصروف مدفوع بالفعل.');
+
+            return;
+        }
+
+        $this->payingSubscriptionId = null;
+        $this->payingFeeId = $fee->id;
         $this->externalReference = '';
         $this->proof = null;
     }
@@ -84,8 +111,33 @@ class ManageChildPayments extends Component
         session()->flash('status', 'تم إرسال إثبات فودافون كاش وبانتظار مراجعة المدرس.');
     }
 
-    public function render(ParentLinkService $links, PaymentRecordService $payments, StudentAccountService $accounts)
+    public function submitFeeProof(StudentFeeService $fees, ParentLinkService $links): void
     {
+        $this->validate([
+            'externalReference' => ['required', 'string', 'min:4', 'max:100'],
+            'proof' => ['required', 'image', 'max:4096'],
+        ]);
+
+        $student = $this->student($links);
+        $fee = StudentFee::query()
+            ->where('student_id', $student->id)
+            ->findOrFail($this->payingFeeId);
+
+        $fees->submitVodafoneForChild(auth()->user(), $student, $fee, [
+            'external_reference' => $this->externalReference,
+        ], $this->proof);
+
+        $this->payingFeeId = null;
+        $this->reset(['externalReference', 'proof']);
+        session()->flash('status', 'تم إرسال إثبات مصروف فودافون كاش وبانتظار مراجعة المدرس.');
+    }
+
+    public function render(
+        ParentLinkService $links,
+        PaymentRecordService $payments,
+        StudentAccountService $accounts,
+        StudentFeeService $fees,
+    ) {
         $student = $this->student($links);
         $teacherIds = $student->teachers()->pluck('users.id');
 
@@ -102,9 +154,16 @@ class ManageChildPayments extends Component
             ->latest()
             ->get();
 
+        $openFees = $fees->listOpenForStudent($student);
+
         $instructions = [];
         foreach ($subscriptions->where('status', SubscriptionStatus::PendingPayment) as $subscription) {
             $instructions[$subscription->id] = $payments->paymentInstructionsForSubscription($subscription);
+        }
+
+        $feeInstructions = [];
+        foreach ($openFees as $fee) {
+            $feeInstructions[$fee->id] = $fees->paymentInstructions($fee);
         }
 
         $canSubmit = [];
@@ -116,7 +175,9 @@ class ManageChildPayments extends Component
             'student' => $student,
             'plans' => $plans,
             'subscriptions' => $subscriptions,
+            'openFees' => $openFees,
             'instructions' => $instructions,
+            'feeInstructions' => $feeInstructions,
             'canSubmit' => $canSubmit,
         ]);
     }

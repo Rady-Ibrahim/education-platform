@@ -14,7 +14,7 @@
                 </select>
             </div>
             <div class="flex items-end">
-                <a href="{{ route('teacher.students.add') }}" class="btn-brand w-full lg:w-auto" target="_blank" rel="noopener">
+                <a href="{{ route('teacher.students.add') }}" class="btn-brand w-full lg:w-auto">
                     إضافة طالب ↗
                 </a>
             </div>
@@ -81,7 +81,7 @@
                                     {{ $latestActive?->ends_at?->format('Y-m-d') ?? '—' }}
                                 </td>
                                 <td class="text-end">
-                                    <a href="{{ route('teacher.students.show', $student) }}" class="text-sm font-semibold text-brand-700 hover:text-brand-900" target="_blank" rel="noopener">
+                                    <a href="{{ route('teacher.students.show', $student) }}" class="text-sm font-semibold text-brand-700 hover:text-brand-900">
                                         عرض ↗
                                     </a>
                                 </td>

@@ -58,7 +58,7 @@
                 @if ($gradeId && $groups->isEmpty())
                     <p class="mt-1 text-xs text-ink-muted">
                         لا توجد مجموعات لهذا الصف —
-                        <a href="{{ route('teacher.groups') }}" class="link-brand" target="_blank" rel="noopener">أنشئ مجموعة ↗</a>
+                        <a href="{{ route('teacher.groups') }}" class="link-brand">أنشئ مجموعة ↗</a>
                     </p>
                 @endif
             </div>

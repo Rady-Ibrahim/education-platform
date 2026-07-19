@@ -2,7 +2,7 @@
     @forelse ($children as $child)
         <x-page-section :title="$child->name" :subtitle="$child->student_code">
             <x-slot:actions>
-                <a href="{{ route('parent.children.exams', $child->id) }}" class="link-brand text-sm" target="_blank" rel="noopener">تفاصيل الابن ↗</a>
+                <a href="{{ route('parent.children.exams', $child->id) }}" class="link-brand text-sm">تفاصيل الابن ↗</a>
             </x-slot:actions>
 
             @php $rows = $attemptsByChild->get($child->id, collect()); @endphp

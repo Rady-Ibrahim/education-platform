@@ -21,7 +21,7 @@
                                 <div class="text-sm text-ink-muted">رقم العملية: {{ $payment->external_reference }}</div>
                             @endif
                             @if ($payment->proof_path)
-                                <a href="{{ asset('storage/'.$payment->proof_path) }}" target="_blank" class="text-sm font-semibold text-brand-700">عرض الإثبات ↗</a>
+                                <a href="{{ asset('storage/'.$payment->proof_path) }}" target="_blank" rel="noopener" class="text-sm font-semibold text-brand-700">عرض الإثبات ↗</a>
                             @endif
                         </div>
                         <div class="flex gap-2">

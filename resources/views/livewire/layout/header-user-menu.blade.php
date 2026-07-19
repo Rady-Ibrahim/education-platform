@@ -13,6 +13,13 @@ new class extends Component
         $this->redirect('/', navigate: true);
     }
 
+    public function switchAccount(Logout $logout): void
+    {
+        $logout();
+
+        $this->redirect(route('login', absolute: false), navigate: true);
+    }
+
     public function roleLabel(): string
     {
         $user = auth()->user();
@@ -78,6 +85,17 @@ new class extends Component
                 </svg>
                 الملف الشخصي
             </a>
+
+            <button
+                type="button"
+                wire:click="switchAccount"
+                class="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-ink transition hover:bg-brand-50"
+            >
+                <svg class="h-4 w-4 text-ink-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                تبديل الحساب
+            </button>
 
             <button
                 type="button"

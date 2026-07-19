@@ -6,7 +6,7 @@
     <x-panel-page title="متابعة الأبناء" subtitle="كل قسم لوحده — وافتح النتائج أو المدفوعات في تاب متصفح منفصل.">
         <x-slot:actions>
             <a href="{{ route('parent.link') }}" class="btn-brand">ربط ابن</a>
-            <a href="{{ route('parent.messages') }}" class="btn-accent" target="_blank" rel="noopener">
+            <a href="{{ route('parent.messages') }}" class="btn-accent">
                 الرسائل ↗
                 @if ($stats['unread_messages'] > 0)
                     <span class="ms-1 rounded-md bg-ink/10 px-1.5 py-0.5 text-[11px]">{{ $stats['unread_messages'] }}</span>
@@ -25,7 +25,7 @@
                         تابع النتائج، سجّل دفع فودافون كاش، واستقبل رسائل المدرس.
                     </p>
                 </div>
-                <a href="{{ route('parent.exams') }}" class="hero-btn-ghost" target="_blank" rel="noopener">كل النتائج ↗</a>
+                <a href="{{ route('parent.exams') }}" class="hero-btn-ghost">كل النتائج ↗</a>
             </div>
         </div>
 
@@ -42,13 +42,13 @@
                     <div class="attention-strip">
                         <span class="font-bold">يتطلب متابعتك:</span>
                         @if ($stats['unread_messages'] > 0)
-                            <a href="{{ route('parent.messages') }}" target="_blank" rel="noopener" class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold ring-1 ring-amber-200">
+                            <a href="{{ route('parent.messages') }}" class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold ring-1 ring-amber-200">
                                 {{ $stats['unread_messages'] }} رسالة من مدرس ↗
                             </a>
                         @endif
                         @foreach ($stats['children'] as $child)
                             @if ($child['pending_subscriptions'] > 0 || $child['pending_payments'] > 0)
-                                <a href="{{ route('parent.children.payments', $child['id']) }}" target="_blank" rel="noopener" class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold ring-1 ring-amber-200">
+                                <a href="{{ route('parent.children.payments', $child['id']) }}" class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold ring-1 ring-amber-200">
                                     دفع — {{ $child['name'] }} ↗
                                 </a>
                             @endif
@@ -73,12 +73,12 @@
                 <div class="dashboard-block">
                     <div class="mb-4">
                         <h3 class="dashboard-block-title">المهام الأساسية</h3>
-                        <p class="dashboard-block-sub">كل مهمة تفتح في تاب جديد بدون ما تضيع الصفحة الحالية.</p>
+                        <p class="dashboard-block-sub">اربط ابنك، ادفع المصاريف، وتابع النتائج.</p>
                     </div>
                     <div class="grid gap-3 sm:grid-cols-3">
-                        <x-flow-step step="1" title="ربط الابن" description="بكود الطالب من المدرس أو حساب الطالب." :href="route('parent.link')" :tone="$stats['children_count'] === 0 ? 'warning' : 'success'" target="_blank" rel="noopener" />
-                        <x-flow-step step="2" title="دفع المصاريف" description="فودافون كاش بإثبات — المدرس يراجع." :href="$stats['children_count'] ? route('parent.children.payments', $stats['children'][0]['id']) : route('parent.link')" tone="accent" target="_blank" rel="noopener" />
-                        <x-flow-step step="3" title="متابعة الدرجات" description="نتائج إلكترونية وورقية + رسائل." :href="route('parent.exams')" :badge="$stats['unread_messages']" target="_blank" rel="noopener" />
+                        <x-flow-step step="1" title="ربط الابن" description="بكود الطالب من المدرس أو حساب الطالب." :href="route('parent.link')" :tone="$stats['children_count'] === 0 ? 'warning' : 'success'" />
+                        <x-flow-step step="2" title="دفع المصاريف" description="فودافون كاش بإثبات — المدرس يراجع." :href="$stats['children_count'] ? route('parent.children.payments', $stats['children'][0]['id']) : route('parent.link')" tone="accent" />
+                        <x-flow-step step="3" title="متابعة الدرجات" description="نتائج إلكترونية وورقية + رسائل." :href="route('parent.exams')" :badge="$stats['unread_messages']" />
                     </div>
                 </div>
             </x-dashboard-panel>
@@ -107,8 +107,8 @@
                                         @endif
                                     </div>
                                     <div class="flex flex-wrap gap-2">
-                                        <a href="{{ route('parent.children.exams', $child['id']) }}" target="_blank" rel="noopener" class="btn-brand !px-3 !py-2 text-xs">النتائج ↗</a>
-                                        <a href="{{ route('parent.children.payments', $child['id']) }}" target="_blank" rel="noopener" class="btn-accent !px-3 !py-2 text-xs">المدفوعات ↗</a>
+                                        <a href="{{ route('parent.children.exams', $child['id']) }}" class="btn-brand !px-3 !py-2 text-xs">النتائج ↗</a>
+                                        <a href="{{ route('parent.children.payments', $child['id']) }}" class="btn-accent !px-3 !py-2 text-xs">المدفوعات ↗</a>
                                     </div>
                                 </div>
 
@@ -147,7 +147,7 @@
                         @empty
                             <div class="empty-state">
                                 <p class="text-sm text-ink-muted">لا يوجد أبناء مرتبطون بعد.</p>
-                                <a href="{{ route('parent.link') }}" class="btn-brand mt-4" target="_blank" rel="noopener">ربط ابن بكود الطالب ↗</a>
+                                <a href="{{ route('parent.link') }}" class="btn-brand mt-4">ربط ابن بكود الطالب ↗</a>
                             </div>
                         @endforelse
                     </div>

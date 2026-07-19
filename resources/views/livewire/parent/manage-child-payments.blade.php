@@ -28,6 +28,66 @@
         </div>
     </x-page-section>
 
+    <x-page-section title="مصاريف وكتب" subtitle="بنود سجّلها المدرس — حوّل فودافون كاش وأرسل الإثبات.">
+        <div class="space-y-3">
+            @forelse ($openFees as $fee)
+                <div class="list-row !items-stretch !flex-col space-y-3">
+                    <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <div class="font-semibold text-ink">{{ $fee->title }}</div>
+                            <div class="text-sm text-ink-muted">
+                                {{ $fee->category->label() }} — {{ $fee->teacher?->name }}
+                            </div>
+                            <div class="text-sm">
+                                المتبقي: <span class="font-bold tabular-nums">{{ number_format($fee->remainingAmount(), 2) }} ج.م</span>
+                                من أصل {{ number_format((float) $fee->expected_amount, 2) }}
+                            </div>
+                        </div>
+                        @if ($payingFeeId !== $fee->id)
+                            <x-secondary-button wire:click="startFeePayment({{ $fee->id }})">
+                                إرسال إثبات فودافون
+                            </x-secondary-button>
+                        @endif
+                    </div>
+
+                    @if (! empty($feeInstructions[$fee->id]))
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-ink space-y-1">
+                            <div class="font-medium">تعليمات التحويل</div>
+                            @if ($feeInstructions[$fee->id]['vodafone_cash_number'])
+                                <div>رقم فودافون كاش: <span class="font-mono font-semibold">{{ $feeInstructions[$fee->id]['vodafone_cash_number'] }}</span></div>
+                            @else
+                                <div class="text-amber-700">لم يُضبط رقم المحفظة بعد — تواصل مع المدرس.</div>
+                            @endif
+                            @if ($feeInstructions[$fee->id]['payment_instructions'])
+                                <div class="whitespace-pre-line">{{ $feeInstructions[$fee->id]['payment_instructions'] }}</div>
+                            @endif
+                        </div>
+                    @endif
+
+                    @if ($payingFeeId === $fee->id)
+                        <div class="space-y-3 border-t border-slate-100 pt-4">
+                            <div>
+                                <x-input-label value="رقم عملية فودافون كاش" />
+                                <x-text-input wire:model="externalReference" class="mt-1.5 block w-full" />
+                                <x-input-error :messages="$errors->get('externalReference')" />
+                            </div>
+                            <div>
+                                <x-input-label value="صورة وصل فودافون كاش (مطلوبة)" />
+                                <input type="file" wire:model="proof" class="mt-1.5 block w-full text-sm" accept="image/*" />
+                                <x-input-error :messages="$errors->get('proof')" />
+                            </div>
+                            <x-primary-button wire:click="submitFeeProof">إرسال للمراجعة</x-primary-button>
+                        </div>
+                    @endif
+                </div>
+            @empty
+                <div class="empty-state">
+                    <p class="text-sm text-ink-muted">لا توجد مصاريف مفتوحة حاليًا.</p>
+                </div>
+            @endforelse
+        </div>
+    </x-page-section>
+
     <x-page-section title="الاشتراكات والدفع" subtitle="حالة كل اشتراك وإرسال إثبات فودافون عند الحاجة.">
         <div class="space-y-3">
             @forelse ($subscriptions as $subscription)

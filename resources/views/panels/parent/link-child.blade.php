@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-panel-page title="ربط ابن" subtitle="اطلب كود الطالب من لوحة ابنك، ثم أرسل الطلب.">
         <x-slot:actions>
-            <a href="{{ route('parent.dashboard') }}" class="link-brand" target="_blank" rel="noopener">رجوع ↗</a>
+            <a href="{{ route('parent.dashboard') }}" class="link-brand">رجوع ↗</a>
         </x-slot:actions>
 
         <div class="max-w-lg">

@@ -83,4 +83,21 @@ class AuthenticationTest extends TestCase
 
         $this->assertGuest();
     }
+
+    public function test_users_can_switch_account(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user);
+
+        $component = Volt::test('layout.header-user-menu');
+
+        $component->call('switchAccount');
+
+        $component
+            ->assertHasNoErrors()
+            ->assertRedirect(route('login', absolute: false));
+
+        $this->assertGuest();
+    }
 }

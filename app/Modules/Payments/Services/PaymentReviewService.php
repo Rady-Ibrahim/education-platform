@@ -9,6 +9,7 @@ use App\Enums\UserRole;
 use App\Models\User;
 use App\Modules\Payments\Models\Payment;
 use App\Modules\Payments\Models\SubscriptionCharge;
+use App\Modules\Payments\Models\StudentFee;
 use App\Modules\Notifications\Services\NotificationService;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
@@ -47,6 +48,13 @@ class PaymentReviewService
                 $this->refreshLinkedCharge($payment->subscription_charge_id);
             }
 
+            if ($payment->student_fee_id) {
+                $fee = StudentFee::query()->find($payment->student_fee_id);
+                if ($fee) {
+                    app(StudentFeeService::class)->refreshFeeStatus($fee);
+                }
+            }
+
             if ($subscription && ! $wasActive) {
                 $this->enrollment->activate($subscription);
             } elseif ($subscription && $wasActive && $payment->subscription_charge_id) {
@@ -56,7 +64,7 @@ class PaymentReviewService
                 }
             }
 
-            if ($payment->subscription_id) {
+            if ($payment->subscription_id || $payment->student_fee_id) {
                 $this->invoices->issueForPayment($payment->fresh());
             }
 

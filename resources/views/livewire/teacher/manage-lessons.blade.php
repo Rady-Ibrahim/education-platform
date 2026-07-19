@@ -9,7 +9,7 @@
         <x-page-section title="المادة غير محددة" subtitle="حدّد مادتك من البروفايل قبل إضافة الدروس.">
             <p class="text-sm text-ink-muted">
                 حدّد مادتك أولًا من
-                <a href="{{ route('profile') }}" class="link-brand" target="_blank" rel="noopener">البروفايل ↗</a>
+                <a href="{{ route('profile') }}" class="link-brand">البروفايل ↗</a>
                 (اختيار من الكتالوج أو كتابة اسم المادة)، بعدين ارجع هنا لإضافة الدروس.
             </p>
         </x-page-section>
@@ -21,7 +21,7 @@
                         {{ $subjects->first()->grade?->stage?->name }} / {{ $subjects->first()->grade?->name }} / {{ $subjects->first()->name }}
                     </span>
                     —
-                    <a href="{{ route('profile') }}" class="link-brand" target="_blank" rel="noopener">تعديل من البروفايل ↗</a>
+                    <a href="{{ route('profile') }}" class="link-brand">تعديل من البروفايل ↗</a>
                 </p>
             </x-page-section>
         @endif

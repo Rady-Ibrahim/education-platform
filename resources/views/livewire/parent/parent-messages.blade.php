@@ -26,7 +26,7 @@
                     </div>
                     <p class="mt-1 text-sm leading-relaxed text-ink whitespace-pre-line">{{ $message->body }}</p>
                     @if ($message->imageUrl())
-                        <a href="{{ $message->imageUrl() }}" target="_blank" class="mt-2 block overflow-hidden rounded-xl border border-slate-200">
+                        <a href="{{ $message->imageUrl() }}" target="_blank" rel="noopener" class="mt-2 block overflow-hidden rounded-xl border border-slate-200">
                             <img src="{{ $message->imageUrl() }}" alt="مرفق" class="max-h-72 w-full object-contain bg-slate-50">
                         </a>
                     @endif

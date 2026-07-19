@@ -64,7 +64,7 @@
                         </div>
                         <p class="mt-2 text-sm text-ink-soft whitespace-pre-line">{{ $message->body }}</p>
                         @if ($message->imageUrl())
-                            <a href="{{ $message->imageUrl() }}" target="_blank" class="mt-2 inline-flex text-sm font-semibold text-brand-700">عرض الصورة ↗</a>
+                            <a href="{{ $message->imageUrl() }}" target="_blank" rel="noopener" class="mt-2 inline-flex text-sm font-semibold text-brand-700">عرض الصورة ↗</a>
                         @endif
                     </div>
                 </div>

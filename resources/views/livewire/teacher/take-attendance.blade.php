@@ -35,7 +35,7 @@
     @if ($groups->isEmpty())
         <div class="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-10 text-center shadow-soft">
             <p class="text-sm text-ink-muted">أنشئ مجموعة أولًا قبل تسجيل الحضور.</p>
-            <a href="{{ route('teacher.groups') }}" class="btn-brand mt-4" target="_blank" rel="noopener">إنشاء مجموعة ↗</a>
+            <a href="{{ route('teacher.groups') }}" class="btn-brand mt-4">إنشاء مجموعة ↗</a>
         </div>
     @elseif (! $groupId)
         <div class="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-8 text-center text-sm text-ink-muted shadow-soft">
@@ -44,7 +44,7 @@
     @elseif ($roster->isEmpty())
         <div class="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-8 text-center text-sm text-ink-muted shadow-soft">
             لا يوجد طلاب مستمرون في هذه المجموعة.
-            <a href="{{ route('teacher.groups') }}" class="link-brand ms-1" target="_blank" rel="noopener">إدارة الأعضاء ↗</a>
+            <a href="{{ route('teacher.groups') }}" class="link-brand ms-1">إدارة الأعضاء ↗</a>
         </div>
     @else
         <x-page-section

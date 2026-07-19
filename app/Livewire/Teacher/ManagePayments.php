@@ -2,17 +2,20 @@
 
 namespace App\Livewire\Teacher;
 
+use App\Enums\FeeCategory;
 use App\Enums\PaymentChannel;
 use App\Enums\PaymentStatus;
 use App\Enums\SubscriptionStatus;
 use App\Models\User;
 use App\Modules\Payments\Models\Payment;
+use App\Modules\Payments\Models\StudentFee;
 use App\Modules\Payments\Models\Subscription;
 use App\Modules\Payments\Models\SubscriptionCharge;
 use App\Modules\Payments\Models\SubscriptionPlan;
 use App\Modules\Payments\Services\EnrollmentService;
 use App\Modules\Payments\Services\MonthlyCollectionService;
 use App\Modules\Payments\Services\PaymentReviewService;
+use App\Modules\Payments\Services\StudentFeeService;
 use App\Modules\Payments\Services\SubscriptionPlanService;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -55,6 +58,30 @@ class ManagePayments extends Component
 
     public int $newPlanDays = 30;
 
+    public string $feeTitle = 'كتب';
+
+    public string $feeCategory = 'books';
+
+    public string $feeAmount = '';
+
+    public ?int $feeStudentId = null;
+
+    public ?int $feeSubjectId = null;
+
+    public string $feeNotes = '';
+
+    public string $feeSearch = '';
+
+    public bool $feeOpenOnly = true;
+
+    public ?int $collectFeeId = null;
+
+    public string $collectFeeAmount = '';
+
+    public string $collectFeeDiscount = '0';
+
+    public string $collectFeeNotes = '';
+
     public function mount(): void
     {
         $this->billingMonth = now()->format('Y-m');
@@ -62,7 +89,7 @@ class ManagePayments extends Component
 
     public function setTab(string $tab): void
     {
-        if (! in_array($tab, ['cash', 'vodafone', 'plans', 'settings'], true)) {
+        if (! in_array($tab, ['cash', 'fees', 'vodafone', 'plans', 'settings'], true)) {
             return;
         }
 
@@ -70,6 +97,7 @@ class ManagePayments extends Component
         $this->resetPage();
         $this->rejectingPaymentId = null;
         $this->collectChargeId = null;
+        $this->collectFeeId = null;
     }
 
     public function generateMonth(MonthlyCollectionService $collection): void
@@ -185,7 +213,9 @@ class ManagePayments extends Component
     {
         $payment = Payment::query()->findOrFail($paymentId);
         $review->confirm(auth()->user(), $payment);
-        session()->flash('status', 'تم تأكيد فودافون كاش وتفعيل الاشتراك.');
+
+        $label = $payment->student_fee_id ? 'المصروف' : 'الاشتراك';
+        session()->flash('status', 'تم تأكيد فودافون كاش وتسوية '.$label.'.');
     }
 
     public function startReject(int $paymentId): void
@@ -208,7 +238,103 @@ class ManagePayments extends Component
         session()->flash('status', 'تم رفض الدفع.');
     }
 
-    public function render(MonthlyCollectionService $collection)
+    public function createFee(StudentFeeService $fees): void
+    {
+        $validated = $this->validate([
+            'feeTitle' => ['required', 'string', 'max:160'],
+            'feeCategory' => ['required', 'in:books,materials,transport,other'],
+            'feeAmount' => ['required', 'numeric', 'min:1'],
+            'feeStudentId' => ['required', 'integer'],
+            'feeSubjectId' => ['nullable', 'integer', 'exists:subjects,id'],
+            'feeNotes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $student = User::query()->findOrFail($validated['feeStudentId']);
+        $fees->create(auth()->user(), $student, [
+            'title' => $validated['feeTitle'],
+            'category' => $validated['feeCategory'],
+            'expected_amount' => (float) $validated['feeAmount'],
+            'subject_id' => $validated['feeSubjectId'] ?: null,
+            'notes' => $validated['feeNotes'] ?: null,
+        ]);
+
+        $this->reset(['feeAmount', 'feeStudentId', 'feeSubjectId', 'feeNotes']);
+        $this->feeTitle = 'كتب';
+        $this->feeCategory = 'books';
+        session()->flash('status', 'تم تسجيل المصروف — يظهر لولي الأمر لدفع فودافون أو حصّله كاش من الطالب.');
+        $this->tab = 'fees';
+    }
+
+    public function startCollectFee(int $feeId, StudentFeeService $fees): void
+    {
+        $fee = StudentFee::query()
+            ->where('teacher_id', auth()->id())
+            ->findOrFail($feeId);
+
+        $fees->refreshFeeStatus($fee);
+        $fee = $fee->fresh();
+
+        $this->collectFeeId = $fee->id;
+        $this->collectFeeAmount = (string) $fee->remainingAmount();
+        $this->collectFeeDiscount = (string) $fee->discount_amount;
+        $this->collectFeeNotes = 'تحصيل كاش — '.$fee->title;
+    }
+
+    public function cancelCollectFee(): void
+    {
+        $this->collectFeeId = null;
+        $this->collectFeeAmount = '';
+        $this->collectFeeDiscount = '0';
+        $this->collectFeeNotes = '';
+    }
+
+    public function collectFee(StudentFeeService $fees): void
+    {
+        $validated = $this->validate([
+            'collectFeeId' => ['required', 'exists:student_fees,id'],
+            'collectFeeAmount' => ['required', 'numeric', 'min:0.5'],
+            'collectFeeDiscount' => ['nullable', 'numeric', 'min:0'],
+            'collectFeeNotes' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $fee = StudentFee::query()->findOrFail($validated['collectFeeId']);
+        $payment = $fees->collectCash(auth()->user(), $fee, [
+            'amount' => (float) $validated['collectFeeAmount'],
+            'discount' => $validated['collectFeeDiscount'] !== '' ? (float) $validated['collectFeeDiscount'] : null,
+            'notes' => $validated['collectFeeNotes'] ?: null,
+        ]);
+
+        $this->cancelCollectFee();
+        session()->flash(
+            'status',
+            'تم تحصيل المصروف — إيصال '.$payment->receipt_number.' بمبلغ '.number_format((float) $payment->amount, 0).' ج.م'
+        );
+    }
+
+    public function collectFeeFull(int $feeId, StudentFeeService $fees): void
+    {
+        $fee = StudentFee::query()
+            ->where('teacher_id', auth()->id())
+            ->findOrFail($feeId);
+
+        $payment = $fees->collectCash(auth()->user(), $fee, [
+            'notes' => $this->collectFeeNotes !== '' ? $this->collectFeeNotes : null,
+        ]);
+
+        session()->flash('status', 'تم تحصيل المصروف كاملًا — إيصال '.$payment->receipt_number);
+    }
+
+    public function waiveFee(int $feeId, StudentFeeService $fees): void
+    {
+        $fee = StudentFee::query()
+            ->where('teacher_id', auth()->id())
+            ->findOrFail($feeId);
+
+        $fees->waive(auth()->user(), $fee);
+        session()->flash('status', 'تم إعفاء المصروف.');
+    }
+
+    public function render(MonthlyCollectionService $collection, StudentFeeService $fees)
     {
         $teacher = auth()->user();
         $monthKey = $this->billingMonth !== '' ? $this->billingMonth.'-01' : now()->toDateString();
@@ -223,8 +349,16 @@ class ManagePayments extends Component
         $owingTotal = $collection->owingTotalForMonth($teacher, $monthKey);
         $owingCount = $collection->owingCountForMonth($teacher, $monthKey);
 
+        $studentFees = $fees->listForTeacher(
+            $teacher,
+            $this->feeOpenOnly,
+            $this->feeSearch !== '' ? $this->feeSearch : null,
+        );
+        $openFeesTotal = $fees->openFeesTotalForTeacher($teacher);
+        $openFeesCount = $fees->openFeesCountForTeacher($teacher);
+
         $pendingVodafone = Payment::query()
-            ->with(['student', 'subscription.plan'])
+            ->with(['student', 'subscription.plan', 'studentFee'])
             ->where('teacher_id', $teacher->id)
             ->where('status', PaymentStatus::PendingReview)
             ->where('channel', PaymentChannel::VodafoneCash)
@@ -251,9 +385,18 @@ class ManagePayments extends Component
             ? SubscriptionCharge::query()->with('student')->find($this->collectChargeId)
             : null;
 
+        $collectFee = $this->collectFeeId
+            ? StudentFee::query()->with('student')->find($this->collectFeeId)
+            : null;
+
         return view('livewire.teacher.manage-payments', [
             'charges' => $charges,
             'collectCharge' => $collectCharge,
+            'studentFees' => $studentFees,
+            'collectFee' => $collectFee,
+            'feeCategories' => FeeCategory::cases(),
+            'openFeesTotal' => $openFeesTotal,
+            'openFeesCount' => $openFeesCount,
             'pendingVodafone' => $pendingVodafone,
             'students' => $students,
             'plans' => $plans,

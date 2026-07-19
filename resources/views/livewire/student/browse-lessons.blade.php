@@ -8,7 +8,7 @@
     @if ($subjects->isEmpty())
         <div class="empty-state">
             <p class="text-sm text-ink-muted">لا توجد مواد متاحة بعد. انضم لمدرس وانتظر موافقته، أو أكمل الاشتراك.</p>
-            <a href="{{ route('teachers.index') }}" class="mt-4 inline-flex link-brand" target="_blank" rel="noopener">تصفّح المدرسين ↗</a>
+            <a href="{{ route('teachers.index') }}" class="mt-4 inline-flex link-brand">تصفّح المدرسين ↗</a>
         </div>
     @else
         <x-page-section title="المادة" subtitle="اختر المادة لعرض دروسها.">

@@ -78,8 +78,5 @@
                 {{ $primaryAction['label'] }}
             </a>
         @endif
-        <p class="px-1 text-[11px] leading-4 text-ink-muted">
-            افتح أي صفحة في تاب جديد: كلك يمين → فتح في علامة تبويب جديدة
-        </p>
     </div>
 </div>

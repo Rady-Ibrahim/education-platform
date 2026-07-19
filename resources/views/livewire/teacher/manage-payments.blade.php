@@ -17,6 +17,11 @@
             <div class="mt-1 text-xs text-amber-800">{{ $owingCount }} طالب</div>
         </div>
         <div class="kpi-card">
+            <div class="kpi-label">مصاريف مفتوحة</div>
+            <div class="kpi-value">{{ number_format($openFeesTotal, 0) }} <span class="text-sm font-semibold text-ink-muted">ج.م</span></div>
+            <div class="mt-1 text-xs text-ink-muted">{{ $openFeesCount }} بند</div>
+        </div>
+        <div class="kpi-card">
             <div class="kpi-label">فودافون بانتظارك</div>
             <div class="kpi-value">{{ $pendingVodafoneCount }}</div>
         </div>
@@ -27,6 +32,7 @@
         :active="$tab"
         :tabs="[
             'cash' => ['label' => 'دفتر الشهر', 'badge' => $owingCount],
+            'fees' => ['label' => 'مصاريف وكتب', 'badge' => $openFeesCount],
             'vodafone' => ['label' => 'مراجعة فودافون', 'badge' => $pendingVodafoneCount],
             'plans' => ['label' => 'الخطط والتسجيل'],
             'settings' => ['label' => 'إعدادات الدفع'],
@@ -154,6 +160,169 @@
         </x-page-section>
     @endif
 
+    @if ($tab === 'fees')
+        <div class="grid gap-5 lg:grid-cols-5">
+            <x-page-section
+                class="lg:col-span-2"
+                title="تسجيل مصروف"
+                subtitle="كتب، مستلزمات، أو أي بند — ولي الأمر يدفع فودافون أو تحصّله كاش من الطالب."
+            >
+                <div class="space-y-3">
+                    <div>
+                        <x-input-label value="العنوان" />
+                        <x-text-input wire:model="feeTitle" class="mt-1.5 block w-full" placeholder="مثال: كتاب برمجة أولى ثانوي" />
+                        <x-input-error :messages="$errors->get('feeTitle')" />
+                    </div>
+                    <div class="grid gap-3 sm:grid-cols-2">
+                        <div>
+                            <x-input-label value="النوع" />
+                            <select wire:model="feeCategory" class="mt-1.5 block w-full">
+                                @foreach ($feeCategories as $category)
+                                    <option value="{{ $category->value }}">{{ $category->label() }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <x-input-label value="المبلغ (ج.م)" />
+                            <x-text-input wire:model="feeAmount" type="number" step="0.5" class="mt-1.5 block w-full" />
+                            <x-input-error :messages="$errors->get('feeAmount')" />
+                        </div>
+                    </div>
+                    <div>
+                        <x-input-label value="الطالب" />
+                        <select wire:model="feeStudentId" class="mt-1.5 block w-full">
+                            <option value="">اختر الطالب</option>
+                            @foreach ($students as $student)
+                                <option value="{{ $student->id }}">{{ $student->name }}</option>
+                            @endforeach
+                        </select>
+                        <x-input-error :messages="$errors->get('feeStudentId')" />
+                    </div>
+                    <div>
+                        <x-input-label value="المادة (اختياري)" />
+                        <select wire:model="feeSubjectId" class="mt-1.5 block w-full">
+                            <option value="">—</option>
+                            @foreach ($subjects as $subject)
+                                <option value="{{ $subject->id }}">{{ $subject->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <x-input-label value="ملاحظة" />
+                        <x-text-input wire:model="feeNotes" class="mt-1.5 block w-full" />
+                    </div>
+                    <x-primary-button type="button" wire:click="createFee">حفظ المصروف</x-primary-button>
+                </div>
+            </x-page-section>
+
+            <x-page-section
+                class="lg:col-span-3"
+                title="دفتر المصاريف"
+                subtitle="نفس البند يُسدَّد إما كاش من الطالب أو فودافون من ولي الأمر — مرة واحدة فقط."
+            >
+                <div class="mb-4 grid gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3 sm:grid-cols-3 sm:items-end">
+                    <div class="sm:col-span-2">
+                        <x-input-label value="بحث" />
+                        <x-text-input wire:model.live.debounce.300ms="feeSearch" class="mt-1.5 block w-full" placeholder="عنوان / طالب / كود" />
+                    </div>
+                    <label class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm">
+                        <input type="checkbox" wire:model.live="feeOpenOnly" class="rounded border-slate-300 text-brand-700 focus:ring-brand-500">
+                        مفتوح فقط
+                    </label>
+                </div>
+
+                @if ($collectFee)
+                    <div class="mb-4 rounded-2xl border border-accent/40 bg-[#FFF8E8] p-4">
+                        <div class="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                                <div class="text-sm font-bold text-ink">تحصيل كاش — {{ $collectFee->student?->name }}</div>
+                                <div class="mt-0.5 text-xs text-ink-muted">
+                                    {{ $collectFee->title }} — متبقي {{ number_format($collectFee->remainingAmount(), 0) }} ج.م
+                                </div>
+                            </div>
+                            <button type="button" class="text-sm text-ink-muted hover:text-ink" wire:click="cancelCollectFee">إلغاء</button>
+                        </div>
+                        <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                            <div>
+                                <x-input-label value="المبلغ المستلم" />
+                                <x-text-input wire:model="collectFeeAmount" type="number" step="0.5" class="mt-1.5 block w-full" />
+                                <x-input-error :messages="$errors->get('collectFeeAmount')" />
+                            </div>
+                            <div>
+                                <x-input-label value="خصم" />
+                                <x-text-input wire:model="collectFeeDiscount" type="number" step="0.5" class="mt-1.5 block w-full" />
+                            </div>
+                            <div>
+                                <x-input-label value="ملاحظة" />
+                                <x-text-input wire:model="collectFeeNotes" class="mt-1.5 block w-full" />
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <x-primary-button type="button" wire:click="collectFee">حفظ التحصيل + إيصال</x-primary-button>
+                        </div>
+                    </div>
+                @endif
+
+                <div class="overflow-hidden rounded-2xl border border-slate-200">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>البند</th>
+                                <th>الطالب</th>
+                                <th>المتبقي</th>
+                                <th>الحالة</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($studentFees as $fee)
+                                <tr>
+                                    <td>
+                                        <div class="font-semibold text-ink">{{ $fee->title }}</div>
+                                        <div class="text-xs text-ink-muted">{{ $fee->category->label() }} — {{ number_format((float) $fee->expected_amount, 0) }} ج.م</div>
+                                    </td>
+                                    <td>
+                                        <div class="font-medium text-ink">{{ $fee->student?->name }}</div>
+                                        <div class="font-mono text-xs text-ink-muted" dir="ltr">{{ $fee->student?->student_code }}</div>
+                                    </td>
+                                    <td @class(['font-bold tabular-nums', 'text-amber-800' => $fee->remainingAmount() > 0])>
+                                        {{ number_format($fee->remainingAmount(), 0) }}
+                                    </td>
+                                    <td>
+                                        <span @class([
+                                            'rounded-lg px-2 py-1 text-xs font-bold',
+                                            'bg-amber-50 text-amber-900' => $fee->status === \App\Enums\ChargeStatus::Due,
+                                            'bg-orange-50 text-orange-900' => $fee->status === \App\Enums\ChargeStatus::Partial,
+                                            'bg-emerald-50 text-emerald-800' => $fee->status === \App\Enums\ChargeStatus::Paid,
+                                            'bg-slate-100 text-slate-700' => $fee->status === \App\Enums\ChargeStatus::Waived,
+                                        ])>{{ $fee->status->label() }}</span>
+                                    </td>
+                                    <td class="space-x-2 space-x-reverse text-end text-sm">
+                                        @if ($fee->status->isOpen())
+                                            <button type="button" class="btn-brand !px-3 !py-2 text-xs" wire:click="collectFeeFull({{ $fee->id }})" wire:confirm="تحصيل المتبقي كاملًا من الطالب؟">
+                                                كاش كامل
+                                            </button>
+                                            <button type="button" class="link-brand" wire:click="startCollectFee({{ $fee->id }})">جزئي</button>
+                                            <button type="button" class="text-xs text-ink-muted hover:text-rose-700" wire:click="waiveFee({{ $fee->id }})" wire:confirm="إعفاء هذا المصروف؟">إعفاء</button>
+                                        @else
+                                            <span class="text-xs text-ink-muted">—</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="py-10 text-center text-sm text-ink-muted">
+                                        لا توجد مصاريف. سجّل بندًا جديدًا من النموذج على اليسار.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </x-page-section>
+        </div>
+    @endif
+
     @if ($tab === 'vodafone')
         <x-page-section
             title="مراجعة فودافون كاش"
@@ -167,7 +336,9 @@
                                 <div class="font-semibold text-ink">{{ $payment->student->name }}</div>
                                 <div class="mt-1 text-sm text-ink-muted">
                                     {{ number_format($payment->amount, 2) }} ج.م
-                                    @if ($payment->subscription?->plan)
+                                    @if ($payment->studentFee)
+                                        — مصروف: {{ $payment->studentFee->title }}
+                                    @elseif ($payment->subscription?->plan)
                                         — {{ $payment->subscription->plan->name }}
                                     @endif
                                 </div>
@@ -175,7 +346,7 @@
                                     <div class="mt-1 text-sm text-ink-muted">رقم العملية: <span class="font-mono">{{ $payment->external_reference }}</span></div>
                                 @endif
                                 @if ($payment->proof_path)
-                                    <a href="{{ asset('storage/'.$payment->proof_path) }}" target="_blank" class="mt-1 inline-flex text-sm font-semibold text-brand-700">عرض صورة الوصل ↗</a>
+                                    <a href="{{ asset('storage/'.$payment->proof_path) }}" target="_blank" rel="noopener" class="mt-1 inline-flex text-sm font-semibold text-brand-700">عرض صورة الوصل ↗</a>
                                 @endif
                             </div>
                             <div class="flex flex-wrap gap-2">

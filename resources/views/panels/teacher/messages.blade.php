@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-panel-page title="مراسلة أولياء الأمور" subtitle="ابعث رسالة أو صورة لولي أمر طالب في مجموعتك.">
         <x-slot:actions>
-            <a href="{{ route('teacher.students') }}" class="link-brand" target="_blank" rel="noopener">الطلاب ↗</a>
+            <a href="{{ route('teacher.students') }}" class="link-brand">الطلاب ↗</a>
         </x-slot:actions>
 
         <livewire:teacher.message-parents />

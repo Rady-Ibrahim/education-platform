@@ -20,6 +20,7 @@ class Payment extends Model
         'teacher_id',
         'subscription_id',
         'subscription_charge_id',
+        'student_fee_id',
         'branch_id',
         'channel',
         'provider',
@@ -65,6 +66,11 @@ class Payment extends Model
     public function subscriptionCharge(): BelongsTo
     {
         return $this->belongsTo(SubscriptionCharge::class, 'subscription_charge_id');
+    }
+
+    public function studentFee(): BelongsTo
+    {
+        return $this->belongsTo(StudentFee::class, 'student_fee_id');
     }
 
     public function branch(): BelongsTo

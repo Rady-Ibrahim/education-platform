@@ -9,9 +9,9 @@
         <div class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand-100 bg-brand-50/50 px-4 py-3">
             <div class="min-w-0">
                 <div class="text-xs font-semibold text-brand-800">صفحتك العامة</div>
-                <a href="{{ $publicUrl }}" class="mt-0.5 block truncate text-sm text-brand-700 hover:underline" target="_blank" rel="noopener">{{ $publicUrl }}</a>
+                <a href="{{ $publicUrl }}" class="mt-0.5 block truncate text-sm text-brand-700 hover:underline">{{ $publicUrl }}</a>
             </div>
-            <a href="{{ $publicUrl }}" target="_blank" rel="noopener" class="btn-brand !px-3 !py-2 text-xs">فتح</a>
+            <a href="{{ $publicUrl }}" class="btn-brand !px-3 !py-2 text-xs">فتح</a>
         </div>
     @endif
 

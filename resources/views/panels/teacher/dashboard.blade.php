@@ -20,7 +20,7 @@
         </x-slot:eyebrow>
         <x-slot:actions>
             <a href="{{ route('teacher.students.add') }}" class="btn-brand">إضافة طالب</a>
-            <a href="{{ route('teacher.payments', ['tab' => 'cash']) }}" class="btn-accent" target="_blank" rel="noopener">تحصيل ↗</a>
+            <a href="{{ route('teacher.payments', ['tab' => 'cash']) }}" class="btn-accent">تحصيل ↗</a>
         </x-slot:actions>
 
         <div class="dashboard-hero">
@@ -35,9 +35,9 @@
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <a href="{{ route('teacher.attendance') }}" class="hero-btn-ghost" target="_blank" rel="noopener">حضور اليوم ↗</a>
-                    <a href="{{ route('teacher.groups') }}" class="hero-btn-ghost" target="_blank" rel="noopener">المجموعات ↗</a>
-                    <a href="{{ route('teacher.exams.manual') }}" class="hero-btn-accent" target="_blank" rel="noopener">رصد درجة ↗</a>
+                    <a href="{{ route('teacher.attendance') }}" class="hero-btn-ghost">حضور اليوم ↗</a>
+                    <a href="{{ route('teacher.groups') }}" class="hero-btn-ghost">المجموعات ↗</a>
+                    <a href="{{ route('teacher.exams.manual') }}" class="hero-btn-accent">رصد درجة ↗</a>
                 </div>
             </div>
         </div>
@@ -57,16 +57,16 @@
                         <svg class="h-4 w-4 shrink-0 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m0 3.75h.008v.008H12v-.008zM10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
                         <span class="font-bold">يتطلب متابعة:</span>
                         @if ($stats['owing_this_month'] > 0)
-                            <a href="{{ route('teacher.payments', ['tab' => 'cash']) }}" target="_blank" rel="noopener" class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold ring-1 ring-amber-200 hover:bg-amber-50">{{ $stats['owing_this_month'] }} مستحقات الشهر ↗</a>
+                            <a href="{{ route('teacher.payments', ['tab' => 'cash']) }}" class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold ring-1 ring-amber-200 hover:bg-amber-50">{{ $stats['owing_this_month'] }} مستحقات الشهر ↗</a>
                         @endif
                         @if ($stats['pending_payments'] > 0)
-                            <a href="{{ route('teacher.payments', ['tab' => 'vodafone']) }}" target="_blank" rel="noopener" class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold ring-1 ring-amber-200 hover:bg-amber-50">{{ $stats['pending_payments'] }} إثبات فودافون ↗</a>
+                            <a href="{{ route('teacher.payments', ['tab' => 'vodafone']) }}" class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold ring-1 ring-amber-200 hover:bg-amber-50">{{ $stats['pending_payments'] }} إثبات فودافون ↗</a>
                         @endif
                         @if ($stats['todays_absent'] > 0)
-                            <a href="{{ route('teacher.attendance') }}" target="_blank" rel="noopener" class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold ring-1 ring-amber-200 hover:bg-amber-50">{{ $stats['todays_absent'] }} غياب اليوم ↗</a>
+                            <a href="{{ route('teacher.attendance') }}" class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold ring-1 ring-amber-200 hover:bg-amber-50">{{ $stats['todays_absent'] }} غياب اليوم ↗</a>
                         @endif
                         @if ($stats['pending_join_requests'] > 0)
-                            <a href="{{ route('teacher.students.join') }}" target="_blank" rel="noopener" class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold ring-1 ring-amber-200 hover:bg-amber-50">{{ $stats['pending_join_requests'] }} طلب انضمام ↗</a>
+                            <a href="{{ route('teacher.students.join') }}" class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold ring-1 ring-amber-200 hover:bg-amber-50">{{ $stats['pending_join_requests'] }} طلب انضمام ↗</a>
                         @endif
                     </div>
                 @endif
@@ -91,14 +91,14 @@
                 <div class="dashboard-block">
                     <div class="mb-4">
                         <h3 class="dashboard-block-title">مسار العمل اليومي</h3>
-                        <p class="dashboard-block-sub">كل خطوة تفتح في تاب جديد عشان تشتغل جنب بعض (حضور + تحصيل مثلًا).</p>
+                        <p class="dashboard-block-sub">اختصر يومك: مجموعات → حضور → تحصيل → درجات.</p>
                     </div>
                     <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                        <x-flow-step step="1" title="المجموعات" description="مراجعة الأعضاء والحالة." :href="route('teacher.groups')" :badge="$stats['groups_count']" target="_blank" rel="noopener" />
-                        <x-flow-step step="2" title="الحضور" description="تسجيل حاضر / غائب / متأخر." :href="route('teacher.attendance')" :tone="$stats['todays_absent'] > 0 ? 'warning' : 'default'" :badge="$stats['todays_absent']" target="_blank" rel="noopener" />
-                        <x-flow-step step="3" title="التحصيل" description="دفتر الشهر والإيصالات." :href="route('teacher.payments', ['tab' => 'cash'])" tone="accent" :badge="$stats['owing_this_month']" target="_blank" rel="noopener" />
-                        <x-flow-step step="4" title="الدرجات" description="رصد الامتحان الورقي." :href="route('teacher.exams.manual')" target="_blank" rel="noopener" />
-                        <x-flow-step step="5" title="أولياء الأمور" description="رسائل الغياب والنتائج." :href="route('teacher.messages')" target="_blank" rel="noopener" />
+                        <x-flow-step step="1" title="المجموعات" description="مراجعة الأعضاء والحالة." :href="route('teacher.groups')" :badge="$stats['groups_count']" />
+                        <x-flow-step step="2" title="الحضور" description="تسجيل حاضر / غائب / متأخر." :href="route('teacher.attendance')" :tone="$stats['todays_absent'] > 0 ? 'warning' : 'default'" :badge="$stats['todays_absent']" />
+                        <x-flow-step step="3" title="التحصيل" description="دفتر الشهر والإيصالات." :href="route('teacher.payments', ['tab' => 'cash'])" tone="accent" :badge="$stats['owing_this_month']" />
+                        <x-flow-step step="4" title="الدرجات" description="رصد الامتحان الورقي." :href="route('teacher.exams.manual')" />
+                        <x-flow-step step="5" title="أولياء الأمور" description="رسائل الغياب والنتائج." :href="route('teacher.messages')" />
                     </div>
                 </div>
             </x-dashboard-panel>
@@ -110,13 +110,13 @@
                             <h3 class="dashboard-block-title">المجموعات النشطة</h3>
                             <p class="dashboard-block-sub">افتح الحضور مباشرة لكل مجموعة من تاب منفصل.</p>
                         </div>
-                        <a href="{{ route('teacher.groups') }}" target="_blank" rel="noopener" class="link-brand text-sm">إدارة المجموعات ↗</a>
+                        <a href="{{ route('teacher.groups') }}" class="link-brand text-sm">إدارة المجموعات ↗</a>
                     </div>
 
                     @if (count($stats['groups']) === 0)
                         <div class="empty-state">
                             <p class="text-sm text-ink-muted">لا توجد مجموعات بعد.</p>
-                            <a href="{{ route('teacher.groups') }}" class="btn-brand mt-4" target="_blank" rel="noopener">إنشاء مجموعة ↗</a>
+                            <a href="{{ route('teacher.groups') }}" class="btn-brand mt-4">إنشاء مجموعة ↗</a>
                         </div>
                     @else
                         <ul class="divide-y divide-slate-100">
@@ -133,7 +133,7 @@
                                         <span class="rounded-lg bg-brand-50 px-2.5 py-1 text-xs font-bold tabular-nums text-brand-900 ring-1 ring-brand-100">
                                             {{ $group['active_students'] }}
                                         </span>
-                                        <a href="{{ route('teacher.attendance') }}" target="_blank" rel="noopener" class="text-sm font-semibold text-brand-700">حضور ↗</a>
+                                        <a href="{{ route('teacher.attendance') }}" class="text-sm font-semibold text-brand-700">حضور ↗</a>
                                     </div>
                                 </li>
                             @endforeach
@@ -149,13 +149,13 @@
                         <p class="dashboard-block-sub">المحتوى الإلكتروني والامتحانات — منفصلة عن تشغيل السنتر اليومي.</p>
                     </div>
                     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        <x-quick-link href="{{ route('teacher.students') }}" title="قائمة الطلاب" description="بحث ومتابعة الاشتراك" target="_blank" rel="noopener">
+                        <x-quick-link href="{{ route('teacher.students') }}" title="قائمة الطلاب" description="بحث ومتابعة الاشتراك">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m4-4a4 4 0 11-8 0 4 4 0 018 0zm8 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                         </x-quick-link>
-                        <x-quick-link href="{{ route('teacher.lessons') }}" title="الدروس" description="محتوى ونشر" target="_blank" rel="noopener">
+                        <x-quick-link href="{{ route('teacher.lessons') }}" title="الدروس" description="محتوى ونشر">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                         </x-quick-link>
-                        <x-quick-link href="{{ route('teacher.exams') }}" title="امتحان إلكتروني" description="بنك أسئلة ومحاولات" target="_blank" rel="noopener">
+                        <x-quick-link href="{{ route('teacher.exams') }}" title="امتحان إلكتروني" description="بنك أسئلة ومحاولات">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                         </x-quick-link>
                     </div>

@@ -7,14 +7,14 @@
         $needsPay = $stats['pending_subscriptions'] > 0;
     @endphp
 
-    <x-panel-page title="لوحتي" subtitle="أقسام منفصلة — وافتح الدروس أو الاشتراكات في تاب جديد وقت ما تحتاج.">
+    <x-panel-page title="لوحتي" subtitle="تابع دروسك واشتراكاتك وامتحاناتك من مكان واحد.">
         <x-slot:actions>
             @if ($needsJoin)
-                <a href="{{ route('teachers.index') }}" class="btn-brand" target="_blank" rel="noopener">تصفّح المدرسين ↗</a>
+                <a href="{{ route('teachers.index') }}" class="btn-brand">تصفّح المدرسين ↗</a>
             @elseif ($needsPay)
-                <a href="{{ route('student.subscriptions') }}" class="btn-accent" target="_blank" rel="noopener">إكمال الدفع ↗</a>
+                <a href="{{ route('student.subscriptions') }}" class="btn-accent">إكمال الدفع ↗</a>
             @else
-                <a href="{{ route('student.lessons') }}" class="btn-brand" target="_blank" rel="noopener">متابعة التعلم ↗</a>
+                <a href="{{ route('student.lessons') }}" class="btn-brand">متابعة التعلم ↗</a>
             @endif
         </x-slot:actions>
 
@@ -55,7 +55,7 @@
                     <div class="attention-strip">
                         <span class="font-bold">مطلوب منك:</span>
                         @if ($needsPay)
-                            <a href="{{ route('student.subscriptions') }}" target="_blank" rel="noopener" class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold ring-1 ring-amber-200">
+                            <a href="{{ route('student.subscriptions') }}" class="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold ring-1 ring-amber-200">
                                 دفع الاشتراك ({{ $stats['pending_subscriptions'] }}) ↗
                             </a>
                         @endif
@@ -90,9 +90,9 @@
                         <p class="dashboard-block-sub">ثلاث خطوات فقط — كل واحدة تفتح في تاب مستقل.</p>
                     </div>
                     <div class="grid gap-3 sm:grid-cols-3">
-                        <x-flow-step step="1" title="الانضمام لمدرس" description="طلب انضمام أو إضافة يدوية من المدرس." :href="$needsJoin ? route('teachers.index') : route('student.dashboard')" :tone="$needsJoin ? 'warning' : 'success'" target="_blank" rel="noopener" />
-                        <x-flow-step step="2" title="الاشتراك والدفع" description="كاش في السنتر أو فودافون من ولي الأمر." :href="route('student.subscriptions')" tone="accent" :badge="$stats['pending_subscriptions']" target="_blank" rel="noopener" />
-                        <x-flow-step step="3" title="الدروس والامتحانات" description="متابعة المحتوى والاختبارات." :href="route('student.lessons')" target="_blank" rel="noopener" />
+                        <x-flow-step step="1" title="الانضمام لمدرس" description="طلب انضمام أو إضافة يدوية من المدرس." :href="$needsJoin ? route('teachers.index') : route('student.dashboard')" :tone="$needsJoin ? 'warning' : 'success'" />
+                        <x-flow-step step="2" title="الاشتراك والدفع" description="كاش في السنتر أو فودافون من ولي الأمر." :href="route('student.subscriptions')" tone="accent" :badge="$stats['pending_subscriptions']" />
+                        <x-flow-step step="3" title="الدروس والامتحانات" description="متابعة المحتوى والاختبارات." :href="route('student.lessons')" />
                     </div>
                 </div>
             </x-dashboard-panel>
@@ -110,7 +110,7 @@
                     @else
                         <div class="mb-4">
                             <h3 class="dashboard-block-title">مدرّسوك</h3>
-                            <p class="dashboard-block-sub">افتح الامتحانات في تاب جديد أثناء المتابعة.</p>
+                            <p class="dashboard-block-sub">الامتحانات المتاحة والمتابعة من هنا.</p>
                         </div>
                         <ul class="divide-y divide-slate-100">
                             @foreach ($teachers as $teacher)
@@ -120,9 +120,9 @@
                                         <div class="truncate text-xs text-ink-muted">{{ $teacher->headline ?: 'مدرس' }}</div>
                                     </div>
                                     <div class="flex shrink-0 items-center gap-3">
-                                        <a href="{{ route('student.exams') }}" target="_blank" rel="noopener" class="text-sm font-semibold text-brand-700">امتحانات ↗</a>
+                                        <a href="{{ route('student.exams') }}" class="text-sm font-semibold text-brand-700">امتحانات ↗</a>
                                         @if ($teacher->slug)
-                                            <a href="{{ route('teachers.show', $teacher->slug) }}" target="_blank" rel="noopener" class="text-sm text-ink-muted hover:text-ink">الملف ↗</a>
+                                            <a href="{{ route('teachers.show', $teacher->slug) }}" class="text-sm text-ink-muted hover:text-ink">الملف ↗</a>
                                         @endif
                                     </div>
                                 </li>
