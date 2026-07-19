@@ -17,7 +17,7 @@
 @endphp
 
 @if ($href)
-    <a href="{{ $href }}" wire:navigate {{ $attributes->merge(['class' => $classes]) }}>
+    <a href="{{ $href }}" {{ $attributes->merge(['class' => $classes]) }}>
 @else
     <div {{ $attributes->merge(['class' => $classes]) }}>
 @endif

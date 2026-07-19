@@ -101,6 +101,30 @@
         @apply rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-10 text-center;
     }
 
+    .dashboard-tabs {
+        @apply flex flex-wrap gap-1 rounded-2xl border border-slate-200/80 bg-slate-100/80 p-1.5;
+    }
+
+    .dashboard-tab {
+        @apply rounded-xl px-3.5 py-2 text-sm font-semibold text-ink-muted transition hover:bg-white hover:text-ink;
+    }
+
+    .dashboard-tab-active {
+        @apply rounded-xl bg-white px-3.5 py-2 text-sm font-bold text-brand-950 shadow-soft ring-1 ring-slate-200/80;
+    }
+
+    .dashboard-block {
+        @apply rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft sm:p-6;
+    }
+
+    .dashboard-block-title {
+        @apply text-sm font-bold tracking-tight text-ink;
+    }
+
+    .dashboard-block-sub {
+        @apply mt-1 text-xs leading-5 text-ink-muted;
+    }
+
     .link-brand {
         @apply font-medium text-brand-700 transition hover:text-brand-900;
     }

@@ -52,7 +52,7 @@
 @endphp
 
 <div class="flex h-full min-h-screen flex-col px-4 py-5">
-    <a href="{{ route('dashboard') }}" wire:navigate class="mb-7 flex items-center gap-2.5 px-1">
+    <a href="{{ route('dashboard') }}" class="mb-7 flex items-center gap-2.5 px-1">
         <span class="brand-mark h-9 w-9">س</span>
         <span class="text-xl font-bold tracking-tight text-brand-900">{{ config('app.name', 'سنتر') }}</span>
     </a>
@@ -61,7 +61,6 @@
         @foreach ($links as $link)
             <a
                 href="{{ route($link['route']) }}"
-                wire:navigate
                 @class(['sidebar-link', 'sidebar-link-active' => $link['active']])
             >
                 @include('partials.nav-icon', ['icon' => $link['icon'], 'active' => $link['active']])
@@ -72,12 +71,15 @@
 
     <div class="mt-auto space-y-4 pt-8">
         @if ($primaryAction)
-            <a href="{{ route($primaryAction['route']) }}" wire:navigate class="btn-accent w-full">
+            <a href="{{ route($primaryAction['route']) }}" class="btn-accent w-full">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
                 {{ $primaryAction['label'] }}
             </a>
         @endif
+        <p class="px-1 text-[11px] leading-4 text-ink-muted">
+            افتح أي صفحة في تاب جديد: كلك يمين → فتح في علامة تبويب جديدة
+        </p>
     </div>
 </div>

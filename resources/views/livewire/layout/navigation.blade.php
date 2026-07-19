@@ -60,7 +60,7 @@ new class extends Component
 }; ?>
 
 <div class="flex h-full min-h-screen flex-col px-4 py-5">
-    <a href="{{ route('dashboard') }}" wire:navigate class="mb-7 flex items-center gap-2.5 px-1">
+    <a href="{{ route('dashboard') }}" class="mb-7 flex items-center gap-2.5 px-1">
         <span class="brand-mark h-9 w-9">س</span>
         <span class="text-xl font-bold tracking-tight text-brand-900">{{ config('app.name', 'سنتر') }}</span>
     </a>
@@ -69,7 +69,6 @@ new class extends Component
         @foreach ($this->roleLinks() as $link)
             <a
                 href="{{ route($link['route']) }}"
-                wire:navigate
                 @class(['sidebar-link', 'sidebar-link-active' => $link['active']])
             >
                 @include('partials.nav-icon', ['icon' => $link['icon'], 'active' => $link['active']])
@@ -80,7 +79,7 @@ new class extends Component
 
     <div class="mt-auto space-y-4 pt-8">
         @if ($action = $this->primaryAction())
-            <a href="{{ route($action['route'], $action['params'] ?? []) }}" wire:navigate class="btn-accent w-full">
+            <a href="{{ route($action['route'], $action['params'] ?? []) }}" class="btn-accent w-full">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>

@@ -18,7 +18,6 @@
 
 <a
     href="{{ $href }}"
-    wire:navigate
     {{ $attributes->merge(['class' => "group relative flex h-full items-start gap-3 rounded-2xl border p-4 shadow-soft transition duration-200 hover:-translate-y-0.5 hover:shadow-panel {$toneClass}"]) }}
 >
     <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-950 text-xs font-bold text-white transition group-hover:bg-brand-700">
