@@ -1,35 +1,36 @@
-<div>
+<div class="space-y-5">
     @if (session('exam_status'))
-        <div class="mb-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <div class="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
             {{ session('exam_status') }}
         </div>
     @endif
 
     @if ($subjects->isEmpty())
-        <div class="rounded-2xl border border-dashed border-slate-200 px-6 py-10 text-center text-sm text-ink-muted">
+        <div class="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-10 text-center text-sm text-ink-muted shadow-soft">
             حدّد مادتك أولًا من
-            <a href="{{ route('profile') }}" class="link-brand" wire:navigate>البروفايل</a>.
+            <a href="{{ route('profile') }}" class="link-brand" target="_blank" rel="noopener">البروفايل ↗</a>.
         </div>
     @else
-        <div class="mb-6 max-w-xl">
-            <x-input-label value="المادة" />
-            <select wire:model.live="subjectId" class="mt-1 block w-full">
-                @foreach ($subjects as $subject)
-                    <option value="{{ $subject->id }}">
-                        {{ $subject->grade?->stage?->name }} / {{ $subject->grade?->name }} / {{ $subject->name }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
+        <x-page-section title="المادة" subtitle="كل الأسئلة والامتحانات مربوطة بالمادة المختارة.">
+            <div class="max-w-xl">
+                <x-input-label value="اختر المادة" />
+                <select wire:model.live="subjectId" class="mt-1.5 block w-full">
+                    @foreach ($subjects as $subject)
+                        <option value="{{ $subject->id }}">
+                            {{ $subject->grade?->stage?->name }} / {{ $subject->grade?->name }} / {{ $subject->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </x-page-section>
 
-        <div class="grid gap-6 xl:grid-cols-2">
-            <section class="rounded-2xl border border-slate-200 p-5">
-                <h3 class="text-base font-bold text-ink">إضافة سؤال لبنك الأسئلة</h3>
-                <form wire:submit="saveQuestion" class="mt-4 space-y-3">
+        <div class="grid gap-5 xl:grid-cols-2">
+            <x-page-section title="إضافة سؤال لبنك الأسئلة" subtitle="MCQ · صح/خطأ · فراغ · مقال.">
+                <form wire:submit="saveQuestion" class="space-y-3">
                     <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
                         <div>
                             <x-input-label value="النوع" />
-                            <select wire:model.live="questionType" class="mt-1 block w-full">
+                            <select wire:model.live="questionType" class="mt-1.5 block w-full">
                                 @foreach ($types as $type)
                                     <option value="{{ $type->value }}">{{ $type->label() }}</option>
                                 @endforeach
@@ -37,13 +38,13 @@
                         </div>
                         <div>
                             <x-input-label value="الدرجة" />
-                            <x-text-input type="number" step="0.5" wire:model="points" class="mt-1 block w-full" />
+                            <x-text-input type="number" step="0.5" wire:model="points" class="mt-1.5 block w-full" />
                         </div>
                     </div>
 
                     <div>
                         <x-input-label value="نص السؤال" />
-                        <textarea wire:model="questionStem" rows="3" class="mt-1 block w-full rounded-xl border-brand-200 shadow-sm focus:border-brand-500 focus:ring-brand-500"></textarea>
+                        <textarea wire:model="questionStem" rows="3" class="mt-1.5 block w-full rounded-xl border-brand-200 shadow-sm focus:border-brand-500 focus:ring-brand-500"></textarea>
                         <x-input-error :messages="$errors->get('questionStem')" />
                     </div>
 
@@ -63,44 +64,43 @@
                     @if (in_array($questionType, ['true_false', 'fill_blank'], true))
                         <div>
                             <x-input-label value="{{ $questionType === 'true_false' ? 'الإجابة (true/false)' : 'الإجابة الصحيحة' }}" />
-                            <x-text-input wire:model="correctAnswer" class="mt-1 block w-full" />
+                            <x-text-input wire:model="correctAnswer" class="mt-1.5 block w-full" />
                             <x-input-error :messages="$errors->get('correctAnswer')" />
                         </div>
                     @endif
 
                     <x-primary-button>حفظ السؤال</x-primary-button>
                 </form>
-            </section>
+            </x-page-section>
 
-            <section class="rounded-2xl border border-slate-200 p-5">
-                <h3 class="text-base font-bold text-ink">إنشاء امتحان</h3>
-                <form wire:submit="createExam" class="mt-4 space-y-3">
+            <x-page-section title="إنشاء امتحان" subtitle="اختر الأسئلة من البنك ثم انشر.">
+                <form wire:submit="createExam" class="space-y-3">
                     <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
                         <div class="md:col-span-2">
                             <x-input-label value="عنوان الامتحان" />
-                            <x-text-input wire:model="examTitle" class="mt-1 block w-full" />
+                            <x-text-input wire:model="examTitle" class="mt-1.5 block w-full" />
                             <x-input-error :messages="$errors->get('examTitle')" />
                         </div>
                         <div>
                             <x-input-label value="المدة (دقيقة)" />
-                            <x-text-input type="number" wire:model="durationMinutes" class="mt-1 block w-full" />
+                            <x-text-input type="number" wire:model="durationMinutes" class="mt-1.5 block w-full" />
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
                         <div>
                             <x-input-label value="يبدأ في (اختياري)" />
-                            <x-text-input type="datetime-local" wire:model="startsAt" class="mt-1 block w-full" />
+                            <x-text-input type="datetime-local" wire:model="startsAt" class="mt-1.5 block w-full" />
                             <x-input-error :messages="$errors->get('startsAt')" />
                         </div>
                         <div>
                             <x-input-label value="ينتهي في (اختياري)" />
-                            <x-text-input type="datetime-local" wire:model="endsAt" class="mt-1 block w-full" />
+                            <x-text-input type="datetime-local" wire:model="endsAt" class="mt-1.5 block w-full" />
                             <x-input-error :messages="$errors->get('endsAt')" />
                         </div>
                         <div>
                             <x-input-label value="درجة النجاح % (اختياري)" />
-                            <x-text-input type="number" step="0.5" wire:model="passScore" class="mt-1 block w-full" />
+                            <x-text-input type="number" step="0.5" wire:model="passScore" class="mt-1.5 block w-full" />
                             <x-input-error :messages="$errors->get('passScore')" />
                         </div>
                     </div>
@@ -122,11 +122,10 @@
 
                     <x-primary-button>إنشاء ونشر الامتحان</x-primary-button>
                 </form>
-            </section>
+            </x-page-section>
         </div>
 
-        <section class="mt-6 rounded-2xl border border-slate-200 p-5">
-            <h3 class="mb-3 text-base font-bold text-ink">امتحانات المادة</h3>
+        <x-page-section title="امتحانات المادة" subtitle="المنشور والمسودة لهذه المادة.">
             <div class="overflow-hidden rounded-xl border border-slate-200">
                 <table class="data-table">
                     <thead>
@@ -169,6 +168,6 @@
                     </tbody>
                 </table>
             </div>
-        </section>
+        </x-page-section>
     @endif
 </div>

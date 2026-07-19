@@ -1,19 +1,13 @@
 <x-app-layout>
     <x-panel-page title="الهيكل الأكاديمي" subtitle="المراحل والصفوف والمواد والوحدات.">
         <x-slot:actions>
-            <a href="{{ route('admin.dashboard') }}" class="link-brand" wire:navigate>لوحة الإدارة</a>
+            <a href="{{ route('admin.dashboard') }}" class="link-brand" target="_blank" rel="noopener">لوحة الإدارة ↗</a>
         </x-slot:actions>
 
-        <x-panel-card title="المراحل → الصفوف → المواد → الوحدات">
+        <div class="space-y-5">
             <livewire:admin.academic-manager />
-        </x-panel-card>
-
-        <x-panel-card title="ربط المدرس بالمادة">
             <livewire:admin.assign-teacher-subject />
-        </x-panel-card>
-
-        <x-panel-card title="تسجيل الطالب في صف">
             <livewire:admin.enroll-student-grade />
-        </x-panel-card>
+        </div>
     </x-panel-page>
 </x-app-layout>

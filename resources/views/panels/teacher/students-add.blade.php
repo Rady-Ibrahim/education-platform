@@ -1,19 +1,12 @@
 <x-app-layout>
-    <x-panel-page title="إضافة طالب" subtitle="إنشاء حساب طالب وربطه بمجموعتك مباشرة.">
+    <x-panel-page title="إضافة طالب" subtitle="إنشاء حساب طالب وربطه بمجموعتك، مع ربط ولي الأمر.">
         <x-slot:actions>
-            <a href="{{ route('teacher.students') }}" class="link-brand" wire:navigate>رجوع للطلاب</a>
+            <a href="{{ route('teacher.students') }}" class="link-brand" target="_blank" rel="noopener">رجوع للطلاب ↗</a>
         </x-slot:actions>
 
-        <x-panel-card>
-            <div class="max-w-xl">
-                <livewire:teacher.create-student-form />
-            </div>
-        </x-panel-card>
-
-        <x-panel-card title="ربط ولي أمر بطالب" subtitle="اربط ولي أمر بكود الطالب أو بحسابه.">
-            <div class="max-w-xl">
-                <livewire:teacher.link-parent-to-student />
-            </div>
-        </x-panel-card>
+        <div class="grid gap-5 lg:grid-cols-2">
+            <livewire:teacher.create-student-form />
+            <livewire:teacher.link-parent-to-student />
+        </div>
     </x-panel-page>
 </x-app-layout>

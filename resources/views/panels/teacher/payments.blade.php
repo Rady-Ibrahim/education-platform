@@ -1,13 +1,9 @@
 <x-app-layout>
-    <x-panel-page title="مكتب التحصيل" subtitle="دفتر شهري: مين عليه فلوس · كامل/جزئي/خصم/إيصال — وفودافون من ولي الأمر.">
+    <x-panel-page title="مكتب التحصيل" subtitle="دفتر شهري · فودافون · خطط — كل قسم في تاب منفصل داخل الصفحة.">
         <x-slot:actions>
-            <a href="{{ route('teacher.students') }}" class="link-brand" wire:navigate>الطلاب</a>
+            <a href="{{ route('teacher.students') }}" class="link-brand" target="_blank" rel="noopener">الطلاب ↗</a>
         </x-slot:actions>
 
-        <x-panel-card :padding="false">
-            <div class="p-5 sm:p-6">
-                <livewire:teacher.manage-payments />
-            </div>
-        </x-panel-card>
+        <livewire:teacher.manage-payments />
     </x-panel-page>
 </x-app-layout>

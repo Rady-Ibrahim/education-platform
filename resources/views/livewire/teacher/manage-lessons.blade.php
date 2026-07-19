@@ -1,4 +1,4 @@
-<div class="space-y-6">
+<div class="space-y-5">
     @if (session('lesson_status'))
         <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
             {{ session('lesson_status') }}
@@ -6,24 +6,28 @@
     @endif
 
     @if ($subjects->isEmpty())
-        <p class="text-sm text-ink-muted">
-            حدّد مادتك أولًا من
-            <a href="{{ route('profile') }}" class="link-brand" wire:navigate>البروفايل</a>
-            (اختيار من الكتالوج أو كتابة اسم المادة)، بعدين ارجع هنا لإضافة الدروس.
-        </p>
+        <x-page-section title="المادة غير محددة" subtitle="حدّد مادتك من البروفايل قبل إضافة الدروس.">
+            <p class="text-sm text-ink-muted">
+                حدّد مادتك أولًا من
+                <a href="{{ route('profile') }}" class="link-brand" target="_blank" rel="noopener">البروفايل ↗</a>
+                (اختيار من الكتالوج أو كتابة اسم المادة)، بعدين ارجع هنا لإضافة الدروس.
+            </p>
+        </x-page-section>
     @else
         @if ($subjects->count() === 1)
-            <p class="text-sm text-ink-muted">
-                مادتك:
-                <span class="font-semibold text-ink">
-                    {{ $subjects->first()->grade?->stage?->name }} / {{ $subjects->first()->grade?->name }} / {{ $subjects->first()->name }}
-                </span>
-                —
-                <a href="{{ route('profile') }}" class="link-brand" wire:navigate>تعديل من البروفايل</a>
-            </p>
+            <x-page-section title="مادتك" subtitle="كل الدروس مربوطة بهذه المادة.">
+                <p class="text-sm text-ink-muted">
+                    <span class="font-semibold text-ink">
+                        {{ $subjects->first()->grade?->stage?->name }} / {{ $subjects->first()->grade?->name }} / {{ $subjects->first()->name }}
+                    </span>
+                    —
+                    <a href="{{ route('profile') }}" class="link-brand" target="_blank" rel="noopener">تعديل من البروفايل ↗</a>
+                </p>
+            </x-page-section>
         @endif
 
-        <form wire:submit="save" class="space-y-5 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:p-5">
+        <x-page-section title="إضافة درس" subtitle="نص · فيديو · لايف — ثم انشر لطلابك.">
+        <form wire:submit="save" class="space-y-5">
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
                     <x-input-label value="المادة" />
@@ -202,11 +206,12 @@
                 <x-primary-button>حفظ الدرس</x-primary-button>
             </div>
         </form>
+        </x-page-section>
 
-        <div class="space-y-3">
-            <h4 class="section-title">دروس الوحدة المختارة</h4>
+        <x-page-section title="دروس الوحدة المختارة" subtitle="نشر، مرفق، أو حذف لكل درس.">
+            <div class="space-y-3">
             @forelse ($lessons as $lesson)
-                <div class="space-y-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-soft">
+                <div class="list-row !items-stretch !flex-col space-y-3">
                     <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                         <div class="text-sm">
                             <span class="font-bold text-ink">{{ $lesson->title }}</span>
@@ -258,9 +263,12 @@
                     </div>
                 </div>
             @empty
-                <p class="text-sm text-ink-muted">لا توجد دروس في هذه الوحدة بعد.</p>
+                <div class="empty-state">
+                    <p class="text-sm text-ink-muted">لا توجد دروس في هذه الوحدة بعد.</p>
+                </div>
             @endforelse
-        </div>
+            </div>
+        </x-page-section>
     @endif
 </div>
 

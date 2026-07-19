@@ -1,11 +1,9 @@
 <x-app-layout>
     <x-panel-page title="امتحان ورقي ودرجات يدوية" subtitle="ارفع ورقة الامتحان وسجّل درجة كل طالب بنفسك.">
         <x-slot:actions>
-            <a href="{{ route('teacher.exams') }}" class="link-brand" wire:navigate>الامتحانات الإلكترونية</a>
+            <a href="{{ route('teacher.exams') }}" class="link-brand" target="_blank" rel="noopener">الامتحانات الإلكترونية ↗</a>
         </x-slot:actions>
 
-        <x-panel-card>
-            <livewire:teacher.manual-exam-grades />
-        </x-panel-card>
+        <livewire:teacher.manual-exam-grades />
     </x-panel-page>
 </x-app-layout>

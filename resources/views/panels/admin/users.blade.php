@@ -1,15 +1,12 @@
 <x-app-layout>
     <x-panel-page title="إشراف الحسابات" subtitle="إيقاف حساب أو إخفاء مدرس من الكتالوج.">
         <x-slot:actions>
-            <a href="{{ route('admin.dashboard') }}" class="link-brand" wire:navigate>اللوحة</a>
+            <a href="{{ route('admin.dashboard') }}" class="link-brand" target="_blank" rel="noopener">اللوحة ↗</a>
         </x-slot:actions>
 
-        <x-panel-card>
+        <div class="space-y-5">
             <livewire:admin.user-moderation />
-        </x-panel-card>
-
-        <x-panel-card title="ربط ولي أمر بطالب" subtitle="ربط مباشر نشط عند الحاجة.">
             <livewire:admin.link-parent-student />
-        </x-panel-card>
+        </div>
     </x-panel-page>
 </x-app-layout>

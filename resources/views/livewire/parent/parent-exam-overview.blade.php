@@ -1,17 +1,15 @@
-<div class="space-y-6">
+<div class="space-y-5">
     @forelse ($children as $child)
-        <section class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-soft">
-            <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <h3 class="font-bold text-ink">{{ $child->name }}</h3>
-                    <div class="font-mono text-xs text-ink-muted" dir="ltr">{{ $child->student_code }}</div>
-                </div>
-                <a href="{{ route('parent.children.exams', $child->id) }}" class="link-brand text-sm" wire:navigate>تفاصيل الابن</a>
-            </div>
+        <x-page-section :title="$child->name" :subtitle="$child->student_code">
+            <x-slot:actions>
+                <a href="{{ route('parent.children.exams', $child->id) }}" class="link-brand text-sm" target="_blank" rel="noopener">تفاصيل الابن ↗</a>
+            </x-slot:actions>
 
             @php $rows = $attemptsByChild->get($child->id, collect()); @endphp
             @if ($rows->isEmpty())
-                <p class="text-sm text-ink-muted">لا توجد نتائج امتحانات بعد.</p>
+                <div class="empty-state">
+                    <p class="text-sm text-ink-muted">لا توجد نتائج امتحانات بعد.</p>
+                </div>
             @else
                 <div class="overflow-hidden rounded-xl border border-slate-200">
                     <table class="data-table">
@@ -49,10 +47,10 @@
                     </table>
                 </div>
             @endif
-        </section>
+        </x-page-section>
     @empty
-        <p class="rounded-xl border border-dashed border-slate-200 px-4 py-10 text-center text-sm text-ink-muted">
-            اربط ابنًا أولًا من صفحة ربط ابن.
-        </p>
+        <div class="empty-state">
+            <p class="text-sm text-ink-muted">اربط ابنًا أولًا من صفحة ربط ابن.</p>
+        </div>
     @endforelse
 </div>

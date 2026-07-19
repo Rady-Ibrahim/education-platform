@@ -1,38 +1,30 @@
-<div class="space-y-6">
+<div class="space-y-5">
     @if (session('status'))
-        <div class="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
             {{ session('status') }}
         </div>
     @endif
 
-    <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div>
-            <h3 class="text-lg font-bold text-ink">{{ $student->name }}</h3>
-            <p class="text-sm text-ink-muted">{{ $student->email }} — {{ $student->student_code }}</p>
-        </div>
-        <a href="{{ route('teacher.students') }}" class="link-brand" wire:navigate>رجوع للطلاب</a>
-    </div>
-
-    <div class="grid gap-4 sm:grid-cols-2">
-        <div class="surface-stat">
-            <div class="ps-3">
-                <div class="text-sm text-ink-muted">محصّل مؤكد</div>
-                <div class="mt-1 text-2xl font-bold text-ink">{{ number_format($confirmed_total, 2) }} ج.م</div>
+    <x-page-section
+        :title="$student->name"
+        :subtitle="($student->email ?? '').' — '.($student->student_code ?? '')"
+    >
+        <div class="grid gap-3 sm:grid-cols-2">
+            <div class="kpi-card">
+                <div class="kpi-label">محصّل مؤكد</div>
+                <div class="kpi-value">{{ number_format($confirmed_total, 0) }} <span class="text-sm font-semibold text-ink-muted">ج.م</span></div>
+            </div>
+            <div class="kpi-card-warn">
+                <div class="text-[11px] font-semibold uppercase tracking-[0.06em] text-amber-800">معلّق للمراجعة</div>
+                <div class="mt-1.5 text-2xl font-bold tracking-tight text-amber-950">{{ number_format($pending_total, 0) }} <span class="text-sm font-semibold">ج.م</span></div>
             </div>
         </div>
-        <div class="surface-stat">
-            <div class="ps-3">
-                <div class="text-sm text-ink-muted">معلّق للمراجعة</div>
-                <div class="mt-1 text-2xl font-bold text-ink">{{ number_format($pending_total, 2) }} ج.م</div>
-            </div>
-        </div>
-    </div>
+    </x-page-section>
 
-    <div>
-        <h4 class="mb-3 font-bold text-ink">الاشتراكات</h4>
+    <x-page-section title="الاشتراكات" subtitle="إيقاف أو إعادة تفعيل اشتراك الطالب.">
         <div class="space-y-2">
             @forelse ($subscriptions as $subscription)
-                <div class="flex flex-col gap-3 rounded-xl border border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="list-row">
                     <div>
                         <div class="font-semibold text-ink">{{ $subscription->plan?->name }} — {{ $subscription->subject?->name }}</div>
                         <div class="mt-1 text-xs text-ink-muted">
@@ -56,14 +48,15 @@
                     </div>
                 </div>
             @empty
-                <p class="text-sm text-ink-muted">لا توجد اشتراكات.</p>
+                <div class="empty-state">
+                    <p class="text-sm text-ink-muted">لا توجد اشتراكات.</p>
+                </div>
             @endforelse
         </div>
-    </div>
+    </x-page-section>
 
-    <div>
-        <h4 class="mb-3 font-bold text-ink">سجل المدفوعات</h4>
-        <div class="overflow-hidden rounded-2xl border border-slate-200">
+    <x-page-section title="سجل المدفوعات" subtitle="كل الدفعات المرتبطة بالطالب.">
+        <div class="overflow-hidden rounded-xl border border-slate-200">
             <table class="data-table">
                 <thead>
                     <tr>
@@ -91,19 +84,18 @@
                 </tbody>
             </table>
         </div>
-    </div>
+    </x-page-section>
 
     @if ($invoices->isNotEmpty())
-        <div>
-            <h4 class="mb-3 font-bold text-ink">الفواتير</h4>
+        <x-page-section title="الفواتير">
             <ul class="space-y-2 text-sm">
                 @foreach ($invoices as $invoice)
-                    <li class="flex justify-between rounded-xl border border-slate-200 px-3 py-2">
+                    <li class="list-row">
                         <span class="font-mono">{{ $invoice->invoice_number }}</span>
-                        <span>{{ number_format($invoice->amount, 2) }} ج.م — {{ $invoice->issued_at->format('Y-m-d') }}</span>
+                        <span class="text-ink-muted">{{ number_format($invoice->amount, 2) }} ج.م — {{ $invoice->issued_at->format('Y-m-d') }}</span>
                     </li>
                 @endforeach
             </ul>
-        </div>
+        </x-page-section>
     @endif
 </div>

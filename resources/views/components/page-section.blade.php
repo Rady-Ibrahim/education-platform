@@ -1,10 +1,8 @@
 @props([
     'title' => null,
     'subtitle' => null,
-    'padding' => true,
 ])
 
-{{-- Legacy alias: same visual language as x-page-section --}}
 <section {{ $attributes->merge(['class' => 'page-section']) }}>
     @if ($title || isset($actions) || $subtitle)
         <div class="page-section-head">
@@ -24,7 +22,7 @@
         </div>
     @endif
 
-    <div @class(['mt-4' => $title || $subtitle || isset($actions), 'p-0' => ! $padding])>
+    <div @class(['mt-4' => $title || $subtitle || isset($actions)])>
         {{ $slot }}
     </div>
 </section>

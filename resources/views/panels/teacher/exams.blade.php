@@ -1,12 +1,10 @@
 <x-app-layout>
-    <x-panel-page title="الامتحانات الإلكترونية" subtitle="بنك الأسئلة وإنشاء الامتحانات الأونلاين.">
+    <x-panel-page title="الامتحانات الإلكترونية" subtitle="بنك الأسئلة وإنشاء الامتحانات الأونلاين — كل قسم في بطاقة واضحة.">
         <x-slot:actions>
-            <a href="{{ route('teacher.exams.grading') }}" class="link-brand" wire:navigate>تصحيح المقالات</a>
-            <a href="{{ route('teacher.exams.manual') }}" class="btn-brand" wire:navigate>امتحان ورقي / يدوي</a>
+            <a href="{{ route('teacher.exams.grading') }}" class="link-brand" target="_blank" rel="noopener">تصحيح المقالات ↗</a>
+            <a href="{{ route('teacher.exams.manual') }}" class="btn-brand" target="_blank" rel="noopener">امتحان ورقي / يدوي ↗</a>
         </x-slot:actions>
 
-        <x-panel-card>
-            <livewire:teacher.manage-exams />
-        </x-panel-card>
+        <livewire:teacher.manage-exams />
     </x-panel-page>
 </x-app-layout>
