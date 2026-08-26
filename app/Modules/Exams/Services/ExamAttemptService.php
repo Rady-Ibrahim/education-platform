@@ -11,6 +11,8 @@ use App\Modules\Exams\Models\Exam;
 use App\Modules\Exams\Models\ExamAnswer;
 use App\Modules\Exams\Models\ExamAttempt;
 use App\Modules\Exams\Models\Question;
+use App\Modules\Notifications\Services\NotificationService;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
@@ -20,6 +22,7 @@ class ExamAttemptService
     public function __construct(
         private readonly ContentAccessService $access,
         private readonly CertificateService $certificates,
+        private readonly NotificationService $notifications,
     ) {}
 
     public function start(User $student, Exam $exam): ExamAttempt
@@ -120,6 +123,14 @@ class ExamAttemptService
         $this->assertRateLimit($student, 'submit');
         $this->assertOwnedAttempt($student, $attempt);
 
+        return $this->finalize($attempt);
+    }
+
+    /**
+     * تسليم نهائي (يدوي أو تلقائي عند انتهاء الوقت) — بدون تحقق هوية.
+     */
+    private function finalize(ExamAttempt $attempt): ExamAttempt
+    {
         if (! $attempt->isInProgress()) {
             return $attempt;
         }
@@ -136,31 +147,154 @@ class ExamAttemptService
         });
 
         $this->certificates->issueForPassedAttempt($graded);
+        $this->notifications->notifyExamGraded($graded);
 
         return $graded;
     }
 
     /**
+     * تسليم محاولة واحدة انتهى وقتها (تُستخدم من حذف الامتحان أو المجدول).
+     */
+    public function autoSubmitAttempt(ExamAttempt $attempt): ExamAttempt
+    {
+        return $this->finalize($attempt);
+    }
+
+    /**
+     * تسليم كل المحاولات الجارية التي انتهى وقتها (للمجدول).
+     */
+    public function autoSubmitExpiredAttempts(int $limit = 200): int
+    {
+        $attempts = ExamAttempt::query()
+            ->where('status', ExamAttemptStatus::InProgress)
+            ->with('exam')
+            ->orderBy('id')
+            ->limit($limit)
+            ->get()
+            ->filter(fn (ExamAttempt $attempt) => $attempt->hasExpired());
+
+        $count = 0;
+
+        foreach ($attempts as $attempt) {
+            $this->finalize($attempt);
+            $count++;
+        }
+
+        return $count;
+    }
+
+    /**
      * أسئلة المحاولة بدون تسريب الإجابات الصحيحة.
+     * الترتيب ثابت لكل محاولة (يصمد أمام الـrefresh) عبر shuffle حتمي مبني على attempt id.
      *
      * @return list<array<string, mixed>>
      */
     public function questionsForStudent(ExamAttempt $attempt): array
     {
         $questions = $attempt->exam->questions()->with('options')->get();
+        $shuffle = $attempt->exam->shuffle_questions;
 
-        if ($attempt->exam->shuffle_questions) {
-            $questions = $questions->shuffle()->values();
+        if ($shuffle) {
+            $questions = $this->stableShuffle($questions, $attempt->id);
         }
 
-        return $questions->map(function (Question $question) use ($attempt) {
+        return $questions->map(function (Question $question) use ($attempt, $shuffle) {
             $payload = $question->toStudentArray();
-            if ($attempt->exam->shuffle_questions) {
-                $payload['options'] = collect($payload['options'])->shuffle()->values()->all();
+            if ($shuffle) {
+                $payload['options'] = $this->stableShuffle(collect($payload['options']), $attempt->id * 31 + $question->id)->all();
             }
 
             return $payload;
         })->all();
+    }
+
+    /**
+     * الوقت المتبقي بالثواني من قاعدة البيانات (started_at + duration) — null إن لم يكن مؤقت.
+     */
+    public function remainingSeconds(ExamAttempt $attempt): ?int
+    {
+        $duration = $attempt->exam->duration_minutes;
+
+        if (! $duration || ! $attempt->isInProgress()) {
+            return null;
+        }
+
+        $endsAt = $attempt->started_at->copy()->addMinutes($duration);
+
+        return (int) max(0, now()->diffInSeconds($endsAt, false));
+    }
+
+    /**
+     * ملخص نتيجة المحاولة للعرض.
+     *
+     * @return array{total: int, answered: int, correct: int, wrong: int, unanswered: int, score: float, max_score: float, percent: float, passed: bool|null}
+     */
+    public function resultSummary(ExamAttempt $attempt): array
+    {
+        $attempt->loadMissing(['answers', 'exam.questions']);
+
+        $total = $attempt->exam->questions->count();
+        $answered = 0;
+        $correct = 0;
+        $wrong = 0;
+
+        foreach ($attempt->exam->questions as $question) {
+            $answer = $attempt->answers->firstWhere('question_id', $question->id);
+
+            if (! $answer || (blank($answer->selected_option_id) && blank($answer->answer_text))) {
+                continue;
+            }
+
+            $answered++;
+
+            if ($answer->is_correct === true) {
+                $correct++;
+            } elseif ($answer->is_correct === false) {
+                $wrong++;
+            }
+        }
+
+        $score = (float) ($attempt->score ?? 0);
+        $maxScore = (float) ($attempt->max_score ?? 0);
+        $percent = $maxScore > 0 ? round($score / $maxScore * 100, 2) : 0.0;
+
+        return [
+            'total' => $total,
+            'answered' => $answered,
+            'correct' => $correct,
+            'wrong' => $wrong,
+            'unanswered' => max(0, $total - $answered),
+            'score' => $score,
+            'max_score' => $maxScore,
+            'percent' => $percent,
+            'passed' => $attempt->exam->pass_score !== null ? $percent >= (float) $attempt->exam->pass_score : null,
+        ];
+    }
+
+    /**
+     * Fisher-Yates بمولد عشوائي حتمي (LCG) — نفس الـseed يعطي نفس الترتيب دائمًا.
+     *
+     * @template T
+     *
+     * @param  Collection<int, T>  $items
+     * @return Collection<int, T>
+     */
+    private function stableShuffle(Collection $items, int $seed): Collection
+    {
+        $indices = $items->keys()->values()->all();
+        $state = $seed % 2147483647;
+
+        if ($state <= 0) {
+            $state += 2147483646;
+        }
+
+        for ($i = count($indices) - 1; $i > 0; $i--) {
+            $state = ($state * 48271) % 2147483647;
+            $j = $state % ($i + 1);
+            [$indices[$i], $indices[$j]] = [$indices[$j], $indices[$i]];
+        }
+
+        return collect($indices)->map(fn (int $index) => $items[$index])->values();
     }
 
     public function gradeAttempt(ExamAttempt $attempt): void
@@ -242,6 +376,7 @@ class ExamAttemptService
         );
 
         $this->certificates->issueForPassedAttempt($attempt->fresh(['exam', 'student']));
+        $this->notifications->notifyExamGraded($attempt->refresh());
 
         return $attempt->refresh();
     }
@@ -274,6 +409,9 @@ class ExamAttemptService
         ]);
 
         $this->recalculateScore($attempt);
+
+        // إشعار الطالب وولي الأمر بالنتيجة النهائية بعد اكتمال التصحيح.
+        $this->notifications->notifyExamGraded($attempt->refresh());
 
         return $answer->refresh();
     }

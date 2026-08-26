@@ -58,6 +58,84 @@ class QuestionBankService
     }
 
     /**
+     * @param  array{type?: string, stem?: string, points?: float|int, correct_answer?: string|null, explanation?: string|null, options?: list<array{label: string, is_correct?: bool}>}  $data
+     */
+    public function update(User $teacher, Question $question, array $data): Question
+    {
+        $question->loadMissing('subject');
+        $this->access->assertTeacherOwnsSubject($teacher, $question->subject);
+
+        $type = isset($data['type']) ? QuestionType::from($data['type']) : $question->type;
+        $payload = [
+            'type' => $type,
+            'stem' => $data['stem'] ?? $question->stem,
+            'points' => $data['points'] ?? $question->points,
+            'correct_answer' => array_key_exists('correct_answer', $data) ? $data['correct_answer'] : $question->correct_answer,
+            'explanation' => array_key_exists('explanation', $data) ? $data['explanation'] : $question->explanation,
+            'options' => $data['options'] ?? null,
+        ];
+
+        if ($payload['options'] !== null || $type !== $question->type) {
+            $this->validateQuestionPayload($type, [
+                'stem' => $payload['stem'],
+                'points' => $payload['points'],
+                'correct_answer' => $payload['correct_answer'],
+                'options' => $payload['options'] ?? [],
+            ]);
+        }
+
+        return DB::transaction(function () use ($question, $type, $payload) {
+            $question->update([
+                'type' => $type,
+                'stem' => $payload['stem'],
+                'points' => $payload['points'],
+                'correct_answer' => $payload['correct_answer'],
+                'explanation' => $payload['explanation'],
+            ]);
+
+            if ($payload['options'] !== null || $type !== $question->type) {
+                $question->options()->delete();
+
+                if ($type === QuestionType::Mcq) {
+                    foreach (array_values((array) $payload['options']) as $index => $option) {
+                        $question->options()->create([
+                            'label' => $option['label'],
+                            'is_correct' => (bool) ($option['is_correct'] ?? false),
+                            'ordering' => $index + 1,
+                        ]);
+                    }
+                }
+
+                if ($type === QuestionType::TrueFalse) {
+                    $question->options()->create(['label' => 'صح', 'is_correct' => ($payload['correct_answer'] ?? '') === 'true', 'ordering' => 1]);
+                    $question->options()->create(['label' => 'خطأ', 'is_correct' => ($payload['correct_answer'] ?? '') === 'false', 'ordering' => 2]);
+                }
+            }
+
+            return $question->refresh()->load('options');
+        });
+    }
+
+    /**
+     * حذف السؤال — ممنوع إذا كان مرفقًا بأي امتحان حفاظًا على سلامة المحاولات.
+     */
+    public function delete(User $teacher, Question $question): void
+    {
+        $question->loadMissing('subject');
+        $this->access->assertTeacherOwnsSubject($teacher, $question->subject);
+
+        $attached = $question->exams()->exists();
+
+        if ($attached) {
+            throw ValidationException::withMessages([
+                'question' => 'لا يمكن حذف سؤال مرفق بامتحان — أزله من الامتحانات أولًا.',
+            ]);
+        }
+
+        $question->delete();
+    }
+
+    /**
      * @param  array<string, mixed>  $data
      */
     private function validateQuestionPayload(QuestionType $type, array $data): void

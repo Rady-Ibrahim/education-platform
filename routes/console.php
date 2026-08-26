@@ -9,3 +9,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('subscriptions:notify-expiring --days=3')->dailyAt('09:00');
+
+Schedule::command('exams:auto-submit-expired')->everyMinute();

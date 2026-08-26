@@ -2,11 +2,15 @@
 
 namespace App\Modules\Notifications\Services;
 
+use App\Enums\ExamAttemptStatus;
+use App\Enums\ParentLinkStatus;
 use App\Enums\SubscriptionStatus;
 use App\Modules\Exams\Models\Exam;
+use App\Modules\Exams\Models\ExamAttempt;
 use App\Modules\Payments\Models\Payment;
 use App\Modules\Payments\Models\Subscription;
 use App\Notifications\ExamPublishedNotification;
+use App\Notifications\ExamResultNotification;
 use App\Notifications\PaymentConfirmedNotification;
 use App\Notifications\PaymentPendingReviewNotification;
 use App\Notifications\PaymentRejectedNotification;
@@ -71,6 +75,30 @@ class NotificationService
 
         foreach ($students as $student) {
             $student->notify(new ExamPublishedNotification($exam));
+        }
+    }
+
+    /**
+     * إشعار الطالب وولي الأمر النشِطين بتوفر نتيجة الامتحان.
+     */
+    public function notifyExamGraded(ExamAttempt $attempt): void
+    {
+        $attempt->loadMissing(['student.parents', 'exam']);
+
+        if (! $attempt->exam || ! $attempt->student) {
+            return;
+        }
+
+        if (in_array($attempt->status, [ExamAttemptStatus::Submitted, ExamAttemptStatus::Graded], true)) {
+            $attempt->student->notify(new ExamResultNotification($attempt));
+
+            $parents = $attempt->student->parents()
+                ->wherePivot('status', ParentLinkStatus::Active->value)
+                ->get();
+
+            foreach ($parents as $parent) {
+                $parent->notify(new ExamResultNotification($attempt, 'parent'));
+            }
         }
     }
 

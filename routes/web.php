@@ -57,6 +57,9 @@ Route::middleware(['auth', 'account.active', 'role:teacher', 'platform.access'])
         })->name('students.show');
         Route::view('lessons', 'panels.teacher.lessons')->name('lessons');
         Route::view('exams', 'panels.teacher.exams')->name('exams');
+        Route::get('exams/{exam}/results', function (\App\Modules\Exams\Models\Exam $exam) {
+            return view('panels.teacher.exams-results', ['examId' => $exam->id]);
+        })->name('exams.results');
         Route::view('exams/grading', 'panels.teacher.exams-grading')->name('exams.grading');
         Route::view('exams/manual', 'panels.teacher.exams-manual')->name('exams.manual');
         Route::view('payments', 'panels.teacher.payments')->name('payments');

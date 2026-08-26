@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Modules\Academic\Models\Subject;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -47,6 +48,13 @@ class Question extends Model
     public function options(): HasMany
     {
         return $this->hasMany(QuestionOption::class)->orderBy('ordering');
+    }
+
+    public function exams(): BelongsToMany
+    {
+        return $this->belongsToMany(Exam::class, 'exam_questions')
+            ->withPivot(['ordering', 'points'])
+            ->withTimestamps();
     }
 
     /**

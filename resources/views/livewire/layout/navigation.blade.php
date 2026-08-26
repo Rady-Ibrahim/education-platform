@@ -59,16 +59,21 @@ new class extends Component
     }
 }; ?>
 
-<div class="flex h-full min-h-screen flex-col px-4 py-5">
-    <a href="{{ route('dashboard') }}" class="mb-7 flex items-center gap-2.5 px-1">
-        <span class="brand-mark h-9 w-9">س</span>
-        <span class="text-xl font-bold tracking-tight text-brand-900">{{ config('app.name', 'سنتر') }}</span>
-    </a>
+<div class="flex h-full min-h-screen flex-col" style="background: linear-gradient(180deg, #ffffff 0%, #F8FBFC 100%);">
 
-    <nav class="space-y-1">
+    {{-- Logo --}}
+    <div class="border-b border-slate-100 px-5 py-5">
+        <a href="{{ route('dashboard') }}" wire:navigate class="group flex items-center gap-3">
+            <span class="brand-mark h-9 w-9 shadow-soft transition duration-200 group-hover:bg-brand-800">س</span>
+            <span class="text-[1.1rem] font-bold tracking-tight text-brand-900">{{ config('app.name', 'سنتر') }}</span>
+        </a>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
         @foreach ($this->roleLinks() as $link)
             <a
                 href="{{ route($link['route']) }}"
+                wire:navigate
                 @class(['sidebar-link', 'sidebar-link-active' => $link['active']])
             >
                 @include('partials.nav-icon', ['icon' => $link['icon'], 'active' => $link['active']])
@@ -77,9 +82,9 @@ new class extends Component
         @endforeach
     </nav>
 
-    <div class="mt-auto space-y-4 pt-8">
+    <div class="border-t border-slate-100 px-3 py-4">
         @if ($action = $this->primaryAction())
-            <a href="{{ route($action['route'], $action['params'] ?? []) }}" class="btn-accent w-full">
+            <a href="{{ route($action['route'], $action['params'] ?? []) }}" wire:navigate class="btn-accent w-full">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>

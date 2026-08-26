@@ -22,24 +22,30 @@
                     x-show="sidebarOpen"
                     x-cloak
                     @click="sidebarOpen = false"
-                    class="fixed inset-0 z-40 bg-brand-950/45 backdrop-blur-sm lg:hidden"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    class="fixed inset-0 z-40 bg-brand-950/40 backdrop-blur-sm lg:hidden"
                 ></div>
 
                 <aside
-                    class="fixed inset-y-0 start-0 z-50 flex w-64 translate-x-full flex-col border-e border-slate-200 bg-white transition-transform duration-200 lg:static lg:translate-x-0"
+                    class="fixed inset-y-0 start-0 z-50 flex w-64 translate-x-full flex-col border-e border-slate-200/80 bg-white shadow-panel transition-transform duration-300 ease-spring lg:static lg:translate-x-0"
                     :class="sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'"
                 >
                     @include('partials.sidebar')
                 </aside>
 
                 <div class="flex min-w-0 flex-1 flex-col">
-                    <header class="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur">
+                    <header class="sticky top-0 z-30 border-b border-slate-200/70 bg-white/95 backdrop-blur-md">
                         <div class="flex items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
                             <div class="flex min-w-0 items-center gap-3">
                                 <button
                                     type="button"
                                     @click="sidebarOpen = true"
-                                    class="inline-flex items-center justify-center rounded-xl border border-slate-200 p-2 text-ink-muted hover:bg-slate-50 lg:hidden"
+                                    class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-ink-muted shadow-soft transition duration-200 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700 lg:hidden"
                                     aria-label="فتح القائمة"
                                 >
                                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,11 +53,15 @@
                                     </svg>
                                 </button>
 
-                                <div class="min-w-0">
-                                    <div class="truncate text-base font-bold tracking-tight text-brand-950 sm:text-lg">
-                                        {{ auth()->user()->name }}
+                                {{-- Page breadcrumb / title --}}
+                                <div class="min-w-0 lg:hidden">
+                                    <div class="flex items-center gap-2">
+                                        <span class="brand-mark h-7 w-7 text-xs shadow-soft">س</span>
+                                        <span class="truncate text-sm font-bold text-brand-900">{{ config('app.name', 'سنتر') }}</span>
                                     </div>
-                                    <div class="mt-0.5 hidden truncate text-xs text-ink-muted sm:block">
+                                </div>
+                                <div class="hidden min-w-0 lg:block">
+                                    <div class="truncate text-sm font-semibold text-ink-muted">
                                         {{ match (auth()->user()?->primaryRole()) {
                                             \App\Enums\UserRole::Teacher => 'لوحة المدرس',
                                             \App\Enums\UserRole::Student => 'لوحة الطالب',

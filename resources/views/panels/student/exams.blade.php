@@ -5,5 +5,7 @@
         </x-slot:actions>
 
         <livewire:student.take-exam />
+
+        <livewire:student.my-exam-results />
     </x-panel-page>
 </x-app-layout>

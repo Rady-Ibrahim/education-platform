@@ -5,7 +5,7 @@
 
 <div {{ $attributes->merge(['class' => 'page-shell']) }}>
     <header class="page-header">
-        <div class="min-w-0">
+        <div class="min-w-0 flex-1">
             @isset($eyebrow)
                 <div class="mb-2.5">{{ $eyebrow }}</div>
             @endisset

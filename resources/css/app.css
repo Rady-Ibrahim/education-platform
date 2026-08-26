@@ -22,9 +22,30 @@
     summary::-webkit-details-marker {
         display: none;
     }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        @apply rounded-full bg-slate-300;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        @apply bg-slate-400;
+    }
 }
 
 @layer components {
+
+    /* ─── Page surfaces ─── */
+
     .surface-page {
         @apply min-h-screen bg-app-wash text-ink;
     }
@@ -46,15 +67,15 @@
     }
 
     .surface-panel {
-        @apply overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-soft;
+        @apply overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-card;
     }
 
     .list-row {
-        @apply flex flex-col gap-3 rounded-xl border border-slate-200/80 bg-slate-50/40 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between;
+        @apply flex flex-col gap-3 rounded-xl border border-slate-200/80 bg-slate-50/40 px-4 py-3.5 transition duration-200 hover:border-brand-200 hover:bg-white sm:flex-row sm:items-center sm:justify-between;
     }
 
     .surface-stat {
-        @apply relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft;
+        @apply relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card;
     }
 
     .section-title {
@@ -69,8 +90,10 @@
         @apply mb-4 flex flex-wrap items-end justify-between gap-2;
     }
 
+    /* ─── Dashboard Hero ─── */
+
     .dashboard-hero {
-        @apply relative overflow-hidden rounded-[1.35rem] border border-white/10 bg-hero-wash p-6 text-white shadow-panel sm:p-7;
+        @apply relative overflow-hidden rounded-[1.35rem] border border-white/10 bg-hero-wash p-6 text-white shadow-panel sm:p-8;
     }
 
     .dashboard-hero::before {
@@ -85,52 +108,63 @@
 
     .dashboard-hero::after {
         content: '';
-        @apply pointer-events-none absolute -end-16 top-1/2 h-56 w-56 -translate-y-1/2 rounded-full;
-        background: radial-gradient(circle, rgba(226, 160, 8, 0.28), transparent 68%);
+        @apply pointer-events-none absolute -end-16 top-1/2 h-64 w-64 -translate-y-1/2 rounded-full;
+        background: radial-gradient(circle, rgba(226, 160, 8, 0.32), transparent 65%);
     }
+
+    /* ─── Alerts & Strips ─── */
 
     .attention-strip {
         @apply flex flex-wrap items-center gap-2 rounded-2xl border border-amber-200/70 bg-gradient-to-l from-amber-50 to-white px-4 py-3 text-sm text-amber-950 shadow-soft;
     }
 
+    /* ─── Cards ─── */
+
     .child-card {
-        @apply rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft transition duration-200 hover:border-brand-300 hover:shadow-panel;
+        @apply rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card transition duration-200 hover:border-brand-200 hover:shadow-card-hover;
     }
 
+    /* ─── Hero Buttons ─── */
+
     .metric-chip {
-        @apply inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-semibold text-white/90 ring-1 ring-white/10;
+        @apply inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold text-white/90 ring-1 ring-white/20 backdrop-blur-sm;
+        background-color: rgba(255, 255, 255, 0.12);
     }
 
     .hero-btn {
-        @apply inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-bold transition;
+        @apply inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-bold transition duration-200;
     }
 
     .hero-btn-ghost {
-        @apply hero-btn bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/20;
+        @apply hero-btn bg-white/10 text-white ring-1 ring-white/20 hover:bg-white/20 hover:ring-white/30;
     }
 
     .hero-btn-accent {
         @apply hero-btn bg-accent text-ink hover:bg-accent-dark hover:text-white;
     }
 
+    /* ─── Empty States ─── */
+
     .empty-state {
-        @apply rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-10 text-center;
+        @apply flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-12 text-center;
     }
 
+    /* ─── Tabs ─── */
+
     .dashboard-tabs {
-        @apply flex flex-wrap gap-1 rounded-2xl border border-slate-200/80 bg-slate-100/80 p-1.5;
+        @apply flex flex-wrap gap-1.5 rounded-2xl border border-slate-200/80 bg-slate-100/80 p-1.5;
     }
 
     .dashboard-tab {
-        @apply rounded-xl px-3.5 py-2 text-sm font-semibold text-ink-muted transition hover:bg-white hover:text-ink;
+        @apply rounded-xl px-3.5 py-2 text-sm font-semibold text-ink-muted transition duration-200 hover:bg-white/80 hover:text-ink;
     }
 
     .dashboard-tab-active {
-        @apply rounded-xl bg-white px-3.5 py-2 text-sm font-bold text-brand-950 shadow-soft ring-1 ring-slate-200/80;
+        @apply rounded-xl bg-white px-3.5 py-2 text-sm font-bold text-brand-950 shadow-card ring-1 ring-slate-200/80;
     }
 
     .dashboard-block {
-        @apply rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft sm:p-6;
+        @apply rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card sm:p-6;
     }
 
     .dashboard-block-title {
@@ -146,11 +180,11 @@
     }
 
     .page-tab {
-        @apply inline-flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-ink-muted transition hover:bg-white/80 hover:text-ink;
+        @apply inline-flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-ink-muted transition duration-200 hover:bg-white/80 hover:text-ink;
     }
 
     .page-tab-active {
-        @apply inline-flex shrink-0 items-center gap-2 rounded-xl bg-white px-3.5 py-2.5 text-sm font-bold text-brand-950 shadow-soft ring-1 ring-slate-200/70;
+        @apply inline-flex shrink-0 items-center gap-2 rounded-xl bg-white px-3.5 py-2.5 text-sm font-bold text-brand-950 shadow-card ring-1 ring-slate-200/70;
     }
 
     .page-tab-badge {
@@ -161,8 +195,10 @@
         @apply bg-brand-50 text-brand-800;
     }
 
+    /* ─── Page Sections ─── */
+
     .page-section {
-        @apply rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft sm:p-6;
+        @apply rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card sm:p-6;
     }
 
     .page-section-head {
@@ -177,16 +213,18 @@
         @apply mt-1 max-w-2xl text-xs leading-5 text-ink-muted;
     }
 
+    /* ─── KPI ─── */
+
     .kpi-grid {
         @apply grid gap-3 sm:grid-cols-3;
     }
 
     .kpi-card {
-        @apply rounded-2xl border border-slate-200/80 bg-white p-4 shadow-soft;
+        @apply rounded-2xl border border-slate-200/80 bg-white p-4 shadow-card;
     }
 
     .kpi-card-warn {
-        @apply rounded-2xl border border-amber-200/80 bg-gradient-to-bl from-amber-50 to-white p-4 shadow-soft;
+        @apply rounded-2xl border border-amber-200/80 bg-gradient-to-bl from-amber-50 to-white p-4 shadow-card;
     }
 
     .kpi-label {
@@ -197,25 +235,33 @@
         @apply mt-1.5 text-2xl font-bold tracking-tight text-ink;
     }
 
+    /* ─── Links & Marks ─── */
+
     .link-brand {
-        @apply font-medium text-brand-700 transition hover:text-brand-900;
+        @apply font-medium text-brand-700 transition duration-150 hover:text-brand-900;
     }
 
     .brand-mark {
         @apply inline-flex items-center justify-center rounded-xl bg-brand-700 text-sm font-bold tracking-tight text-white;
     }
 
+    /* ─── Teacher card ─── */
+
     .teacher-card {
         @apply will-change-transform;
     }
 
+    /* ─── Sidebar ─── */
+
     .sidebar-link {
-        @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-muted transition hover:bg-slate-100 hover:text-ink;
+        @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-muted transition duration-200 hover:bg-brand-50/70 hover:text-brand-900;
     }
 
     .sidebar-link-active {
         @apply bg-brand-700 text-white shadow-soft hover:bg-brand-700 hover:text-white;
     }
+
+    /* ─── Data Tables ─── */
 
     .data-table {
         @apply w-full min-w-full text-sm;
@@ -234,22 +280,30 @@
     }
 
     .data-table tbody tr {
-        @apply border-t border-slate-100 transition hover:bg-slate-50/80;
+        @apply border-t border-slate-100 transition duration-150 hover:bg-brand-50/40;
     }
 
+    /* ─── Buttons ─── */
+
     .btn-accent {
-        @apply inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-ink shadow-soft transition hover:bg-accent-dark hover:text-white;
+        @apply inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-ink shadow-soft transition duration-200 hover:bg-accent-dark hover:text-white active:scale-[0.98];
     }
 
     .btn-brand {
-        @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-bold text-white shadow-soft transition hover:bg-brand-800;
+        @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-bold text-white shadow-soft transition duration-200 hover:bg-brand-800 active:scale-[0.98];
     }
 
+    .btn-ghost {
+        @apply inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-ink shadow-soft transition duration-200 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-900 active:scale-[0.98];
+    }
+
+    /* ─── Form elements ─── */
+
     select {
-        @apply rounded-xl border-brand-200 text-ink shadow-sm focus:border-brand-500 focus:ring-brand-500;
+        @apply rounded-xl border-brand-200 text-ink shadow-sm transition duration-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20;
     }
 
     textarea {
-        @apply rounded-xl border-brand-200 text-ink shadow-sm focus:border-brand-500 focus:ring-brand-500;
+        @apply rounded-xl border-brand-200 text-ink shadow-sm transition duration-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20;
     }
 }

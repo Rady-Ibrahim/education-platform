@@ -2,11 +2,13 @@
 
 namespace App\Modules\Exams\Services;
 
+use App\Enums\ExamAttemptStatus;
 use App\Enums\ExamDeliveryMode;
 use App\Models\User;
 use App\Modules\Academic\Models\Subject;
 use App\Modules\Content\Services\ContentAccessService;
 use App\Modules\Exams\Models\Exam;
+use App\Modules\Exams\Models\ExamAttempt;
 use App\Modules\Exams\Models\Question;
 use App\Modules\Notifications\Services\NotificationService;
 use Illuminate\Http\UploadedFile;
@@ -18,6 +20,7 @@ class ExamService
     public function __construct(
         private readonly ContentAccessService $access,
         private readonly NotificationService $notifications,
+        private readonly ExamAttemptService $attempts,
     ) {}
 
     /**
@@ -131,6 +134,61 @@ class ExamService
         $exam->questions()->sync($sync);
 
         return $exam->refresh()->load('questions');
+    }
+
+    /**
+     * تحديث بيانات امتحان (عنوان/وصف/مدة/نافذة/درجة نجاح/محاولات) مع مزامنة اختيارية للأسئلة.
+     *
+     * @param  array{title?: string, description?: string|null, duration_minutes?: int|null, max_attempts?: int, pass_score?: float|null, shuffle_questions?: bool, starts_at?: string|null, ends_at?: string|null, question_ids?: list<int>}  $data
+     */
+    public function update(User $teacher, Exam $exam, array $data): Exam
+    {
+        $this->access->assertTeacherOwnsSubject($teacher, $exam->subject);
+
+        if ($exam->isPaper()) {
+            throw ValidationException::withMessages([
+                'exam' => 'الامتحانات الورقية تُدار من صفحة الدرجات اليدوية.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($teacher, $exam, $data) {
+            $exam->update([
+                'title' => $data['title'] ?? $exam->title,
+                'description' => array_key_exists('description', $data) ? $data['description'] : $exam->description,
+                'duration_minutes' => $data['duration_minutes'] ?? $exam->duration_minutes,
+                'max_attempts' => $data['max_attempts'] ?? $exam->max_attempts,
+                'pass_score' => array_key_exists('pass_score', $data) ? $data['pass_score'] : $exam->pass_score,
+                'shuffle_questions' => array_key_exists('shuffle_questions', $data)
+                    ? (bool) $data['shuffle_questions']
+                    : $exam->shuffle_questions,
+                'starts_at' => array_key_exists('starts_at', $data) ? ($data['starts_at'] ?: null) : $exam->starts_at,
+                'ends_at' => array_key_exists('ends_at', $data) ? ($data['ends_at'] ?: null) : $exam->ends_at,
+            ]);
+
+            if (! empty($data['question_ids'])) {
+                $this->syncQuestions($teacher, $exam, $data['question_ids']);
+            }
+
+            return $exam->refresh()->load('questions');
+        });
+    }
+
+    /**
+     * حذف الامتحان (soft delete) — تسليم المحاولات الجارية أولًا حفاظًا على بيانات الطلاب.
+     */
+    public function delete(User $teacher, Exam $exam): void
+    {
+        $this->access->assertTeacherOwnsSubject($teacher, $exam->subject);
+
+        DB::transaction(function () use ($exam) {
+            $exam->attempts()
+                ->where('status', ExamAttemptStatus::InProgress)
+                ->get()
+                ->each(fn (ExamAttempt $attempt) => $this->attempts->autoSubmitAttempt($attempt));
+
+            $exam->update(['is_published' => false]);
+            $exam->delete();
+        });
     }
 
     public function publish(User $teacher, Exam $exam, bool $published = true): Exam
