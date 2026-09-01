@@ -16,7 +16,7 @@
             aria-hidden="true"
         ></div>
 
-        <div class="surface-page" x-data="{ sidebarOpen: false }">
+        <div class="surface-page" x-data="{ sidebarOpen: false }" data-tab-authed="1">
             <div class="min-h-screen lg:flex">
                 <div
                     x-show="sidebarOpen"

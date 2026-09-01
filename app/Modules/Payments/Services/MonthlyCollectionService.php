@@ -125,7 +125,8 @@ class MonthlyCollectionService
         $charges = $query->get()->each(fn (SubscriptionCharge $c) => $this->refreshChargeStatus($c));
 
         if ($owingOnly) {
-            return $charges->filter(fn (SubscriptionCharge $c) => $c->fresh()->status->isOpen())->values();
+            // Use the in-memory status after refresh — avoid fresh() per-row DB hit
+            return $charges->filter(fn (SubscriptionCharge $c) => $c->status->isOpen())->values();
         }
 
         return $charges->values();
@@ -239,9 +240,11 @@ class MonthlyCollectionService
 
         if ($charge->status !== $status) {
             $charge->update(['status' => $status]);
+            // Update in-memory instead of hitting DB again with fresh()
+            $charge->status = $status;
         }
 
-        return $charge->fresh();
+        return $charge;
     }
 
     public function owingTotalForMonth(User $teacher, Carbon|string|null $month = null): float

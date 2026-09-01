@@ -79,18 +79,18 @@ class DashboardReportService
             ->where('status', PaymentStatus::PendingReview)
             ->count();
 
-        $lateSubscriptions = Subscription::query()
-            ->where('teacher_id', $teacher->id)
-            ->where('status', SubscriptionStatus::PendingPayment)
-            ->where('created_at', '<', now()->subDays(3))
-            ->count();
-
         $pendingJoin = TeacherJoinRequest::query()
             ->where('teacher_id', $teacher->id)
             ->where('status', JoinRequestStatus::Pending)
             ->count();
 
         $todaysAbsent = app(GroupAttendanceService::class)->todaysAbsentCount($teacher);
+
+        // Run monthly collection query ONCE and reuse the result
+        $collection  = app(MonthlyCollectionService::class);
+        $owingCharges = $collection->listForTeacher($teacher, owingOnly: true);
+        $owingCount   = $owingCharges->count();
+        $owingTotal   = (float) $owingCharges->sum(fn ($c) => $c->remainingAmount());
 
         $groups = TeacherGroup::query()
             ->with('grade:id,name')
@@ -121,14 +121,17 @@ class DashboardReportService
                 ->where('status', PaymentStatus::Confirmed)
                 ->sum('amount'),
             'pending_payments' => $pendingPayments,
-            'late_subscriptions' => $lateSubscriptions,
+            'late_subscriptions' => Subscription::query()
+                ->where('teacher_id', $teacher->id)
+                ->where('status', SubscriptionStatus::PendingPayment)
+                ->where('created_at', '<', now()->subDays(3))
+                ->count(),
             'pending_join_requests' => $pendingJoin,
             'average_exam_score' => $this->averageAttemptPercentForTeacher($teacher),
             'todays_absent' => $todaysAbsent,
-            'owing_this_month' => app(MonthlyCollectionService::class)->owingCountForMonth($teacher),
-            'owing_total_this_month' => app(MonthlyCollectionService::class)->owingTotalForMonth($teacher),
-            'attention_count' => $pendingPayments + $pendingJoin + $lateSubscriptions + $todaysAbsent
-                + app(MonthlyCollectionService::class)->owingCountForMonth($teacher),
+            'owing_this_month' => $owingCount,
+            'owing_total_this_month' => $owingTotal,
+            'attention_count' => $pendingPayments + $pendingJoin + $todaysAbsent + $owingCount,
             'groups' => $groups,
         ];
     }

@@ -5,6 +5,7 @@ use App\Http\Controllers\AttachmentDownloadController;
 use App\Http\Controllers\CertificateShowController;
 use App\Http\Controllers\CertificateVerifyController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Middleware\TabSessionIsolation;
 use App\Livewire\Public\TeacherCatalog;
 use App\Livewire\Public\TeacherShow;
 use App\Models\User;
@@ -29,6 +30,19 @@ Route::view('profile', 'profile')
 
 Route::get('certificates/verify/{code}', CertificateVerifyController::class)
     ->name('certificates.verify');
+
+/**
+ * Tab-user token endpoint.
+ * Returns an encrypted token representing the currently-authenticated user.
+ * The JS stores it in localStorage keyed by tabId, and sends it as
+ * `X-Tab-User` on every subsequent request from that tab.
+ */
+Route::post('tab/token', function () {
+    abort_unless(auth()->check(), 401);
+    return response()->json([
+        'token' => TabSessionIsolation::createToken(auth()->id()),
+    ]);
+})->middleware(['auth'])->name('tab.token');
 
 Route::middleware(['auth', 'account.active', 'role:admin'])
     ->prefix('admin')

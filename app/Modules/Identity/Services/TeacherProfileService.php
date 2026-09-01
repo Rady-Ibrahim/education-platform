@@ -169,6 +169,62 @@ class TeacherProfileService
         ]);
     }
 
+    /**
+     * Set multiple subjects for a teacher (replaces setSingleSubject for multi-select).
+     * Accepts a mix of catalog subject IDs and one optional custom subject.
+     *
+     * @param  list<int>  $catalogSubjectIds  IDs of catalog subjects to assign
+     */
+    public function setSubjects(User $teacher, array $catalogSubjectIds): void
+    {
+        if (empty($catalogSubjectIds)) {
+            return;
+        }
+
+        $subjects = Subject::query()
+            ->whereIn('id', $catalogSubjectIds)
+            ->where('is_active', true)
+            ->where('is_custom', false)
+            ->pluck('id');
+
+        if ($subjects->isEmpty()) {
+            throw ValidationException::withMessages([
+                'subject_ids' => 'اختر مادة واحدة على الأقل من الكتالوج.',
+            ]);
+        }
+
+        // Remove any existing custom subjects created by this teacher (keep catalog ones)
+        $customIds = $teacher->teachingSubjects()
+            ->where('is_custom', true)
+            ->where('created_by', $teacher->id)
+            ->pluck('subjects.id');
+
+        $teacher->teachingSubjects()->sync($subjects);
+
+        // Soft-delete orphaned custom subjects no longer needed
+        Subject::query()->whereIn('id', $customIds)->whereNotIn('id', $subjects)->delete();
+    }
+
+    /**
+     * Upload and save teacher avatar.
+     */
+    public function updateAvatar(User $teacher, \Illuminate\Http\UploadedFile $file): User
+    {
+        if (! $teacher->hasRole(UserRole::Teacher)) {
+            throw ValidationException::withMessages(['teacher' => 'الحساب ليس مدرسًا.']);
+        }
+
+        // Remove old avatar
+        if ($teacher->avatar_path && ! str_starts_with($teacher->avatar_path, 'http')) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($teacher->avatar_path);
+        }
+
+        $path = $file->store('teacher-avatars', 'public');
+        $teacher->forceFill(['avatar_path' => $path])->save();
+
+        return $teacher->refresh();
+    }
+
     public function ensureSlug(User $teacher): string
     {
         if ($teacher->slug) {

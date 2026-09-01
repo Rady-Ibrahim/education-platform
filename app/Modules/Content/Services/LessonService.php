@@ -105,6 +105,15 @@ class LessonService
         ]);
     }
 
+    public function deleteAttachment(User $teacher, LessonAttachment $attachment): void
+    {
+        $attachment->loadMissing('lesson.unit.subject');
+        $this->access->assertTeacherOwnsSubject($teacher, $attachment->lesson->unit->subject);
+
+        \Illuminate\Support\Facades\Storage::disk($attachment->disk)->delete($attachment->path);
+        $attachment->delete();
+    }
+
     private function assertTypeRules(LessonType $type, ?string $videoId, ?string $meetingUrl): void
     {
         if (in_array($type, [LessonType::Video, LessonType::Mixed], true) && blank($videoId)) {

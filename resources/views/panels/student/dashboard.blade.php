@@ -81,6 +81,32 @@
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                     </x-stat-tile>
                 </div>
+
+                {{-- Quick access to lessons --}}
+                @if (! $needsJoin && ! $needsPay)
+                    <div class="grid gap-3 sm:grid-cols-2">
+                        <a href="{{ route('student.lessons') }}" wire:navigate
+                            class="group flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-soft transition duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-700 transition duration-200 group-hover:bg-brand-700 group-hover:text-white">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </span>
+                            <span>
+                                <span class="block text-sm font-bold text-ink">متابعة الدروس</span>
+                                <span class="text-xs text-ink-muted">{{ $stats['completed_lessons'] }} درس مكتمل</span>
+                            </span>
+                        </a>
+                        <a href="{{ route('student.exams') }}" wire:navigate
+                            class="group flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-soft transition duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-700 transition duration-200 group-hover:bg-brand-700 group-hover:text-white">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                            </span>
+                            <span>
+                                <span class="block text-sm font-bold text-ink">الامتحانات</span>
+                                <span class="text-xs text-ink-muted">حل الامتحانات المتاحة</span>
+                            </span>
+                        </a>
+                    </div>
+                @endif
             </x-dashboard-panel>
 
             <x-dashboard-panel name="path">

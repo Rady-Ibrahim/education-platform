@@ -12,10 +12,20 @@ enum LessonType: string
     public function label(): string
     {
         return match ($this) {
-            self::Text => 'نصي',
+            self::Text  => 'نصي',
             self::Video => 'فيديو',
             self::Mixed => 'نص + فيديو',
-            self::Live => 'حصة لايف (زوم / ميت)',
+            self::Live  => 'حصة مباشرة (Google Meet)',
+        };
+    }
+
+    public function icon(): string
+    {
+        return match ($this) {
+            self::Text  => '📄',
+            self::Video => '🎬',
+            self::Mixed => '🎬',
+            self::Live  => '📡',
         };
     }
 }

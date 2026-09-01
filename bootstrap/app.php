@@ -19,7 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'platform.access' => \App\Http\Middleware\EnsureTeacherPlatformAccess::class,
         ]);
 
+        // Tab-user isolation: override the authenticated user per-tab.
+        // Must run AFTER StartSession and Auth middleware.
         $middleware->appendToGroup('web', [
+            \App\Http\Middleware\TabSessionIsolation::class,
             \App\Http\Middleware\EnsureAccountIsActive::class,
             \App\Http\Middleware\ForceHttps::class,
         ]);

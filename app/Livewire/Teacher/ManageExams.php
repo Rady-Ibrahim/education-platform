@@ -46,6 +46,8 @@ class ManageExams extends Component
 
     public bool $publishNow = true;
 
+    public bool $shuffleQuestions = true;
+
     /** @var list<int> */
     public array $selectedQuestionIds = [];
 
@@ -151,6 +153,7 @@ class ManageExams extends Component
             'pass_score' => $validated['passScore'] !== '' ? (float) $validated['passScore'] : null,
             'question_ids' => $validated['selectedQuestionIds'] ?? [],
             'is_published' => $this->publishNow,
+            'shuffle_questions' => $this->shuffleQuestions,
         ]);
 
         $this->resetExamForm();
@@ -177,6 +180,7 @@ class ManageExams extends Component
         $this->passScore = $exam->pass_score !== null ? (string) $exam->pass_score : '';
         $this->selectedQuestionIds = $exam->questions()->pluck('questions.id')->all();
         $this->publishNow = $exam->is_published;
+        $this->shuffleQuestions = $exam->shuffle_questions;
     }
 
     public function updateExam(ExamService $service): void
@@ -196,6 +200,7 @@ class ManageExams extends Component
             'ends_at' => $validated['endsAt'] ?: null,
             'pass_score' => $validated['passScore'] !== '' ? (float) $validated['passScore'] : null,
             'question_ids' => $validated['selectedQuestionIds'] ?? [],
+            'shuffle_questions' => $this->shuffleQuestions,
         ]);
 
         if ($this->publishNow !== $exam->is_published) {
@@ -357,5 +362,6 @@ class ManageExams extends Component
         $this->durationMinutes = 30;
         $this->maxAttempts = 1;
         $this->publishNow = true;
+        $this->shuffleQuestions = true;
     }
 }
