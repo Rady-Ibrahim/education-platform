@@ -53,17 +53,16 @@ class ParentLinkTest extends TestCase
         $this->teacher->students()->attach($this->student->id, ['joined_at' => now()]);
     }
 
-    public function test_parent_can_register_as_active(): void
+    public function test_parent_cannot_self_register(): void
     {
-        $user = app(RegistrationService::class)->register([
-            'name' => 'ولي أمر',
-            'email' => 'parent@test.com',
-            'password' => 'password',
-            'role' => 'parent',
-        ]);
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
 
-        $this->assertTrue($user->hasRole(UserRole::Parent));
-        $this->assertSame(UserStatus::Active, $user->status);
+        app(RegistrationService::class)->register([
+            'name'     => 'ولي أمر',
+            'email'    => 'parent@test.com',
+            'password' => 'password',
+            'role'     => 'parent',
+        ]);
     }
 
     public function test_student_self_registration_gets_student_code(): void
@@ -149,16 +148,11 @@ class ParentLinkTest extends TestCase
         $this->assertSame($this->student->id, $stats['children'][0]['id']);
     }
 
-    public function test_parent_dashboard_page_loads_after_registration(): void
+    public function test_parent_dashboard_page_loads_after_being_linked_by_teacher(): void
     {
-        $parent = app(RegistrationService::class)->register([
-            'name' => 'ولي',
-            'email' => 'parent2@test.com',
-            'password' => 'password',
-            'role' => 'parent',
-        ]);
-
-        $this->actingAs($parent->fresh())
+        // Parent accounts are created by teachers, not self-registered.
+        // Use the existing $this->parent created in setUp().
+        $this->actingAs($this->parent)
             ->get(route('parent.dashboard'))
             ->assertOk()
             ->assertSee('ربط ابن بكود الطالب', false);

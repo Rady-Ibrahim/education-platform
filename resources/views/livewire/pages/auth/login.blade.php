@@ -90,8 +90,5 @@ new #[Layout('layouts.guest')] class extends Component
                 سجّل كمدرس
             </a>
         </div>
-        <a href="{{ route('register', ['role' => 'parent']) }}" wire:navigate class="block text-center text-xs text-ink-muted transition hover:text-brand-700">
-            سجّل كولي أمر
-        </a>
     </div>
 </div>

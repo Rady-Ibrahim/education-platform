@@ -82,6 +82,14 @@ class TeacherCatalogTest extends TestCase
             'subject_id' => $subject->id,
         ]);
 
+        // Approve the teacher so they become Active and visible
+        $admin = User::factory()->create();
+        $admin->assignRole(UserRole::Admin);
+        app(\App\Modules\Identity\Services\UserApprovalService::class)->approve($teacher, $admin);
+
+        $teacher = $teacher->fresh();
+        $teacher->forceFill(['is_publicly_visible' => true])->save();
+
         $this->assertTrue($teacher->is_publicly_visible);
 
         $this->get(route('teachers.show', $teacher->slug))

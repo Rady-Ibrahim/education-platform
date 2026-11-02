@@ -158,17 +158,15 @@ new #[Layout('layouts.guest')] class extends Component
         <p class="mt-1.5 text-sm text-ink-muted">
             @if ($role === 'teacher')
                 سجّل كمدرس وأعدّ مكتبك من اليوم الأول.
-            @elseif ($role === 'parent')
-                اربط أبناءك وتابع نتائجهم ومدفوعاتهم.
             @else
                 انضم لمدرسك وابدأ رحلتك التعليمية.
             @endif
         </p>
     </div>
 
-    {{-- Role switcher --}}
+    {{-- Role switcher (teacher / student only — parent accounts are created by teachers) --}}
     <div class="mb-6 flex rounded-xl border border-slate-200/80 bg-slate-100/80 p-1">
-        @foreach (['student' => 'طالب', 'teacher' => 'مدرس', 'parent' => 'ولي أمر'] as $r => $label)
+        @foreach (['student' => 'طالب', 'teacher' => 'مدرس'] as $r => $label)
             <button
                 type="button"
                 wire:click="$set('role', '{{ $r }}')"

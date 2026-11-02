@@ -40,16 +40,16 @@ class RegistrationTest extends TestCase
             ->assertSeeVolt('pages.auth.register');
     }
 
-    public function test_new_users_can_register_as_active_student(): void
+    public function test_new_users_register_as_student_pending_teacher_approval(): void
     {
         $grade = Grade::query()->where('code', 'S1')->firstOrFail();
         $subject = Subject::query()->where('grade_id', $grade->id)->firstOrFail();
 
         $teacher = User::factory()->create([
-            'status' => UserStatus::Active,
-            'slug' => 'reg-teacher',
+            'status'              => UserStatus::Active,
+            'slug'                => 'reg-teacher',
             'is_publicly_visible' => true,
-            'headline' => 'رياضيات',
+            'headline'            => 'رياضيات',
             'vodafone_cash_number' => '01099999999',
         ]);
         $teacher->assignRole(UserRole::Teacher);
@@ -74,7 +74,9 @@ class RegistrationTest extends TestCase
 
         $user = User::query()->where('email', 'test@example.com')->first();
         $this->assertNotNull($user);
-        $this->assertSame(UserStatus::Active, $user->status);
+        // Student is PendingTeacher until the teacher approves the join request
+        $this->assertSame(UserStatus::PendingTeacher, $user->status);
+        $this->assertFalse($user->isActive());
         $this->assertTrue($user->hasRole(UserRole::Student));
         $this->assertNotEmpty($user->student_code);
         $this->assertTrue($user->grades()->where('grades.id', $grade->id)->exists());
@@ -82,7 +84,7 @@ class RegistrationTest extends TestCase
         $this->assertDatabaseHas('teacher_join_requests', [
             'student_id' => $user->id,
             'teacher_id' => $teacher->id,
-            'status' => JoinRequestStatus::Pending->value,
+            'status'     => JoinRequestStatus::Pending->value,
         ]);
     }
 

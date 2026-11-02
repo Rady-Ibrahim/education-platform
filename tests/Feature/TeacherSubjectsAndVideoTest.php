@@ -102,6 +102,13 @@ class TeacherSubjectsAndVideoTest extends TestCase
             'is_publicly_visible' => true,
         ]);
 
+        // Approve the teacher so profile updates with public visibility can take effect
+        $admin = User::factory()->create();
+        $admin->assignRole(UserRole::Admin);
+        app(\App\Modules\Identity\Services\UserApprovalService::class)->approve($user, $admin);
+        $user = $user->fresh();
+        $user->forceFill(['is_publicly_visible' => true])->save();
+
         $this->assertSame(1, $user->teachingSubjects()->count());
         $this->assertSame('فيزياء', $user->teachingSubjects()->first()->name);
         $this->assertTrue($user->is_publicly_visible);

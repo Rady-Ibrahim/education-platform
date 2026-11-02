@@ -5,21 +5,14 @@
  * simultaneously (e.g. teacher in Tab 1, student in Tab 2) without
  * touching the session cookie or breaking CSRF.
  *
- * ── How it works ──
- *
- * 1. A unique `tabId` is stored in sessionStorage (cleared when tab closes).
- *
- * 2. After login, we fetch /tab/token and store the encrypted user token in
- *    localStorage under the key `tab_user_<tabId>`.
- *
- * 3. Every Livewire / AJAX request automatically gets the `X-Tab-User`
- *    header with this token, so Laravel knows which user owns this tab.
- *
- * 4. The PHP middleware decrypts the token and calls Auth::onceUsingId()
- *    to override the session user for that request only.
- *
- * 5. CSRF remains untouched — Livewire reads csrf-token from the meta tag
- *    as normal and the session cookie is shared across tabs (that's fine).
+ * How it works:
+ * 1. Each tab has a unique tabId in sessionStorage (clears when tab closes).
+ * 2. After login/navigation to an authed page, fetch /tab/token (POST) and
+ *    store the encrypted user token in localStorage under tab_user_<tabId>.
+ * 3. Every Livewire/AJAX request sends X-Tab-User header with the token.
+ * 4. TabSessionIsolation middleware decrypts it and calls Auth::onceUsingId()
+ *    so the request runs as the correct user for this tab.
+ * 5. CSRF is untouched — Livewire reads it from meta[name=csrf-token] normally.
  */
 
 const TAB_KEY = 'sentar_tab_id';
@@ -27,7 +20,7 @@ const TOKEN_PREFIX = 'tab_user_';
 const HEADER = 'X-Tab-User';
 const TOKEN_URL = '/tab/token';
 
-// ── Tab ID: unique per tab, lives in sessionStorage ──────────────────────────
+// ── Stable per-tab ID ────────────────────────────────────────────────────────
 
 function getTabId() {
     let id = sessionStorage.getItem(TAB_KEY);
@@ -46,70 +39,63 @@ export const tabId = getTabId();
 
 const storageKey = () => TOKEN_PREFIX + tabId;
 
-// ── Token storage ─────────────────────────────────────────────────────────────
+// ── Token helpers ─────────────────────────────────────────────────────────────
 
-function saveToken(token) {
-    try { localStorage.setItem(storageKey(), token); } catch (_) { }
+function saveToken(t) {
+    try { localStorage.setItem(storageKey(), t); } catch (_) { }
 }
-
 function loadToken() {
     try { return localStorage.getItem(storageKey()) || null; } catch (_) { return null; }
 }
-
 function clearToken() {
     try { localStorage.removeItem(storageKey()); } catch (_) { }
 }
 
-// ── Fetch a fresh token from the server ──────────────────────────────────────
+// ── Fetch fresh token from server ────────────────────────────────────────────
 
 async function fetchToken() {
     try {
         const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+        if (!csrf) return null;
+
+        // Use the unpatched fetch to avoid infinite recursion
         const res = await _fetch(TOKEN_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                'X-CSRF-TOKEN': csrf || '',
+                'X-CSRF-TOKEN': csrf,
             },
         });
-        if (!res.ok) return null;
-        const { token } = await res.json();
-        return token || null;
+        if (!res.ok) return null;                  // 401 = not authed, 403 = pending
+        const json = await res.json();
+        return json?.token || null;
     } catch (_) {
         return null;
     }
 }
 
-// ── Initialise: fetch token if user appears to be logged in ──────────────────
+// ── Initialise ────────────────────────────────────────────────────────────────
 
 async function init() {
-    // If we already have a stored token for this tab, keep it
-    if (loadToken()) return;
+    if (loadToken()) return;                       // already have one for this tab
 
-    // Heuristic: the layout only renders the sidebar when logged in
-    // — if there's no csrf meta, the page hasn't loaded yet; wait.
     const csrf = document.querySelector('meta[name="csrf-token"]');
     if (!csrf) return;
 
-    // If the page has a dashboard-style structure, user is likely authed
+    // Detect authenticated pages by data attribute (set in app.blade.php) or path
     const isAuthed = !!document.querySelector('[data-tab-authed]')
-        || location.pathname.startsWith('/teacher')
-        || location.pathname.startsWith('/student')
-        || location.pathname.startsWith('/parent')
-        || location.pathname.startsWith('/admin')
-        || location.pathname.startsWith('/dashboard')
-        || location.pathname.startsWith('/profile');
+        || /^\/(teacher|student|parent|admin|dashboard|profile|account)/.test(location.pathname);
+    if (!isAuthed) return;
 
-    if (isAuthed) {
-        const token = await fetchToken();
-        if (token) saveToken(token);
-    }
+    const token = await fetchToken();
+    if (token) saveToken(token);
 }
 
-// ── Patch window.fetch to inject X-Tab-User on every request ─────────────────
+// ── Patch fetch — inject X-Tab-User on every request ─────────────────────────
 
 const _fetch = window.fetch.bind(window);
+
 window.fetch = async function (input, init = {}) {
     const token = loadToken();
     if (token) {
@@ -120,7 +106,7 @@ window.fetch = async function (input, init = {}) {
     return _fetch(input, init);
 };
 
-// ── Patch XMLHttpRequest (fallback) ──────────────────────────────────────────
+// ── Patch XHR (fallback for older libs) ──────────────────────────────────────
 
 const _xhrOpen = XMLHttpRequest.prototype.open;
 XMLHttpRequest.prototype.open = function (...args) {
@@ -138,28 +124,36 @@ XMLHttpRequest.prototype.send = function (...args) {
     return _xhrSend.apply(this, args);
 };
 
-// ── Re-fetch token after Livewire navigate (new page may be authed) ──────────
+// ── Livewire navigate hooks ───────────────────────────────────────────────────
 
+// After each navigate: try to get a token if we're now on an authed page
 document.addEventListener('livewire:navigated', async () => {
-    // If navigated to an authed page and we have no token yet, get one
     if (!loadToken()) {
         const token = await fetchToken();
         if (token) saveToken(token);
     }
 });
 
-// ── Clear token on logout ─────────────────────────────────────────────────────
-// Livewire dispatches a 'redirect' after logout; check for login page
-
+// Before navigating away from an authed page: clear token if heading to /login
 document.addEventListener('livewire:navigating', () => {
-    // will be handled by navigated if needed
+    if (location.pathname === '/login' || location.pathname === '/register') {
+        clearToken();
+    }
 });
 
-// ── Expose for debugging ──────────────────────────────────────────────────────
+// ── Clear token when the standard logout form fires ──────────────────────────
 
-window.__tabId = tabId;
-window.__tabToken = { save: saveToken, load: loadToken, clear: clearToken, fetch: fetchToken };
+document.addEventListener('submit', (e) => {
+    const form = e.target;
+    if (form?.action?.includes('logout')) {
+        clearToken();
+    }
+});
 
-// Bootstrap
+// ── Bootstrap ─────────────────────────────────────────────────────────────────
+
 document.addEventListener('DOMContentLoaded', init);
-document.addEventListener('livewire:navigated', init);
+
+// Debug helpers
+window.__tabId = tabId;
+window.__tabToken = { load: loadToken, save: saveToken, clear: clearToken, fetch: fetchToken };

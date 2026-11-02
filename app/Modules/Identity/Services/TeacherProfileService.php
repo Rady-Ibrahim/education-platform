@@ -82,7 +82,10 @@ class TeacherProfileService
                 $this->setSingleSubject($teacher, $data);
             }
 
-            if ($teacher->fresh()->is_publicly_visible && ! $this->canBePublic($teacher->fresh())) {
+            if ($teacher->fresh()->is_publicly_visible
+                && $teacher->fresh()->isActive()
+                && ! $this->canBePublic($teacher->fresh())
+            ) {
                 throw ValidationException::withMessages([
                     'is_publicly_visible' => 'لإظهار صفحتك للعامة أضف نبذة قصيرة ورقم فودافون كاش ومادتك.',
                 ]);

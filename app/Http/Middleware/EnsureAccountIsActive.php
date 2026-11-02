@@ -14,12 +14,15 @@ class EnsureAccountIsActive
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // NOTE: TabSessionIsolation runs before this middleware in the web group,
+        // so auth()->user() here already reflects the per-tab override (if any).
         $user = $request->user();
 
         if (! $user) {
             return $next($request);
         }
 
+        // Hard-block suspended users — log them out entirely
         if ($user->status === UserStatus::Suspended) {
             auth()->logout();
 
@@ -28,8 +31,18 @@ class EnsureAccountIsActive
                 ->withErrors(['email' => 'تم إيقاف حسابك. تواصل مع الإدارة.']);
         }
 
+        // Non-active users (PendingAdmin / PendingTeacher / Rejected) get the pending page
         if (! $user->isActive()) {
-            if ($request->routeIs('account.pending', 'profile', 'logout', 'verification.*', 'password.*')) {
+            $allowedRoutes = [
+                'account.pending',
+                'profile',
+                'logout',
+                'tab.token',          // allow token fetch even for pending users
+                'verification.*',
+                'password.*',
+            ];
+
+            if ($request->routeIs(...$allowedRoutes)) {
                 return $next($request);
             }
 

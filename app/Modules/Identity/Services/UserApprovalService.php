@@ -21,7 +21,16 @@ class UserApprovalService
             'rejection_reason' => null,
         ])->save();
 
-        return $user->refresh();
+        $user = $user->refresh();
+
+        // If this is a teacher, (re)create the platform subscription trial
+        // so the trial clock starts from the approval moment, not registration.
+        if ($user->hasRole(UserRole::Teacher)) {
+            $billing = app(\App\Modules\Payments\Services\PlatformBillingService::class);
+            $billing->ensureSubscription($user);
+        }
+
+        return $user;
     }
 
     public function reject(User $user, User $admin, string $reason): User

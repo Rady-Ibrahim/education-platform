@@ -32,25 +32,25 @@ class ApprovalWorkflowTest extends TestCase
         ]);
     }
 
-    public function test_self_registered_student_is_active_immediately(): void
+    public function test_self_registered_student_awaits_teacher_approval(): void
     {
         $grade = Grade::query()->where('code', 'S1')->firstOrFail();
 
         $user = app(RegistrationService::class)->register([
-            'name' => 'طالب تجريبي',
-            'email' => 'student@test.com',
+            'name'     => 'طالب تجريبي',
+            'email'    => 'student@test.com',
             'password' => 'password',
-            'role' => 'student',
+            'role'     => 'student',
             'grade_id' => $grade->id,
         ]);
 
         $this->assertTrue($user->hasRole(UserRole::Student));
-        $this->assertSame(UserStatus::Active, $user->status);
-        $this->assertTrue($user->isActive());
+        $this->assertSame(UserStatus::PendingTeacher, $user->status);
+        $this->assertFalse($user->isActive());
         $this->assertTrue($user->grades()->where('grades.id', $grade->id)->exists());
     }
 
-    public function test_self_registered_teacher_is_active_immediately(): void
+    public function test_self_registered_teacher_requires_admin_approval(): void
     {
         $user = app(RegistrationService::class)->register([
             'name' => 'مدرس تجريبي',
@@ -62,7 +62,8 @@ class ApprovalWorkflowTest extends TestCase
         ]);
 
         $this->assertTrue($user->hasRole(UserRole::Teacher));
-        $this->assertTrue($user->isActive());
+        $this->assertSame(UserStatus::PendingAdmin, $user->status);
+        $this->assertFalse($user->isActive());
         $this->assertNotEmpty($user->slug);
         $this->assertFalse($user->is_publicly_visible);
     }

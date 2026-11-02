@@ -126,8 +126,6 @@
                                 <p class="home-fade home-fade-delay-4 mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-brand-100/50">
                                     <a href="{{ route('register', ['role' => 'teacher']) }}" class="font-semibold text-brand-100/75 transition hover:text-white hover:underline underline-offset-4">مدرس؟ سجّل هنا</a>
                                     <span class="text-white/20">·</span>
-                                    <a href="{{ route('register', ['role' => 'parent']) }}" class="font-semibold text-brand-100/75 transition hover:text-white hover:underline underline-offset-4">ولي أمر؟ سجّل هنا</a>
-                                    <span class="text-white/20">·</span>
                                     <a href="{{ route('login') }}" class="font-semibold text-brand-100/75 transition hover:text-white hover:underline underline-offset-4">لدي حساب</a>
                                 </p>
                             @endguest
@@ -353,7 +351,7 @@
                             </li>
                         </ul>
                         <div class="border-t border-slate-100 p-5 pt-3">
-                            <a href="{{ route('register', ['role' => 'parent']) }}" class="btn-ghost w-full">سجّل كولي أمر</a>
+                            <p class="text-center text-xs text-ink-muted">ولي الأمر يُضاف بواسطة المدرس من لوحته.</p>
                         </div>
                     </div>
                 </div>

@@ -10,42 +10,28 @@ use Illuminate\Contracts\Encryption\DecryptException;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Tab-User Isolation Middleware
+ * Tab User Isolation Middleware
  *
  * Allows different browser tabs to be logged in as different users
- * simultaneously — without touching the session cookie or breaking CSRF.
+ * simultaneously without touching the session cookie or breaking CSRF.
  *
- * ── How it works ──
+ * How it works:
+ * ─ Every AJAX/Livewire request carries an `X-Tab-User` header containing
+ *   an encrypted {user_id, issued_at} payload (8h TTL).
+ * ─ This middleware decrypts it and calls Auth::onceUsingId() to override
+ *   the session user for that single request only.
+ * ─ CSRF is untouched — Livewire reads it from meta[name=csrf-token].
  *
- * 1. When a user logs in, the browser stores a signed, encrypted token in
- *    localStorage keyed by tabId: `tab_user_<tabId>`.
- *    The token contains: { userId, guardedAt (timestamp) }
- *
- * 2. Every subsequent request from that tab sends the token in the
- *    `X-Tab-User` header.
- *
- * 3. This middleware decrypts + verifies the token and calls
- *    Auth::onceUsingId() — which overrides whoever the session says is
- *    logged in, for this request only.
- *
- * 4. CSRF continues to work normally: the session and its CSRF token are
- *    untouched.  The meta[name=csrf-token] in the HTML is session-based and
- *    Livewire reads it correctly.
- *
- * ── Security ──
- *
- * • The token is encrypted + signed with APP_KEY (Crypt::encrypt).
- * • Tokens expire after TAB_TOKEN_TTL_HOURS hours.
- * • An attacker who steals the localStorage value can impersonate —
- *   identical risk to stealing a session cookie.
- * • onceUsingId() does NOT persist to session, so it never corrupts the
- *   underlying session user.
+ * Security:
+ * ─ Token is encrypted+signed with APP_KEY via Crypt::encrypt.
+ * ─ Tokens expire after TTL_HOURS (default 8h).
+ * ─ onceUsingId() never persists to session, so the underlying session
+ *   user is always the last user who did a full Auth::login().
  */
 class TabSessionIsolation
 {
     public const HEADER = 'X-Tab-User';
 
-    /** Token lifetime in hours */
     private const TTL_HOURS = 8;
 
     public function handle(Request $request, Closure $next): Response
@@ -53,13 +39,13 @@ class TabSessionIsolation
         $token = $request->header(self::HEADER);
 
         if ($token) {
-            $this->applyTabUser($request, $token);
+            $this->applyTabUser($token);
         }
 
         return $next($request);
     }
 
-    private function applyTabUser(Request $request, string $token): void
+    private function applyTabUser(string $token): void
     {
         try {
             $payload = Crypt::decrypt($token);
@@ -68,27 +54,30 @@ class TabSessionIsolation
                 return;
             }
 
-            // Check expiry
-            $age = now()->diffInHours($payload['issued_at'] ?? 0, false);
-            if ($age > self::TTL_HOURS || $age < 0) {
-                return;
+            // Check token age
+            $issuedAt = $payload['issued_at'] ?? null;
+            if ($issuedAt) {
+                $age = now()->diffInHours($issuedAt, false);
+                if ($age > self::TTL_HOURS || $age < 0) {
+                    return;
+                }
             }
 
             $userId = (int) $payload['user_id'];
 
-            // Only override if it's a different user from the session
+            // Only override if this tab is running as a different user
             if (Auth::id() !== $userId) {
                 Auth::onceUsingId($userId);
             }
 
         } catch (DecryptException) {
-            // Invalid / tampered token — ignore, fall back to session user
+            // Tampered / invalid token — silently ignore, fall back to session user
         }
     }
 
     /**
      * Create a signed token for the given user ID.
-     * Called from the login response via JavaScript interop.
+     * Called by the /tab/token route after login.
      */
     public static function createToken(int $userId): string
     {

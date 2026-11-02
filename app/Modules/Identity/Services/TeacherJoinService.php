@@ -14,7 +14,15 @@ class TeacherJoinService
 {
     public function requestJoin(User $student, User $teacher, ?string $message = null): TeacherJoinRequest
     {
-        if (! $student->hasRole(UserRole::Student) || ! $student->isActive()) {
+        if (! $student->hasRole(UserRole::Student)) {
+            throw ValidationException::withMessages([
+                'student' => 'الحساب ليس طالبًا.',
+            ]);
+        }
+
+        // Allow PendingTeacher students — they're waiting for this very approval
+        $allowedStatuses = [UserStatus::Active, UserStatus::PendingTeacher];
+        if (! in_array($student->status, $allowedStatuses, true)) {
             throw ValidationException::withMessages([
                 'student' => 'يجب أن يكون حساب الطالب نشطًا.',
             ]);
@@ -74,10 +82,19 @@ class TeacherJoinService
 
         return DB::transaction(function () use ($request, $note) {
             $request->update([
-                'status' => JoinRequestStatus::Approved,
+                'status'      => JoinRequestStatus::Approved,
                 'review_note' => $note,
                 'reviewed_at' => now(),
             ]);
+
+            // Activate the student if they were waiting for teacher approval
+            $student = $request->student;
+            if ($student && $student->status === UserStatus::PendingTeacher) {
+                $student->forceFill([
+                    'status'      => UserStatus::Active,
+                    'approved_at' => now(),
+                ])->save();
+            }
 
             $request->teacher->students()->syncWithoutDetaching([
                 $request->student_id => ['joined_at' => now()],

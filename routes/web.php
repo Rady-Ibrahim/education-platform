@@ -34,11 +34,13 @@ Route::get('certificates/verify/{code}', CertificateVerifyController::class)
 /**
  * Tab-user token endpoint.
  * Returns an encrypted token representing the currently-authenticated user.
- * The JS stores it in localStorage keyed by tabId, and sends it as
- * `X-Tab-User` on every subsequent request from that tab.
+ * Works for all account statuses — the tab isolation should work even for
+ * pending accounts (e.g. student waiting for teacher approval).
  */
 Route::post('tab/token', function () {
-    abort_unless(auth()->check(), 401);
+    if (! auth()->check()) {
+        return response()->json(['token' => null], 401);
+    }
     return response()->json([
         'token' => TabSessionIsolation::createToken(auth()->id()),
     ]);
