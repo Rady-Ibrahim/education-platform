@@ -57,7 +57,7 @@ class PlatformPaymentService
                 ]);
             }
 
-            $path = $proof->store('platform-payment-proofs', 'public');
+            $path = $proof->store('platform-payment-proofs', 'private');
 
             $payment = PlatformPayment::query()->create([
                 'teacher_id' => $teacher->id,

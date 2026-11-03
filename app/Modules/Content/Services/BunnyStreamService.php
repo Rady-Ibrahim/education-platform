@@ -152,22 +152,30 @@ class BunnyStreamService
         }
 
         $libraryId = (string) config('bunny.library_id');
-        $base = rtrim((string) config('bunny.api_base_url'), '/');
-        $contents = file_get_contents($absolutePath);
+        $base      = rtrim((string) config('bunny.api_base_url'), '/');
+        $fileSize  = filesize($absolutePath);
 
-        if ($contents === false) {
+        // Stream the file instead of loading it entirely into memory
+        $stream = fopen($absolutePath, 'rb');
+        if ($stream === false) {
             throw new RuntimeException('تعذر قراءة ملف الفيديو.');
         }
 
         try {
             Http::withHeaders($this->apiHeaders() + [
-                'Content-Type' => 'application/octet-stream',
+                'Content-Type'   => 'application/octet-stream',
+                'Content-Length' => (string) $fileSize,
             ])
-                ->withBody($contents, 'application/octet-stream')
+                ->withBody($stream, 'application/octet-stream')
+                ->timeout(600)          // 10 minutes for large files
                 ->put("{$base}/library/{$libraryId}/videos/{$videoId}")
                 ->throw();
         } catch (RequestException $e) {
-            throw new RuntimeException('فشل رفع الفيديو إلى Bunny: '.$e->getMessage(), previous: $e);
+            throw new RuntimeException('فشل رفع الفيديو إلى Bunny: ' . $e->getMessage(), previous: $e);
+        } finally {
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
         }
     }
 

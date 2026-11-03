@@ -79,8 +79,14 @@ class LessonService
 
     public function delete(User $teacher, Lesson $lesson): void
     {
-        $lesson->loadMissing('unit.subject');
+        $lesson->loadMissing('unit.subject', 'attachments');
         $this->access->assertTeacherOwnsSubject($teacher, $lesson->unit->subject);
+
+        // Delete all attachment files from disk first
+        foreach ($lesson->attachments as $attachment) {
+            \Illuminate\Support\Facades\Storage::disk($attachment->disk)->delete($attachment->path);
+        }
+
         $lesson->delete();
     }
 

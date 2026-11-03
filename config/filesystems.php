@@ -47,6 +47,15 @@ return [
             'report' => false,
         ],
 
+        // Private disk for sensitive files (payment proofs, etc.)
+        // Not web-accessible — served only through signed/authorized routes.
+        'private' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private'),
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

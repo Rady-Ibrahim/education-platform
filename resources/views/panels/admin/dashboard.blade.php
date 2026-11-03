@@ -5,7 +5,11 @@
 
     <x-panel-page title="لوحة الإدارة" subtitle="إشراف المنصة — الحسابات، المدفوعات، والهيكل الأكاديمي.">
         <x-slot:actions>
-            <a href="{{ route('admin.users') }}" class="btn-brand" wire:navigate>الحسابات</a>
+            <a href="{{ route('admin.users', ['tab' => 'create']) }}" class="btn-brand" wire:navigate>
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                إنشاء مدرس
+            </a>
+            <a href="{{ route('admin.users') }}" class="btn-ghost" wire:navigate>الحسابات</a>
             <a href="{{ route('admin.payments') }}" class="btn-accent" wire:navigate>المدفوعات</a>
         </x-slot:actions>
 

@@ -173,7 +173,7 @@ class PaymentRecordService
             ]);
         }
 
-        $proofPath = $proof->store('payment-proofs', 'public');
+        $proofPath = $proof->store('payment-proofs', 'private');
 
         $payment = DB::transaction(function () use ($recorder, $student, $subscription, $data, $proofPath) {
             return Payment::query()->create([
